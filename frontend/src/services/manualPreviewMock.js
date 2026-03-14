@@ -47,7 +47,6 @@ export function runManualPreviewMock(originalText, policy = "default") {
       const label = match[0];
       counters[pattern.type] = (counters[pattern.type] ?? 0) + 1;
       const token = `[${pattern.token}_${String(counters[pattern.type]).padStart(2, "0")}]`;
-      replacedText = replacedText.replace(label, token);
       detections.push({
         type: pattern.type,
         label,
@@ -101,7 +100,6 @@ function buildMockReport(detections, replacements, strategy) {
     review_status: reviewStatus,
   };
 }
-
 
 function buildCopyReadyPrompt(replacedText, report) {
   return [
