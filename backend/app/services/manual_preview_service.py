@@ -228,12 +228,16 @@ class ManualPreviewService:
     async def _read_text_file(self, file: UploadFile) -> str:
         filename = file.filename or "uploaded.txt"
         content_type = file.content_type or "text/plain"
+        file_size = getattr(file, "size", None)
 
         if not filename.lower().endswith(".txt"):
             raise ValueError("현재 manual-preview 파일 업로드는 .txt 파일만 지원합니다.")
 
         if content_type not in {"text/plain", "application/octet-stream"}:
             raise ValueError("현재 manual-preview 파일 업로드는 text/plain 만 지원합니다.")
+
+        if file_size is not None and file_size > MAX_TEXT_FILE_BYTES:
+            raise ValueError("현재 manual-preview 파일 업로드는 1MB 이하의 .txt 파일만 지원합니다.")
 
         raw = await file.read()
         if len(raw) > MAX_TEXT_FILE_BYTES:

@@ -130,12 +130,27 @@ async function setSelectedFile(file) {
   state.selectedFileName = file?.name ?? "";
   state.selectedFileContent = "";
   state.isDragActive = false;
-  if (file) {
-    try {
-      state.selectedFileContent = await file.text();
-    } catch (error) {
-      state.selectedFileContent = "";
-    }
+  if (!file) {
+    render();
+    return;
+  }
+
+  if (!file.name.toLowerCase().endsWith(".txt")) {
+    state.status = createStatus(STATUS_TYPES.FILE_UNSUPPORTED);
+  } else if (file.size === 0) {
+    state.status = createStatus(STATUS_TYPES.FILE_EMPTY);
+  } else if (file.size > MAX_UPLOAD_FILE_BYTES) {
+    state.status = createStatus(STATUS_TYPES.FILE_TOO_LARGE);
+  } else {
+    state.status = createStatus(STATUS_TYPES.FILE_EMPTY_SELECTION, {
+      detail: `${file.name} 파일을 선택했습니다. 미리보기를 생성해 주세요.`,
+    });
+  }
+
+  try {
+    state.selectedFileContent = await file.text();
+  } catch (error) {
+    state.selectedFileContent = "";
   }
   render();
 }

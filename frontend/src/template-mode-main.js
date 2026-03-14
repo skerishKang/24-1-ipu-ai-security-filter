@@ -327,6 +327,18 @@ function normalizeSampleValue(type, value) {
 
   if (type === "phone") {
     const digits = String(value).replaceAll(/[^0-9]/g, "").slice(0, 11);
+    if (digits.length <= 2) {
+      return digits;
+    }
+    if (digits.startsWith("02")) {
+      if (digits.length <= 5) {
+        return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+      }
+      if (digits.length <= 9) {
+        return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+      }
+      return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
     if (digits.length <= 3) {
       return digits;
     }

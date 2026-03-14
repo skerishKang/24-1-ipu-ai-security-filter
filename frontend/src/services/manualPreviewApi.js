@@ -1,4 +1,4 @@
-import { getManualPreviewUrl } from "../config.js";
+import { getManualPreviewFileUrl, getManualPreviewUrl } from "../config.js";
 
 export async function fetchManualPreview(content, policy = "default") {
   const payload = buildManualPreviewPayload(content, policy);
@@ -41,7 +41,7 @@ export async function fetchManualPreview(content, policy = "default") {
 }
 
 export async function uploadManualPreviewFile(file, policy = "default") {
-  const manualPreviewFileUrl = `${getManualPreviewUrl()}/file`;
+  const manualPreviewFileUrl = getManualPreviewFileUrl();
   const formData = new FormData();
   formData.append("file", file);
   formData.append("policy", policy);

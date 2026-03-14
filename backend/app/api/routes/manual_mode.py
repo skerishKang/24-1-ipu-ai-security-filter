@@ -35,4 +35,11 @@ async def manual_preview_file(
     try:
         return await manual_preview_service.build_file_preview(file=file, policy=policy)
     except ValueError as error:
-        raise HTTPException(status_code=415, detail=str(error))
+        message = str(error)
+        if "1MB" in message:
+            raise HTTPException(status_code=413, detail=message)
+        if "비어 있는" in message:
+            raise HTTPException(status_code=400, detail=message)
+        if "UTF-8" in message:
+            raise HTTPException(status_code=415, detail=message)
+        raise HTTPException(status_code=415, detail=message)

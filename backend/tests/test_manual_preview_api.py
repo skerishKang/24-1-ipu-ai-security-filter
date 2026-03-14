@@ -108,6 +108,19 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(response.status_code, 415)
 
+    async def test_manual_preview_file_rejects_oversized_text_file(self) -> None:
+        files = {
+            "file": ("sample.txt", "a" * (1_048_576 + 1), "text/plain"),
+        }
+
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/file",
+            files=files,
+            data={"policy": "default"},
+        )
+
+        self.assertEqual(response.status_code, 413)
+
     async def test_manual_preview_policy_is_reflected_in_report(self) -> None:
         strict_payload = {
             "content": "아이피유테크 홍길동 이사는 contact@ipu.co.kr 로 연락합니다.",

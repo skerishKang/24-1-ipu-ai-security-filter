@@ -14,3 +14,7 @@ export function getManualPreviewUrl() {
   const config = getRuntimeConfig();
   return `${config.apiBaseUrl}/api/v1/mode/manual-preview`;
 }
+
+export function getManualPreviewFileUrl() {
+  return `${getManualPreviewUrl()}/file`;
+}
