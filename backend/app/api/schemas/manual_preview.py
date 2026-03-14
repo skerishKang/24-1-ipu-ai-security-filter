@@ -3,11 +3,17 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 PolicyName = Literal["default", "strict_token"]
+ContentTypeName = Literal["text"]
 
 
 class ManualPreviewRequest(BaseModel):
-    content: str = Field(..., min_length=1, description="Original content to inspect")
-    content_type: str = Field(default="text", description="Input content type")
+    content: str = Field(
+        ...,
+        min_length=1,
+        max_length=50_000,
+        description="Original content to inspect",
+    )
+    content_type: ContentTypeName = Field(default="text", description="Input content type")
     policy: PolicyName = Field(default="default", description="Security policy preset")
 
 
