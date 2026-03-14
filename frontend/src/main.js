@@ -18,12 +18,13 @@ import {
 } from "./statusMessages.js";
 
 const app = document.querySelector("#app");
+const MAX_UPLOAD_FILE_BYTES = 1_048_576;
 const defaultText =
   "아이피유테크 홍길동 이사는 고객사 contact@ipu.co.kr 과 010-1234-5678 정보를 포함한 제안서를 검토해 주세요. 계약 금액은 12,500,000원입니다.";
 
 const state = {
   originalText: defaultText,
-  preview: runManualPreviewMock(defaultText),
+  preview: runManualPreviewMock(defaultText, "default"),
   isLoading: false,
   source: "mock",
   policy: "default",
@@ -58,7 +59,7 @@ async function updatePreview(nextText, policy = state.policy) {
     state.source = "backend";
     state.status = createStatus(STATUS_TYPES.BACKEND_SUCCESS, { policy });
   } catch (error) {
-    state.preview = runManualPreviewMock(nextText);
+    state.preview = runManualPreviewMock(nextText, policy);
     state.source = "mock-fallback";
     state.status = classifyTextFailure(error, policy);
   } finally {
@@ -84,6 +85,12 @@ async function updateFilePreview(file, policy = state.policy) {
 
   if (targetFile.size === 0) {
     state.status = createStatus(STATUS_TYPES.FILE_EMPTY);
+    render();
+    return;
+  }
+
+  if (targetFile.size > MAX_UPLOAD_FILE_BYTES) {
+    state.status = createStatus(STATUS_TYPES.FILE_TOO_LARGE);
     render();
     return;
   }
@@ -204,6 +211,8 @@ function getVisibleStatusMessage() {
       return "먼저 .txt 파일을 선택해 주세요.";
     case STATUS_TYPES.FILE_EMPTY:
       return "내용이 있는 .txt 파일을 선택해 주세요.";
+    case STATUS_TYPES.FILE_TOO_LARGE:
+      return "1MB 이하의 .txt 파일만 올릴 수 있습니다.";
     case STATUS_TYPES.FILE_REQUEST_FAILED:
       return "파일 처리에 실패했습니다. 다시 시도해 주세요.";
     default:

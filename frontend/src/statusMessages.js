@@ -9,6 +9,7 @@ export const STATUS_TYPES = {
   FILE_UNSUPPORTED: "file-unsupported",
   FILE_EMPTY_SELECTION: "file-empty-selection",
   FILE_EMPTY: "file-empty",
+  FILE_TOO_LARGE: "file-too-large",
   FILE_REQUEST_FAILED: "file-request-failed",
 };
 
@@ -82,6 +83,14 @@ export function createStatus(type, options = {}) {
           options.detail ||
           "비어 있는 텍스트 파일은 처리할 수 없습니다. 내용이 있는 .txt 파일을 선택하세요.",
       };
+    case STATUS_TYPES.FILE_TOO_LARGE:
+      return {
+        type,
+        tone: "error",
+        message:
+          options.detail ||
+          "현재는 1MB 이하의 .txt 파일만 업로드할 수 있습니다. 더 작은 파일로 나눠 다시 시도하세요.",
+      };
     case STATUS_TYPES.FILE_REQUEST_FAILED:
       return {
         type,
@@ -120,6 +129,15 @@ export function classifyFileFailure(error) {
     loweredDetail.includes("비어 있는 텍스트 파일")
   ) {
     return createStatus(STATUS_TYPES.FILE_EMPTY, { detail });
+  }
+
+  if (
+    error?.code === "file-too-large" ||
+    loweredDetail.includes("1mb") ||
+    loweredDetail.includes("1 mb") ||
+    loweredDetail.includes("too large")
+  ) {
+    return createStatus(STATUS_TYPES.FILE_TOO_LARGE, { detail });
   }
 
   if (

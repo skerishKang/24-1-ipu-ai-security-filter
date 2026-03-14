@@ -33,12 +33,13 @@ const PATTERNS = [
   },
 ];
 
-export function runManualPreviewMock(originalText) {
+export function runManualPreviewMock(originalText, policy = "default") {
   const sessionId = createSessionId();
-  let replacedText = originalText;
   const detections = [];
   const replacements = [];
+  const replacementPlan = [];
   const counters = {};
+  const strategy = policy === "strict_token" ? "strict_token" : "alias";
 
   for (const pattern of PATTERNS) {
     const matches = [...originalText.matchAll(pattern.regex)];
@@ -61,10 +62,23 @@ export function runManualPreviewMock(originalText) {
         replaced: token,
         reason: pattern.reason,
       });
+      replacementPlan.push({
+        start: match.index ?? 0,
+        end: (match.index ?? 0) + label.length,
+        token,
+      });
     }
   }
 
-  const report = buildMockReport(detections);
+  let replacedText = originalText;
+  for (const replacement of [...replacementPlan].sort((left, right) => right.start - left.start)) {
+    replacedText =
+      replacedText.slice(0, replacement.start) +
+      replacement.token +
+      replacedText.slice(replacement.end);
+  }
+
+  const report = buildMockReport(detections, replacements, strategy);
 
   return {
     session_id: sessionId,
@@ -77,15 +91,17 @@ export function runManualPreviewMock(originalText) {
   };
 }
 
-function buildMockReport(detections) {
-  const reviewStatus = detections.length > 0 ? "review-required" : "clean";
+function buildMockReport(detections, replacements, strategy) {
+  const totalDetections = Math.max(detections.length, replacements.length);
+  const reviewStatus = totalDetections > 0 ? "review-required" : "clean";
   return {
-    total_detections: detections.length,
-    risk_level: detections.length >= 3 ? "high-risk" : detections.length > 0 ? "moderate-risk" : "low-risk",
-    strategy: "strict_token",
+    total_detections: totalDetections,
+    risk_level: totalDetections >= 3 ? "high-risk" : totalDetections > 0 ? "moderate-risk" : "low-risk",
+    strategy,
     review_status: reviewStatus,
   };
 }
+
 
 function buildCopyReadyPrompt(replacedText, report) {
   return [

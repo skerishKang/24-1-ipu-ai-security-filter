@@ -126,6 +126,10 @@ function classifyFileResponseCode(status, detail) {
     return "file-empty";
   }
 
+  if (status === 400 && detail.includes("1MB")) {
+    return "file-too-large";
+  }
+
   if (status === 400 && detail.includes("UTF-8 텍스트 파일만 지원")) {
     return "file-invalid-encoding";
   }
