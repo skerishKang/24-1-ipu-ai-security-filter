@@ -1,0 +1,687 @@
+{
+  "schema_version": "1.0",
+  "template_id": "customer_inquiry_intake",
+  "template_name": "고객 문의 처리 로그",
+  "document_type": "customer_inquiry",
+  "document_purpose": "고객 문의 접수 및 처리 기록",
+  "version": "0.1.0-draft",
+  "status": "draft",
+  "created_at": "2026-03-14T21:30:00+09:00",
+  "updated_at": "2026-03-14T21:30:00+09:00",
+  "created_by": "template-extraction-experiment",
+  "updated_by": "template-extraction-experiment",
+  "approval": null,
+  "source_document": {
+    "origin": "free_document_extraction",
+    "path": "demo-samples/sample-long-customer-inquiry.txt"
+  },
+  "field_groups": [
+    {
+      "name": "intake_meta",
+      "label": "접수 메타",
+      "fields": [
+        "received_at",
+        "intake_channel",
+        "owner_person",
+        "owner_email",
+        "owner_phone"
+      ]
+    },
+    {
+      "name": "customer_profile",
+      "label": "고객 정보",
+      "fields": [
+        "customer_org",
+        "customer_contact_person",
+        "customer_contact_email",
+        "customer_contact_phone",
+        "customer_grade",
+        "customer_business_id"
+      ]
+    },
+    {
+      "name": "follow_up",
+      "label": "처리 및 후속 조치",
+      "fields": [
+        "customer_issue_summary",
+        "timeline_items",
+        "internal_nonpublic_notes",
+        "compensation_note",
+        "follow_up_due_date",
+        "cc_people"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "field_id": "received_at",
+      "field_name": "received_at",
+      "type": "date",
+      "label": "접수일시",
+      "description": "문의가 접수된 날짜와 시각",
+      "required": true,
+      "placeholder": "2024-11-18",
+      "default_value": null,
+      "example_value": "2024년 11월 18일 14:23",
+      "source_examples": [
+        "2024년 11월 18일 14:23"
+      ],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "date",
+        "order": 1,
+        "group": "intake_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{received_at}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "intake_channel",
+      "field_name": "intake_channel",
+      "type": "enum",
+      "label": "접수채널",
+      "description": "문의가 유입된 채널",
+      "required": true,
+      "placeholder": "이메일 + 전화",
+      "default_value": null,
+      "example_value": "이메일 + 전화",
+      "source_examples": [
+        "이메일 + 전화"
+      ],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "text",
+        "order": 2,
+        "group": "intake_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{intake_channel}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "owner_person",
+      "field_name": "owner_person",
+      "type": "person",
+      "label": "담당자",
+      "description": "문의 처리를 맡은 내부 담당자",
+      "required": true,
+      "placeholder": "김민수 팀장",
+      "default_value": null,
+      "example_value": "김민수 팀장",
+      "source_examples": [
+        "김민수 팀장"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 3,
+        "group": "intake_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{owner_person}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "owner_email",
+      "field_name": "owner_email",
+      "type": "email",
+      "label": "담당자 이메일",
+      "description": "문의 처리 결과 공유용 내부 메일",
+      "required": false,
+      "placeholder": "support@ipu.co.kr",
+      "default_value": null,
+      "example_value": "support@ipu.co.kr",
+      "source_examples": [
+        "support@ipu.co.kr"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "email",
+        "order": 4,
+        "group": "intake_meta",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "render": {
+        "token": "{{owner_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "owner_phone",
+      "field_name": "owner_phone",
+      "type": "phone",
+      "label": "담당자 연락처",
+      "description": "문의 처리 담당자의 연락처",
+      "required": false,
+      "placeholder": "010-2345-6789",
+      "default_value": null,
+      "example_value": "010-2345-6789",
+      "source_examples": [
+        "010-2345-6789"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "tel",
+        "order": 5,
+        "group": "intake_meta",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "render": {
+        "token": "{{owner_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_org",
+      "field_name": "customer_org",
+      "type": "org",
+      "label": "고객사명",
+      "description": "고객 회사 또는 기관명",
+      "required": true,
+      "placeholder": "대한시스템 주식회사",
+      "default_value": null,
+      "example_value": "대한시스템 주식회사",
+      "source_examples": [
+        "대한시스템 주식회사"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 4,
+        "group": "customer_profile",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{customer_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_contact_person",
+      "field_name": "customer_contact_person",
+      "type": "person",
+      "label": "고객 담당자",
+      "description": "고객 측 실무 담당자",
+      "required": true,
+      "placeholder": "최영호 Manager",
+      "default_value": null,
+      "example_value": "최영호 Manager",
+      "source_examples": [
+        "최영호 Manager"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 5,
+        "group": "customer_profile",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{customer_contact_person}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_contact_email",
+      "field_name": "customer_contact_email",
+      "type": "email",
+      "label": "고객 담당자 이메일",
+      "description": "고객 측 회신 이메일",
+      "required": false,
+      "placeholder": "contact@daehan.co.kr",
+      "default_value": null,
+      "example_value": "contact@daehan.co.kr",
+      "source_examples": [
+        "contact@daehan.co.kr"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "email",
+        "order": 6,
+        "group": "customer_profile",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "render": {
+        "token": "{{customer_contact_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_contact_phone",
+      "field_name": "customer_contact_phone",
+      "type": "phone",
+      "label": "고객 담당자 연락처",
+      "description": "고객 측 연락 가능한 번호",
+      "required": false,
+      "placeholder": "02-6012-7788",
+      "default_value": null,
+      "example_value": "02-6012-7788",
+      "source_examples": [
+        "02-6012-7788"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "tel",
+        "order": 7,
+        "group": "customer_profile",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "render": {
+        "token": "{{customer_contact_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_grade",
+      "field_name": "customer_grade",
+      "type": "enum",
+      "label": "고객 등급",
+      "description": "내부 기준 고객 등급",
+      "required": false,
+      "placeholder": "VIP",
+      "default_value": null,
+      "example_value": "VIP",
+      "source_examples": [
+        "VIP"
+      ],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "text",
+        "order": 8,
+        "group": "customer_profile",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{customer_grade}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_business_id",
+      "field_name": "customer_business_id",
+      "type": "business_reg_no",
+      "label": "사업자등록번호",
+      "description": "고객 회사의 사업자등록번호",
+      "required": false,
+      "placeholder": "123-45-67890",
+      "default_value": null,
+      "example_value": "123-45-67890",
+      "source_examples": [
+        "123-45-67890"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 9,
+        "group": "customer_profile",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^\\d{3}-\\d{2}-\\d{5}$"
+      },
+      "render": {
+        "token": "{{customer_business_id}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "monthly_fee",
+      "field_name": "monthly_fee",
+      "type": "amount",
+      "label": "월 이용 비용",
+      "description": "고객 계약상 월 이용 비용",
+      "required": false,
+      "placeholder": "4,500,000원",
+      "default_value": null,
+      "example_value": "4,500,000원",
+      "source_examples": [
+        "4,500,000원"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 10,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "validation": {
+        "currency": "KRW",
+        "min_value": 0
+      },
+      "render": {
+        "token": "{{monthly_fee}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "daily_compensation_amount",
+      "field_name": "daily_compensation_amount",
+      "type": "amount",
+      "label": "일할 계산 금액",
+      "description": "환불 또는 배상 산정 시 기준이 되는 금액",
+      "required": false,
+      "placeholder": "150,000원/일",
+      "default_value": null,
+      "example_value": "150,000원/일",
+      "source_examples": [
+        "150,000원/일"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 11,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "validation": {
+        "currency": "KRW",
+        "min_value": 0
+      },
+      "render": {
+        "token": "{{daily_compensation_amount}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_issue_summary",
+      "field_name": "customer_issue_summary",
+      "type": "text",
+      "label": "문의 내용 요약",
+      "description": "고객 문의 핵심 요약",
+      "required": true,
+      "placeholder": "AI 분석 플랫폼 서비스 중단 관련 긴급 문의",
+      "default_value": null,
+      "example_value": "AI 분석 플랫폼 서비스 중단 관련 긴급 문의",
+      "source_examples": [
+        "AI 분석 플랫폼 서비스 중단 관련 긴급 문의"
+      ],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "text",
+        "order": 12,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{customer_issue_summary}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "internal_nonpublic_notes",
+      "field_name": "internal_nonpublic_notes",
+      "type": "list_text",
+      "label": "비공개 내부 논의",
+      "description": "외부 공유 대상이 아닌 내부 논의 사항",
+      "required": false,
+      "placeholder": "정기 점검 중 예상치 못한 오류 발생\n백업 시스템 전환 시 데이터 지연 문제",
+      "default_value": null,
+      "example_value": "정기 점검 중 예상치 못한 오류 발생",
+      "source_examples": [
+        "정기 점검 중 예상치 못한 오류 발생",
+        "백업 시스템 전환 시 데이터 지연 문제"
+      ],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 13,
+        "group": "follow_up",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{internal_nonpublic_notes}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "timeline_items",
+      "field_name": "timeline_items",
+      "type": "list_text",
+      "label": "처리 경과",
+      "description": "문제 인지부터 대응까지의 주요 타임라인",
+      "required": false,
+      "placeholder": "11/18 14:23 문의 접수\n11/18 14:40 내부 장애 원인 확인",
+      "default_value": null,
+      "example_value": "11/18 14:23 문의 접수",
+      "source_examples": [
+        "11/18 14:23 문의 접수",
+        "11/18 14:40 내부 장애 원인 확인"
+      ],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 14,
+        "group": "follow_up",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{timeline_items}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "compensation_note",
+      "field_name": "compensation_note",
+      "type": "free_text",
+      "label": "비용 및 분쟁 가능성 메모",
+      "description": "배상, 환불, SLA 이슈 등 비용 관련 메모",
+      "required": false,
+      "placeholder": "월 이용 비용 기준 부분 환불 검토 필요",
+      "default_value": null,
+      "example_value": "월 이용 비용 기준 부분 환불 검토 필요",
+      "source_examples": [
+        "월 이용 비용 기준 부분 환불 검토 필요"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 15,
+        "group": "follow_up",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 5,
+        "max_length": 1000
+      },
+      "render": {
+        "token": "{{compensation_note}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "follow_up_due_date",
+      "field_name": "follow_up_due_date",
+      "type": "date",
+      "label": "후속 조치 마감",
+      "description": "후속 조치 완료 목표일",
+      "required": false,
+      "placeholder": "2024-11-22",
+      "default_value": null,
+      "example_value": "2024년 11월 22일",
+      "source_examples": [
+        "2024년 11월 22일"
+      ],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "date",
+        "order": 16,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{follow_up_due_date}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "cc_people",
+      "field_name": "cc_people",
+      "type": "list_text",
+      "label": "공유 대상",
+      "description": "후속 공유가 필요한 참조 대상자 목록",
+      "required": false,
+      "placeholder": "박지은 이사\n서비스운영팀",
+      "default_value": null,
+      "example_value": "박지은 이사",
+      "source_examples": [
+        "박지은 이사",
+        "서비스운영팀"
+      ],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 17,
+        "group": "follow_up",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{cc_people}}",
+        "inline": false
+      }
+    }
+  ],
+  "template_text": "고객 문의 처리 로그\n접수일시: {{received_at}}\n접수채널: {{intake_channel}}\n담당자: {{owner_person}} ({{owner_email}} / {{owner_phone}})\n\n고객명: {{customer_org}}\n담당자: {{customer_contact_person}} ({{customer_contact_email}} / {{customer_contact_phone}})\n고객 등급: {{customer_grade}}\n사업자등록번호: {{customer_business_id}}\n\n문의 내용 요약:\n{{customer_issue_summary}}\n\n처리 경과:\n{{timeline_items}}\n\n내부 논의 사항:\n{{internal_nonpublic_notes}}\n\n비용 및 분쟁 가능성:\n{{compensation_note}}\n\n후속 조치:\n담당: {{owner_person}} ({{owner_phone}})\n마감: {{follow_up_due_date}}\ncc: {{cc_people}}",
+  "validation_rules": {
+    "required_fields": [
+      "received_at",
+      "intake_channel",
+      "owner_person",
+      "customer_org",
+      "customer_contact_person",
+      "customer_issue_summary"
+    ],
+    "field_rules": {
+      "owner_email": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "owner_phone": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "customer_contact_email": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "customer_contact_phone": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "customer_business_id": {
+        "pattern": "^\\d{3}-\\d{2}-\\d{5}$"
+      },
+      "monthly_fee": {
+        "currency": "KRW",
+        "min_value": 0
+      },
+      "daily_compensation_amount": {
+        "currency": "KRW",
+        "min_value": 0
+      }
+    },
+    "cross_field_rules": []
+  },
+  "sensitivity_profile": {
+    "profile_id": "customer_inquiry_log_standard_v1",
+    "level": "high",
+    "contains": [
+      "person",
+      "org",
+      "email",
+      "phone",
+      "business_reg_no",
+      "amount",
+      "free_text"
+    ],
+    "default_masking": "strict_token",
+    "field_overrides": {
+      "received_at": {
+        "masking": "none"
+      },
+      "intake_channel": {
+        "masking": "none"
+      },
+      "follow_up_due_date": {
+        "masking": "none"
+      }
+    },
+    "retention": {
+      "store_original_input": false,
+      "store_rendered_output": true
+    }
+  },
+  "sample_values": {
+    "received_at": "2024-11-18",
+    "intake_channel": "이메일 + 전화",
+    "owner_person": "김민수 팀장",
+    "owner_email": "support@ipu.co.kr",
+    "owner_phone": "010-2345-6789",
+    "customer_org": "대한시스템 주식회사",
+    "customer_contact_person": "최영호 Manager",
+    "customer_contact_email": "contact@daehan.co.kr",
+    "customer_contact_phone": "02-6012-7788",
+    "customer_grade": "VIP",
+    "customer_business_id": "123-45-67890",
+    "monthly_fee": "4,500,000원",
+    "daily_compensation_amount": "150,000원/일",
+    "customer_issue_summary": "AI 분석 플랫폼 서비스 중단 관련 긴급 문의",
+    "timeline_items": "11/18 14:23 문의 접수\n11/18 14:40 내부 장애 원인 확인",
+    "internal_nonpublic_notes": "정기 점검 중 예상치 못한 오류 발생\n백업 시스템 전환 시 데이터 지연 문제",
+    "compensation_note": "월 이용 비용 기준 부분 환불 검토 필요",
+    "follow_up_due_date": "2024-11-22",
+    "cc_people": "박지은 이사\n서비스운영팀"
+  }
+}

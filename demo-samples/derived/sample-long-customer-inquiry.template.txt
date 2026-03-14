@@ -1,0 +1,32 @@
+고객 문의 처리 로그
+
+접수일시: {{received_at}}
+접수채널: {{intake_channel}}
+담당자: {{owner_person}} ({{owner_email}} / {{owner_phone}})
+
+1. 고객 기본 정보
+- 고객명: {{customer_org}}
+- 담당자: {{customer_contact_person}} ({{customer_contact_email}} / {{customer_contact_phone}})
+- 고객 등급: {{customer_grade}}
+- 사업자등록번호: {{customer_business_id}}
+
+2. 문의 내용 요약
+- 제목: {{inquiry_title}}
+- 내용: {{customer_issue_summary}}
+- 영향도: {{business_impact_note}}
+
+3. 처리 경과
+{{timeline_items}}
+
+4. 내부 논의 사항
+{{internal_nonpublic_notes}}
+
+5. 비용 및 분쟁 가능성
+- 월 이용 비용: {{monthly_fee}}
+- 일할 계산 금액: {{daily_compensation_amount}}
+- 보상 검토 메모: {{compensation_note}}
+
+6. 후속 조치
+- 담당: {{owner_person}}
+- 마감: {{follow_up_due_date}}
+- cc: {{cc_people}}

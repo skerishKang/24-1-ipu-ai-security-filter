@@ -1,0 +1,219 @@
+# Frontend
+
+웹 기반 수동 모드 보안 치환 워크벤치 영역이다. 현재 구현은 다른 모델 작업과 충돌을 피하기 위해 `frontend/` 내부에서만 동작하는 무의존성 정적 UI로 구성했다.
+
+## 현재 구현 범위
+
+- 일반인 / 전문가 화면 모드 전환
+- 텍스트 입력 화면
+- `.txt` 파일 업로드 화면
+- `.txt` 파일 드래그앤드롭 업로드
+- 간단한 policy 선택 UI
+- 원문과 치환본 비교 패널
+- 탐지 리포트 패널
+- 외부 AI용 복사 프롬프트 패널
+- 수동 모드 중심 4영역 레이아웃
+- `manual-preview` API 연동
+- 백엔드 실패 시 mock fallback
+
+## 구조
+
+```text
+frontend/
+├── index.html
+├── README.md
+├── runtime-config.js
+└── src/
+    ├── config.js
+    ├── main.js
+    ├── styles.css
+    ├── components/
+    │   ├── AppShell.js
+    │   ├── CopyPromptPanel.js
+    │   ├── InputPanel.js
+    │   ├── ReportPanel.js
+    │   └── ResultPanel.js
+    │   ├── SimpleResultPanel.js
+    │   └── ViewModeToggle.js
+    ├── services/
+    │   ├── manualPreviewApi.js
+    │   └── manualPreviewMock.js
+    ├── ui/
+    │   └── createPanelFrame.js
+    └── utils/
+        └── createSessionId.js
+```
+
+## 실행 방법
+
+별도 의존성 없이 정적 파일로 열 수 있다.
+
+```bash
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend
+python3 -m http.server 4241
+```
+
+브라우저에서 `http://localhost:4241` 로 접속하면 된다.
+
+## 브라우저 smoke test
+
+핵심 수동 모드 흐름은 Playwright 기반 smoke script로 확인할 수 있다.
+
+```bash
+# Windows
+cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-security-filter\frontend
+node tests\runSmokeTests.js
+
+# Linux/WSL
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend
+node tests/runSmokeTests.js
+```
+
+현재 자동화 범위:
+
+- 첫 로드 시 4영역 워크벤치 렌더링
+- 텍스트 요청 fallback 상태 표시
+- `.txt` 파일 업로드 성공 상태와 결과 패널 반영
+- 지원하지 않는 파일 선택 시 상태 문구
+- 빈 `.txt` 파일 선택 시 상태 문구
+
+현재 smoke test는 프론트 상태 흐름 검증에 집중하기 위해 Playwright route interception을 사용한다. 즉, fallback 케이스는 backend 미연결 상태를, 파일 성공 케이스는 backend 성공 응답을 브라우저 레벨에서 재현한다.
+
+## 브라우저 live integration test
+
+실제 backend 서버가 실행 중일 때 frontend가 live 응답을 반영하는지 검증한다.
+
+```bash
+# Windows - backend 먼저 실행 필요
+cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-security-filter\backend
+.venv-win\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8241
+
+# Windows - frontend 서버 실행 (別の 터미널)
+cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-security-filter\frontend
+python -m http.server 4241
+
+# Windows - live integration test 실행
+cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-security-filter\frontend
+node tests\runLiveIntegrationTests.js
+```
+
+현재 검증 범위:
+
+- 첫 로드 시 backend 연결 상태 표시
+- 텍스트 요청 시 session/source 에 backend 표시
+- `.txt` 파일 업로드 시 session/source 에 backend-file 표시
+
+## API 설정 변경 방법
+
+기본 backend URL은 `http://127.0.0.1:8241` 이며, [`runtime-config.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/runtime-config.js) 에서 바꿀 수 있다.
+
+```js
+window.IPU_RUNTIME_CONFIG = {
+  apiBaseUrl: "http://127.0.0.1:9000",
+};
+```
+
+- 값이 없으면 [`src/config.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/config.js) 의 기본값으로 돌아간다.
+- 현재는 정적 서버 구조이므로 복잡한 환경변수 대신 런타임 설정 파일 1개만 바꾸면 된다.
+- `manualPreviewApi.js` 는 이 설정을 읽어 `/api/v1/mode/manual-preview` URL을 조합한다.
+
+런타임 smoke test 기준:
+
+- 백엔드가 정상 실행 중이면 상단 세션 표시가 `... · backend` 로 보인다.
+- 이때 입력 패널 상태 문구는 `백엔드 응답으로 치환 결과를 갱신했습니다.` 로 표시된다.
+- 백엔드가 꺼져 있거나 연결 실패하면 상단 세션 표시가 `... · mock-fallback` 으로 바뀐다.
+- 이때 입력 패널 상태 문구는 fallback 안내 문구로 바뀌며 화면은 계속 동작한다.
+
+## 화면 모드
+
+- 기본 진입은 `일반인 모드` 다.
+- `일반인 모드`
+  - 입력 영역
+  - 치환 미리보기 생성 버튼
+  - 안전하게 바뀐 텍스트
+  - 보호된 항목 수 요약
+  - 결과 복사 버튼
+  - 원문 보기 접기/펼치기
+- `전문가 모드`
+  - 기존 4영역 워크벤치 구조를 그대로 유지
+  - policy, 치환 상세, 탐지 리포트, 복사 프롬프트, session/source 정보를 확인 가능
+- 일반인 모드에서는 `policy`, 상세 탐지 목록, 상세 치환 목록, 리포트 metric, session/source 같은 내부 정보는 숨긴다.
+
+## 파일 업로드 사용 방법
+
+- 입력 패널에서 `.txt 파일 업로드` 모드를 선택한다.
+- `.txt` 파일을 고르거나 드롭존에 끌어다 놓은 뒤 `치환 미리보기 생성` 을 누르면 `POST /api/v1/mode/manual-preview/file` 로 요청한다.
+- 응답 결과는 기존과 동일하게 원문, 치환본, 리포트, 복사용 프롬프트 4영역에 렌더링된다.
+- 파일 업로드는 backend live 응답만 사용하며, 실패 시 명확한 상태 문구를 보여준다.
+- 현재 지원 범위는 `.txt` 와 UTF-8 텍스트뿐이다.
+- 리렌더 후에도 선택한 파일명은 패널에 유지되며, 다시 선택하지 않고 바로 재요청할 수 있다.
+
+현재 에러 상태 정리:
+
+- 텍스트 입력은 backend 성공, backend 실패 후 mock fallback, 로딩 상태를 구분해 보여준다.
+- 파일 업로드는 `.txt` 미선택, 지원하지 않는 확장자, 비어 있는 파일, backend 요청 실패를 각각 다른 문구로 보여준다.
+- 파일 업로드는 mock fallback 없이 backend 결과 또는 에러 상태만 표시한다.
+- 상태 문구는 [`src/statusMessages.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/statusMessages.js) 에서 한 곳으로 관리한다.
+
+## policy 선택 사용 방법
+
+- 입력 패널에서 `Policy` 를 `default` 또는 `strict_token` 중에서 선택할 수 있다.
+- 현재 policy 선택은 준비 단계이며, backend request 의 `policy` 필드에 그대로 전달하는 수준이다.
+- 텍스트 입력과 파일 업로드 요청 모두 같은 선택 값을 사용한다.
+- 현재 backend 동작 차이는 크지 않을 수 있지만, 이후 정책 분기 연결을 위한 UI 자리와 요청 경로는 확보돼 있다.
+
+## 연동 동작 설명
+
+- 기본 흐름은 `src/services/manualPreviewApi.js` 를 통해 `POST /api/v1/mode/manual-preview` 를 호출한다.
+- API base URL은 `runtime-config.js` -> `src/config.js` 순서로 결정된다.
+- 요청 본문은 `{ content, content_type: "text", policy }` 형태다.
+- 파일 업로드는 `multipart/form-data` 로 `POST /api/v1/mode/manual-preview/file` 를 호출한다.
+- 백엔드가 정상 응답하면 해당 결과를 그대로 4영역에 렌더링한다.
+- 텍스트 입력에서 백엔드가 꺼져 있거나 실패하면 `src/services/manualPreviewMock.js` 로 자동 fallback 한다.
+- 파일 업로드는 mock fallback 없이 에러 상태만 보여준다.
+- mock 서비스는 비교용이자 비상 대체 경로로 유지한다.
+
+## 다음 연동 포인트
+
+- 백엔드 응답의 `session_id`, `detections`, `replacements`, `report`, `copy_ready_prompt` 필드 검증 강화
+- 파일 업로드 drag-and-drop 개선
+- 자동 모드가 붙더라도 현재 4영역 레이아웃은 유지하고 결과 패널만 확장
+
+## 템플릿 모드 실험
+
+기존 manual-preview 와 별개로, 저장된 승인 템플릿 JSON을 읽어 입력 폼을 만들고 문서 초안을 재구성하는 프론트엔드 전용 데모 진입점을 추가했다.
+
+- 진입 파일: [`template-mode.html`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/template-mode.html)
+- 메인 스크립트: [`src/template-mode-main.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/template-mode-main.js)
+- 템플릿 카탈로그: [`src/data/templateCatalog.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/data/templateCatalog.js)
+- 현재 선택 가능 템플릿:
+  - 기본 승인 버전: [`templates/approved/contract_review_request/v1.1.0.template.json`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/contract_review_request/v1.1.0.template.json)
+  - [`templates/approved/customer_inquiry_intake/v1.1.0.template.json`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/customer_inquiry_intake/v1.1.0.template.json)
+  - [`templates/approved/internal_report_weekly/v1.1.0.template.json`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/internal_report_weekly/v1.1.0.template.json)
+
+현재 템플릿 모드 범위:
+
+- 승인 템플릿 선택 UI
+- 승인 템플릿 JSON fetch
+- 공통 템플릿 스키마를 단순 UI 모델로 정규화
+- `text`, `textarea`, `amount`, `date`, `email`, `phone` 필드 타입 렌더링
+- 템플릿 field 정의 기반 동적 입력 UI 생성
+- 입력값을 `template_text` 에 주입해 실시간 문서 초안 재구성
+- 별도 미리보기 패널에서 생성된 초안과 필드별 입력 상태 표시
+
+실행 방법:
+
+```bash
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter
+python3 -m http.server 4241
+```
+
+- manual-preview: `http://localhost:4241/frontend/index.html`
+- template mode demo: `http://localhost:4241/frontend/template-mode.html`
+
+주의:
+
+- 템플릿 모드는 `../templates/approved/...` 경로의 실제 JSON을 읽으므로, `frontend/` 가 아니라 프로젝트 루트에서 정적 서버를 띄워야 한다.
+- `manual-preview` 기존 흐름은 그대로 유지된다.
+- 추출 초안 템플릿은 `demo-samples/derived/*.template.json`, 승인 템플릿은 `templates/approved/.../*.template.json` 에 둔다.
+- 상단 선택기에서 템플릿을 바꾸면 입력 폼과 문서 초안이 함께 새 템플릿 기준으로 갱신된다.

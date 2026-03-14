@@ -1,0 +1,35 @@
+계약 검토 의뢰서
+
+의뢰일: {{request_date}}
+의뢰자: {{requester_org}} {{requester_person}} ({{requester_email}} / {{requester_phone}})
+수신: {{recipient_group}}
+
+1. 계약 상대방 개요
+- 상대방명: {{counterparty_org}}
+- 대표자: {{counterparty_ceo}}
+- 본점 주소: {{counterparty_address}}
+- 연락처: {{counterparty_phone}} / {{counterparty_email}}
+- 사업자등록번호: {{counterparty_business_id}}
+
+2. 계약 개요
+- 계약명: {{contract_name}}
+- 계약 유형: {{contract_type}}
+- 총 계약금액: {{contract_amount}}
+- 분쟁해결조항: {{dispute_resolution_clause}}
+
+3. 주요 계약 조건 요약
+{{service_scope_items}}
+{{payment_terms}}
+{{special_clauses}}
+
+4. 검토 필요 사항
+{{internal_review_points}}
+
+5. 내부 검토 의견
+{{legal_review_notes}}
+
+6. 결론 및 건의사항
+{{conclusion_note}}
+
+담당: {{owner_person}} ({{owner_phone}} / {{owner_email}})
+검토의뢰일: {{request_date}}

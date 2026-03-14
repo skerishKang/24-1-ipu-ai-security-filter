@@ -1,0 +1,35 @@
+주간 내부 보고서
+
+보고일: {{report_date}}
+보고자: {{reporter_org}} {{reporter_person}} ({{reporter_email}} / {{reporter_phone}})
+수신: {{recipient_people}}
+
+1. 주요 업무 현황
+{{business_status_summary}}
+
+2. 팀 인력 및 관련 사항
+{{staffing_summary}}
+{{hiring_plan_summary}}
+
+3. 기술적 이슈
+{{technical_issues}}
+
+4. 고객 피드백 및 만족도
+{{customer_feedback_summary}}
+
+5. 재무 현황
+- 예산 사용: {{pilot_budget_used}} / {{pilot_budget_total}}
+- 예상 매출: {{monthly_revenue}}
+- 인건비: {{labor_cost}}
+- 서버/인프라: {{infrastructure_cost}}
+- 마케팅: {{marketing_cost}}
+- 순이익: {{net_profit}}
+
+6. 내주 추진 목표
+{{next_week_goals}}
+
+7. 지원 요청 사항
+{{support_requests}}
+
+8. 비고 및 메모
+{{internal_notes}}

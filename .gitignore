@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+.venv-win/
+venv/
+
+# Node / browser test artifacts
+node_modules/
+playwright-report/
+test-results/
+tests/screenshots/
+
+# Logs
+*.log
+
+# Environment / local overrides
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,673 @@
+{
+  "schema_version": "1.0",
+  "template_id": "internal_report_weekly",
+  "template_name": "주간 내부 보고서",
+  "document_type": "internal_report",
+  "document_purpose": "주간 내부 운영 및 사업 보고",
+  "version": "1.1.0",
+  "status": "approved",
+  "created_at": "2026-03-14T21:30:00+09:00",
+  "updated_at": "2026-03-15T01:00:00+09:00",
+  "created_by": "template-extraction-experiment",
+  "updated_by": "reviewer@ipu.co.kr",
+  "approval": {
+    "reviewer": "reviewer@ipu.co.kr",
+    "approved_by": "reviewer@ipu.co.kr",
+    "approved_at": "2026-03-15T01:00:00+09:00",
+    "checklist_version": "template-approval-minimum-v1"
+  },
+  "source_document": {
+    "origin": "free_document_extraction",
+    "path": "demo-samples/sample-long-internal-report.txt",
+    "draft_template_path": "demo-samples/derived/sample-long-internal-report.template.json"
+  },
+  "field_groups": [
+    {
+      "name": "report_meta",
+      "label": "보고 메타",
+      "fields": [
+        "report_date",
+        "reporter_org",
+        "reporter_person",
+        "reporter_email",
+        "reporter_phone",
+        "recipient_people"
+      ]
+    },
+    {
+      "name": "report_summaries",
+      "label": "핵심 요약",
+      "fields": [
+        "business_status_summary",
+        "hiring_plan_summary",
+        "technical_issues",
+        "customer_feedback_summary"
+      ]
+    },
+    {
+      "name": "financial_metrics",
+      "label": "재무 및 예산 지표",
+      "fields": [
+        "pilot_budget_total",
+        "monthly_revenue",
+        "labor_cost",
+        "infrastructure_cost",
+        "net_profit"
+      ]
+    },
+    {
+      "name": "follow_up",
+      "label": "후속 조치",
+      "fields": [
+        "next_week_goals",
+        "support_requests",
+        "owner_person",
+        "owner_phone",
+        "owner_email"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "field_id": "report_date",
+      "field_name": "report_date",
+      "type": "date",
+      "label": "보고일",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "2024년 11월 15일",
+      "source_examples": [
+        "2024년 11월 15일"
+      ],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "date",
+        "order": 1,
+        "group": "report_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{report_date}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "reporter_org",
+      "field_name": "reporter_org",
+      "type": "org",
+      "label": "보고 조직",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "아이피유테크 AI사업부",
+      "source_examples": [
+        "아이피유테크 AI사업부"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 2,
+        "group": "report_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{reporter_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "reporter_person",
+      "field_name": "reporter_person",
+      "type": "person",
+      "label": "보고자",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "정은지 팀장",
+      "source_examples": [
+        "정은지 팀장"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 3,
+        "group": "report_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{reporter_person}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "reporter_email",
+      "field_name": "reporter_email",
+      "type": "email",
+      "label": "보고자 이메일",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "jung.eunji@ipu.co.kr",
+      "source_examples": [
+        "jung.eunji@ipu.co.kr"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "email",
+        "order": 4,
+        "group": "report_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{reporter_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "reporter_phone",
+      "field_name": "reporter_phone",
+      "type": "phone",
+      "label": "보고자 전화번호",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "010-3344-5566",
+      "source_examples": [
+        "010-3344-5566"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "tel",
+        "order": 5,
+        "group": "report_meta",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{reporter_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "recipient_people",
+      "field_name": "recipient_people",
+      "type": "list_text",
+      "label": "수신자",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "박지은 이사님\n김민수 본부장님",
+      "source_examples": [
+        "박지은 이사님",
+        "김민수 본부장님"
+      ],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "textarea",
+        "order": 6,
+        "group": "report_meta",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{recipient_people}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "business_status_summary",
+      "field_name": "business_status_summary",
+      "type": "free_text",
+      "label": "주요 업무 현황",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "시범사업 진행률 75%, POC 3건 완료, 계약 전환 2건 확정",
+      "source_examples": [
+        "시범사업 진행률 75%, POC 3건 완료, 계약 전환 2건 확정"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 7,
+        "group": "report_summaries",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{business_status_summary}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "hiring_plan_summary",
+      "field_name": "hiring_plan_summary",
+      "type": "free_text",
+      "label": "팀 인력 및 관련 사항",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "정규직 12명, 계약직 5명, 인턴 3명 운영 중이며 추가 채용 3명이 필요합니다.",
+      "source_examples": [
+        "정규직 12명, 계약직 5명, 인턴 3명 운영 중이며 추가 채용 3명이 필요합니다."
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 8,
+        "group": "report_summaries",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{hiring_plan_summary}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "technical_issues",
+      "field_name": "technical_issues",
+      "type": "list_text",
+      "label": "기술적 이슈",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "서버 부하 증가로 인한 응답 지연 발생\n취약점 점검 결과 3건 수정 필요",
+      "source_examples": [
+        "서버 부하 증가로 인한 응답 지연 발생",
+        "취약점 점검 결과 3건 수정 필요"
+      ],
+      "multiple": true,
+      "sensitive": true,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 9,
+        "group": "report_summaries",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{technical_issues}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "customer_feedback_summary",
+      "field_name": "customer_feedback_summary",
+      "type": "free_text",
+      "label": "고객 피드백 및 만족도",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "고객 만족도는 4.2/5.0이며 문서화 부족과 초기 교육 부족이 주요 불만 사항으로 확인되었습니다.",
+      "source_examples": [
+        "고객 만족도는 4.2/5.0이며 문서화 부족과 초기 교육 부족이 주요 불만 사항으로 확인되었습니다."
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 10,
+        "group": "report_summaries",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{customer_feedback_summary}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "pilot_budget_total",
+      "field_name": "pilot_budget_total",
+      "type": "amount",
+      "label": "전체 시범사업 예산",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "3억 2천만원",
+      "source_examples": [
+        "3억 2천만원"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 11,
+        "group": "financial_metrics",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{pilot_budget_total}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "monthly_revenue",
+      "field_name": "monthly_revenue",
+      "type": "amount",
+      "label": "예상 매출",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "3억 5천만원",
+      "source_examples": [
+        "3억 5천만원"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 12,
+        "group": "financial_metrics",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{monthly_revenue}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "labor_cost",
+      "field_name": "labor_cost",
+      "type": "amount",
+      "label": "인건비",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "1억 8천만원",
+      "source_examples": [
+        "1억 8천만원"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 13,
+        "group": "financial_metrics",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{labor_cost}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "infrastructure_cost",
+      "field_name": "infrastructure_cost",
+      "type": "amount",
+      "label": "서버/인프라 비용",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "5천만원",
+      "source_examples": [
+        "5천만원"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 14,
+        "group": "financial_metrics",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{infrastructure_cost}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "net_profit",
+      "field_name": "net_profit",
+      "type": "amount",
+      "label": "예상 순이익",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "1억원",
+      "source_examples": [
+        "1억원"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 15,
+        "group": "financial_metrics",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{net_profit}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "next_week_goals",
+      "field_name": "next_week_goals",
+      "type": "list_text",
+      "label": "내주 추진 목표",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "시범사업 90% 완료\n글로벌테크 계약 체결",
+      "source_examples": [
+        "시범사업 90% 완료",
+        "글로벌테크 계약 체결"
+      ],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 16,
+        "group": "follow_up",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{next_week_goals}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "support_requests",
+      "field_name": "support_requests",
+      "type": "list_text",
+      "label": "지원 요청 사항",
+      "description": "",
+      "required": false,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "서버 증설 예산 5천만원 조기 승인 요청\n외부 전문가 자문 비용 2천만원",
+      "source_examples": [
+        "서버 증설 예산 5천만원 조기 승인 요청",
+        "외부 전문가 자문 비용 2천만원"
+      ],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 17,
+        "group": "follow_up",
+        "width": "full"
+      },
+      "render": {
+        "token": "{{support_requests}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "owner_person",
+      "field_name": "owner_person",
+      "type": "person",
+      "label": "담당자",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "정은지 팀장",
+      "source_examples": [
+        "정은지 팀장"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 18,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{owner_person}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "owner_phone",
+      "field_name": "owner_phone",
+      "type": "phone",
+      "label": "담당자 전화번호",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "010-3344-5566",
+      "source_examples": [
+        "010-3344-5566"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "tel",
+        "order": 19,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{owner_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "owner_email",
+      "field_name": "owner_email",
+      "type": "email",
+      "label": "담당자 이메일",
+      "description": "",
+      "required": true,
+      "placeholder": "",
+      "default_value": null,
+      "example_value": "jung.eunji@ipu.co.kr",
+      "source_examples": [
+        "jung.eunji@ipu.co.kr"
+      ],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "email",
+        "order": 20,
+        "group": "follow_up",
+        "width": "half"
+      },
+      "render": {
+        "token": "{{owner_email}}",
+        "inline": true
+      }
+    }
+  ],
+  "template_text": "주간 내부 보고서\n보고일: {{report_date}}\n보고자: {{reporter_org}} {{reporter_person}} ({{reporter_email}} / {{reporter_phone}})\n수신: {{recipient_people}}\n\n1. 주요 업무 현황\n{{business_status_summary}}\n\n2. 팀 인력 및 관련 사항\n{{hiring_plan_summary}}\n\n3. 기술적 이슈\n{{technical_issues}}\n\n4. 고객 피드백 및 만족도\n{{customer_feedback_summary}}\n\n5. 재무 현황\n- 예상 매출: {{monthly_revenue}}\n- 인건비: {{labor_cost}}\n- 서버/인프라: {{infrastructure_cost}}\n- 순이익: {{net_profit}}\n\n6. 내주 추진 목표\n{{next_week_goals}}\n\n7. 지원 요청 사항\n{{support_requests}}\n\n담당: {{owner_person}} ({{owner_phone}} / {{owner_email}})",
+  "validation_rules": {
+    "required_fields": [
+      "report_date",
+      "reporter_org",
+      "reporter_person",
+      "reporter_email",
+      "reporter_phone",
+      "business_status_summary",
+      "owner_person",
+      "owner_phone",
+      "owner_email"
+    ],
+    "field_rules": [],
+    "cross_field_rules": []
+  },
+  "sensitivity_profile": {
+    "profile_id": "internal-report-weekly-v1",
+    "level": "high",
+    "contains": [
+      "PERSON",
+      "ORG",
+      "EMAIL",
+      "PHONE",
+      "AMOUNT",
+      "BUSINESS_CONTEXT"
+    ],
+    "default_masking": "strict_token",
+    "field_overrides": {},
+    "retention": {
+      "storage_mode": "ephemeral-preferred",
+      "template_retention": "approved-template-kept",
+      "draft_retention": "review-period"
+    }
+  },
+  "sample_values": {
+    "report_date": "2024년 11월 15일",
+    "reporter_org": "아이피유테크 AI사업부",
+    "reporter_person": "정은지 팀장",
+    "reporter_email": "jung.eunji@ipu.co.kr",
+    "reporter_phone": "010-3344-5566",
+    "recipient_people": "박지은 이사님\n김민수 본부장님",
+    "business_status_summary": "시범사업 진행률 75%, POC 3건 완료, 계약 전환 2건 확정",
+    "hiring_plan_summary": "정규직 12명, 계약직 5명, 인턴 3명 운영 중이며 추가 채용 3명이 필요합니다.",
+    "technical_issues": "서버 부하 증가로 인한 응답 지연 발생\n취약점 점검 결과 3건 수정 필요",
+    "customer_feedback_summary": "고객 만족도는 4.2/5.0이며 문서화 부족과 초기 교육 부족이 주요 불만 사항으로 확인되었습니다.",
+    "pilot_budget_total": "3억 2천만원",
+    "monthly_revenue": "3억 5천만원",
+    "labor_cost": "1억 8천만원",
+    "infrastructure_cost": "5천만원",
+    "net_profit": "1억원",
+    "next_week_goals": "시범사업 90% 완료\n글로벌테크 계약 체결",
+    "support_requests": "서버 증설 예산 5천만원 조기 승인 요청\n외부 전문가 자문 비용 2천만원",
+    "owner_person": "정은지 팀장",
+    "owner_phone": "010-3344-5566",
+    "owner_email": "jung.eunji@ipu.co.kr"
+  }
+}

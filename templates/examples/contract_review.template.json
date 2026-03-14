@@ -1,0 +1,366 @@
+{
+  "schema_version": "1.0",
+  "template_id": "contract_review_request",
+  "template_name": "계약 검토 요청서",
+  "document_type": "contract_review",
+  "version": "1.0.0",
+  "status": "approved",
+  "created_at": "2026-03-14T09:00:00+09:00",
+  "updated_at": "2026-03-14T09:00:00+09:00",
+  "created_by": "llm-extractor",
+  "updated_by": "policy-owner",
+  "approval": {
+    "approved_by": "reviewer@ipu.co.kr",
+    "approved_at": "2026-03-14T10:00:00+09:00"
+  },
+  "fields": [
+    {
+      "field_id": "requester_name",
+      "field_name": "requester_name",
+      "type": "person",
+      "label": "요청자 이름",
+      "description": "검토 요청을 등록하는 담당자",
+      "required": true,
+      "placeholder": "김민수",
+      "default_value": null,
+      "example_value": "박지은",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 1,
+        "group": "requester",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 20
+      },
+      "render": {
+        "token": "{{requester_name}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_org",
+      "field_name": "requester_org",
+      "type": "org",
+      "label": "요청 부서 또는 회사",
+      "description": "검토 요청을 등록하는 조직명",
+      "required": true,
+      "placeholder": "아이피유테크",
+      "default_value": null,
+      "example_value": "미래전자",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 2,
+        "group": "requester",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 100
+      },
+      "render": {
+        "token": "{{requester_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_email",
+      "field_name": "requester_email",
+      "type": "email",
+      "label": "요청자 이메일",
+      "description": "검토 결과 회신용 이메일",
+      "required": true,
+      "placeholder": "review@ipu.co.kr",
+      "default_value": null,
+      "example_value": "legal@partner.co.kr",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "email",
+        "order": 3,
+        "group": "requester",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "render": {
+        "token": "{{requester_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_phone",
+      "field_name": "requester_phone",
+      "type": "phone",
+      "label": "요청자 연락처",
+      "description": "긴급 검토 시 연락 가능한 전화번호",
+      "required": false,
+      "placeholder": "010-1234-5678",
+      "default_value": null,
+      "example_value": "010-2222-3333",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "tel",
+        "order": 4,
+        "group": "requester",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])-\\d{3,4}-\\d{4}$"
+      },
+      "render": {
+        "token": "{{requester_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_org",
+      "field_name": "counterparty_org",
+      "type": "org",
+      "label": "상대 기관명",
+      "description": "계약 상대방 공식 조직명",
+      "required": true,
+      "placeholder": "주식회사 미래전자",
+      "default_value": null,
+      "example_value": "(주)아이피유테크",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 5,
+        "group": "counterparty",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 100
+      },
+      "render": {
+        "token": "{{counterparty_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_business_reg_no",
+      "field_name": "counterparty_business_reg_no",
+      "type": "business_reg_no",
+      "label": "상대 사업자등록번호",
+      "description": "상대 기관 사업자등록번호",
+      "required": false,
+      "placeholder": "123-45-67890",
+      "default_value": null,
+      "example_value": "220-81-62517",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 6,
+        "group": "counterparty",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^\\d{3}-\\d{2}-\\d{5}$"
+      },
+      "render": {
+        "token": "{{counterparty_business_reg_no}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_address",
+      "field_name": "counterparty_address",
+      "type": "address",
+      "label": "상대 기관 주소",
+      "description": "계약서상 상대 기관 주소",
+      "required": false,
+      "placeholder": "서울특별시 강남구 테헤란로 10",
+      "default_value": null,
+      "example_value": "경기도 성남시 분당구 판교역로 235",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "textarea",
+        "order": 7,
+        "group": "counterparty",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 5,
+        "max_length": 200
+      },
+      "render": {
+        "token": "{{counterparty_address}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "contract_effective_date",
+      "field_name": "contract_effective_date",
+      "type": "date",
+      "label": "계약 효력일",
+      "description": "계약 효력이 시작되는 날짜",
+      "required": true,
+      "placeholder": "2026-03-14",
+      "default_value": null,
+      "example_value": "2026-04-01",
+      "multiple": false,
+      "sensitive": false,
+      "ui": {
+        "widget": "date",
+        "order": 8,
+        "group": "contract",
+        "width": "half"
+      },
+      "validation": {
+        "format": "date"
+      },
+      "render": {
+        "token": "{{contract_effective_date}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "contract_amount",
+      "field_name": "contract_amount",
+      "type": "amount",
+      "label": "계약 금액",
+      "description": "총 계약 금액",
+      "required": true,
+      "placeholder": "120,000,000원",
+      "default_value": null,
+      "example_value": "3억 2천만원",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 9,
+        "group": "contract",
+        "width": "half"
+      },
+      "validation": {
+        "currency": "KRW",
+        "min_value": 0
+      },
+      "render": {
+        "token": "{{contract_amount}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "review_clause_text",
+      "field_name": "review_clause_text",
+      "type": "clause",
+      "label": "검토 대상 조항",
+      "description": "리스크 검토가 필요한 조항 본문",
+      "required": true,
+      "placeholder": "제5조 손해배상 조항",
+      "default_value": null,
+      "example_value": "제7조 비밀유지 조항의 위약벌 문구",
+      "multiple": true,
+      "sensitive": true,
+      "ui": {
+        "widget": "textarea",
+        "order": 10,
+        "group": "contract",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 5,
+        "max_length": 4000
+      },
+      "render": {
+        "token": "{{review_clause_text}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "review_note",
+      "field_name": "review_note",
+      "type": "free_text",
+      "label": "추가 메모",
+      "description": "검토자가 참고해야 할 배경 설명",
+      "required": false,
+      "placeholder": "특약 협의 이력이 있으면 적어주세요.",
+      "default_value": null,
+      "example_value": "이전 계약 대비 손해배상 한도를 상향 요청함",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "textarea",
+        "order": 11,
+        "group": "contract",
+        "width": "full"
+      },
+      "validation": {
+        "max_length": 2000
+      },
+      "render": {
+        "token": "{{review_note}}",
+        "inline": false
+      }
+    }
+  ],
+  "template_text": "{{counterparty_org}}와 {{requester_org}} 간 계약 검토를 요청드립니다.\n요청자는 {{requester_name}}이며 연락처는 {{requester_email}}, {{requester_phone}}입니다.\n계약 효력일은 {{contract_effective_date}}, 검토 대상 금액은 {{contract_amount}}입니다.\n상대 기관 사업자등록번호는 {{counterparty_business_reg_no}}, 주소는 {{counterparty_address}}입니다.\n주요 검토 조항은 아래와 같습니다.\n{{review_clause_text}}\n추가 메모:\n{{review_note}}",
+  "validation_rules": {
+    "required_fields": [
+      "requester_name",
+      "requester_org",
+      "requester_email",
+      "counterparty_org",
+      "contract_effective_date",
+      "contract_amount",
+      "review_clause_text"
+    ],
+    "field_rules": {
+      "requester_email": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "requester_phone": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])-\\d{3,4}-\\d{4}$"
+      },
+      "counterparty_business_reg_no": {
+        "pattern": "^\\d{3}-\\d{2}-\\d{5}$"
+      },
+      "contract_amount": {
+        "currency": "KRW",
+        "min_value": 0
+      }
+    },
+    "cross_field_rules": []
+  },
+  "sensitivity_profile": {
+    "profile_id": "contract_strict_v1",
+    "level": "high",
+    "contains": [
+      "person",
+      "org",
+      "email",
+      "phone",
+      "amount",
+      "business_reg_no",
+      "address",
+      "clause",
+      "free_text"
+    ],
+    "default_masking": "strict_token",
+    "field_overrides": {
+      "contract_effective_date": {
+        "masking": "none"
+      },
+      "review_clause_text": {
+        "masking": "partial"
+      }
+    },
+    "retention": {
+      "store_original_input": false,
+      "store_rendered_output": true
+    }
+  }
+}

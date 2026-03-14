@@ -1,0 +1,561 @@
+{
+  "schema_version": "1.0",
+  "template_id": "contract_review_request",
+  "template_name": "계약 검토 의뢰서",
+  "document_type": "contract_review_request",
+  "document_purpose": "외부 자문 또는 내부 결재용 계약 검토 의뢰",
+  "version": "1.0.0",
+  "status": "approved",
+  "created_at": "2026-03-14T21:00:00+09:00",
+  "updated_at": "2026-03-14T21:00:00+09:00",
+  "created_by": "template-pipeline-integrator",
+  "updated_by": "template-pipeline-integrator",
+  "approval": {
+    "approved_by": "demo-reviewer@ipu.co.kr",
+    "approved_at": "2026-03-14T21:00:00+09:00"
+  },
+  "source_document": {
+    "origin": "derived_extraction_draft",
+    "path": "demo-samples/derived/sample-long-contract-review.template.json"
+  },
+  "field_groups": [
+    {
+      "name": "document_meta",
+      "label": "문서 메타",
+      "fields": ["request_date", "requester_org", "requester_person", "requester_email", "requester_phone"]
+    },
+    {
+      "name": "counterparty_profile",
+      "label": "상대방 개요",
+      "fields": ["counterparty_org", "counterparty_ceo", "counterparty_address", "counterparty_phone", "counterparty_email", "counterparty_business_id"]
+    },
+    {
+      "name": "contract_overview",
+      "label": "계약 개요",
+      "fields": ["contract_name", "contract_type", "contract_amount", "dispute_resolution_clause"]
+    }
+  ],
+  "fields": [
+    {
+      "field_id": "request_date",
+      "field_name": "request_date",
+      "type": "date",
+      "label": "의뢰일",
+      "description": "계약 검토를 요청한 날짜",
+      "required": true,
+      "placeholder": "2026-03-14",
+      "default_value": null,
+      "example_value": "2024-11-15",
+      "source_examples": ["2024년 11월 15일"],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "date",
+        "order": 1,
+        "group": "document_meta",
+        "width": "half"
+      },
+      "validation": {
+        "format": "date"
+      },
+      "render": {
+        "token": "{{request_date}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_org",
+      "field_name": "requester_org",
+      "type": "org",
+      "label": "의뢰 조직",
+      "description": "검토 의뢰를 보낸 팀 또는 회사명",
+      "required": true,
+      "placeholder": "아이피유테크 법무팀",
+      "default_value": null,
+      "example_value": "아이피유테크 법무팀",
+      "source_examples": ["아이피유테크 법무팀"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 2,
+        "group": "document_meta",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 100
+      },
+      "render": {
+        "token": "{{requester_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_person",
+      "field_name": "requester_person",
+      "type": "person",
+      "label": "의뢰자",
+      "description": "검토를 요청한 담당자 이름",
+      "required": true,
+      "placeholder": "박지은 이사",
+      "default_value": null,
+      "example_value": "박지은 이사",
+      "source_examples": ["박지은 이사"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 3,
+        "group": "document_meta",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 40
+      },
+      "render": {
+        "token": "{{requester_person}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_email",
+      "field_name": "requester_email",
+      "type": "email",
+      "label": "의뢰자 이메일",
+      "description": "검토 결과 회신용 이메일",
+      "required": true,
+      "placeholder": "legal@ipu.co.kr",
+      "default_value": null,
+      "example_value": "park.jieun@ipu.co.kr",
+      "source_examples": ["park.jieun@ipu.co.kr"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "email",
+        "order": 4,
+        "group": "document_meta",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "render": {
+        "token": "{{requester_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requester_phone",
+      "field_name": "requester_phone",
+      "type": "phone",
+      "label": "의뢰자 전화번호",
+      "description": "긴급 연락 가능한 번호",
+      "required": true,
+      "placeholder": "010-1234-5678",
+      "default_value": null,
+      "example_value": "010-1234-5678",
+      "source_examples": ["010-1234-5678"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "tel",
+        "order": 5,
+        "group": "document_meta",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "render": {
+        "token": "{{requester_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_org",
+      "field_name": "counterparty_org",
+      "type": "org",
+      "label": "상대방 회사명",
+      "description": "계약 상대방의 공식 회사명",
+      "required": true,
+      "placeholder": "미래솔루션 주식회사",
+      "default_value": null,
+      "example_value": "미래솔루션 주식회사",
+      "source_examples": ["미래솔루션 주식회사"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 6,
+        "group": "counterparty_profile",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 120
+      },
+      "render": {
+        "token": "{{counterparty_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_ceo",
+      "field_name": "counterparty_ceo",
+      "type": "person",
+      "label": "대표자명",
+      "description": "상대방 대표자 또는 서명권자",
+      "required": true,
+      "placeholder": "이정현 대표이사",
+      "default_value": null,
+      "example_value": "이정현 대표이사",
+      "source_examples": ["이정현 대표이사"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_plus_context",
+      "ui": {
+        "widget": "text",
+        "order": 7,
+        "group": "counterparty_profile",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 40
+      },
+      "render": {
+        "token": "{{counterparty_ceo}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_address",
+      "field_name": "counterparty_address",
+      "type": "address",
+      "label": "본점 주소",
+      "description": "상대방 회사의 본점 주소",
+      "required": true,
+      "placeholder": "서울특별시 강남구 테헤란로 427, 타워원 15층",
+      "default_value": null,
+      "example_value": "서울특별시 강남구 테헤란로 427, 타워원 15층",
+      "source_examples": ["서울특별시 강남구 테헤란로 427, 타워원 15층"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "textarea",
+        "order": 8,
+        "group": "counterparty_profile",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 5,
+        "max_length": 200
+      },
+      "render": {
+        "token": "{{counterparty_address}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "counterparty_phone",
+      "field_name": "counterparty_phone",
+      "type": "phone",
+      "label": "상대방 연락처",
+      "description": "상대방 연락 가능한 대표 번호",
+      "required": false,
+      "placeholder": "02-3456-7890",
+      "default_value": null,
+      "example_value": "02-3456-7890",
+      "source_examples": ["02-3456-7890"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "tel",
+        "order": 9,
+        "group": "counterparty_profile",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "render": {
+        "token": "{{counterparty_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_email",
+      "field_name": "counterparty_email",
+      "type": "email",
+      "label": "상대방 이메일",
+      "description": "계약 상대방 이메일",
+      "required": false,
+      "placeholder": "legal@future-solution.co.kr",
+      "default_value": null,
+      "example_value": "legal@future-solution.co.kr",
+      "source_examples": ["legal@future-solution.co.kr"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "email",
+        "order": 10,
+        "group": "counterparty_profile",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "render": {
+        "token": "{{counterparty_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "counterparty_business_id",
+      "field_name": "counterparty_business_id",
+      "type": "business_reg_no",
+      "label": "사업자등록번호",
+      "description": "상대방 사업자등록번호",
+      "required": true,
+      "placeholder": "123-45-67890",
+      "default_value": null,
+      "example_value": "123-45-67890",
+      "source_examples": ["123-45-67890"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 11,
+        "group": "counterparty_profile",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^\\d{3}-\\d{2}-\\d{5}$"
+      },
+      "render": {
+        "token": "{{counterparty_business_id}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "contract_name",
+      "field_name": "contract_name",
+      "type": "text",
+      "label": "계약명",
+      "description": "검토 대상 계약의 명칭",
+      "required": true,
+      "placeholder": "AI 기반 데이터 분석 플랫폼 구축 및 유지보수 계약",
+      "default_value": null,
+      "example_value": "AI 기반 데이터 분석 플랫폼 구축 및 유지보수 계약",
+      "source_examples": ["AI 기반 데이터 분석 플랫폼 구축 및 유지보수 계약"],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 12,
+        "group": "contract_overview",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 5,
+        "max_length": 200
+      },
+      "render": {
+        "token": "{{contract_name}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "contract_type",
+      "field_name": "contract_type",
+      "type": "enum",
+      "label": "계약 유형",
+      "description": "계약 성격과 기간",
+      "required": true,
+      "placeholder": "연간 유지보수 계약",
+      "default_value": null,
+      "example_value": "연간 유지보수 계약 (1년 자동 연장)",
+      "source_examples": ["연간 유지보수 계약 (1년 자동 연장)"],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "text",
+        "order": 13,
+        "group": "contract_overview",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 100
+      },
+      "render": {
+        "token": "{{contract_type}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "contract_amount",
+      "field_name": "contract_amount",
+      "type": "amount",
+      "label": "총 계약금액",
+      "description": "검토 대상 총 계약금액",
+      "required": true,
+      "placeholder": "325,000,000원",
+      "default_value": null,
+      "example_value": "325,000,000원",
+      "source_examples": ["325,000,000원"],
+      "multiple": false,
+      "sensitive": true,
+      "inference_mode": "rule_preferred",
+      "ui": {
+        "widget": "text",
+        "order": 14,
+        "group": "contract_overview",
+        "width": "half"
+      },
+      "validation": {
+        "currency": "KRW",
+        "min_value": 0
+      },
+      "render": {
+        "token": "{{contract_amount}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "dispute_resolution_clause",
+      "field_name": "dispute_resolution_clause",
+      "type": "clause",
+      "label": "분쟁해결조항",
+      "description": "관할 및 분쟁해결 관련 조항",
+      "required": false,
+      "placeholder": "서울중앙지방법원 관할",
+      "default_value": null,
+      "example_value": "서울중앙지방법원 관할",
+      "source_examples": ["서울중앙지방법원 관할"],
+      "multiple": false,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 15,
+        "group": "contract_overview",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 300
+      },
+      "render": {
+        "token": "{{dispute_resolution_clause}}",
+        "inline": false
+      }
+    },
+    {
+      "field_id": "internal_review_points",
+      "field_name": "internal_review_points",
+      "type": "list_text",
+      "label": "내부 검토 포인트",
+      "description": "법무 또는 보안 관점에서 검토할 핵심 포인트",
+      "required": false,
+      "placeholder": "예: 지재권 분배, 책임 한계, termination 조항",
+      "default_value": null,
+      "example_value": "지적재산권 분배\n책임 한계\ntermination 조항",
+      "source_examples": ["지적재산권 분배", "책임 한계", "termination 조항"],
+      "multiple": true,
+      "sensitive": false,
+      "inference_mode": "llm_context_required",
+      "ui": {
+        "widget": "textarea",
+        "order": 16,
+        "group": "contract_overview",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 1000
+      },
+      "render": {
+        "token": "{{internal_review_points}}",
+        "inline": false
+      }
+    }
+  ],
+  "template_text": "계약 검토 의뢰서\n의뢰일: {{request_date}}\n의뢰자: {{requester_org}} {{requester_person}} ({{requester_email}} / {{requester_phone}})\n수신: 외부 법률 자문단\n\n상대방명: {{counterparty_org}}\n대표자: {{counterparty_ceo}}\n본점 주소: {{counterparty_address}}\n연락처: {{counterparty_phone}} / {{counterparty_email}}\n사업자등록번호: {{counterparty_business_id}}\n\n계약명: {{contract_name}}\n계약 유형: {{contract_type}}\n총 계약금액: {{contract_amount}}\n분쟁해결조항: {{dispute_resolution_clause}}\n\n검토 필요 사항:\n{{internal_review_points}}\n\n담당: {{requester_person}} ({{requester_phone}} / {{requester_email}})\n검토의뢰일: {{request_date}}",
+  "validation_rules": {
+    "required_fields": [
+      "request_date",
+      "requester_org",
+      "requester_person",
+      "requester_email",
+      "requester_phone",
+      "counterparty_org",
+      "counterparty_ceo",
+      "counterparty_address",
+      "counterparty_business_id",
+      "contract_name",
+      "contract_type",
+      "contract_amount"
+    ],
+    "field_rules": {
+      "requester_email": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "requester_phone": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}$"
+      },
+      "contract_amount": {
+        "currency": "KRW",
+        "min_value": 0
+      }
+    },
+    "cross_field_rules": []
+  },
+  "sensitivity_profile": {
+    "profile_id": "contract_review_strict_v1",
+    "level": "high",
+    "contains": ["person", "org", "email", "phone", "amount", "business_reg_no", "address"],
+    "default_masking": "strict_token",
+    "field_overrides": {
+      "dispute_resolution_clause": {
+        "masking": "none"
+      }
+    },
+    "retention": {
+      "store_original_input": false,
+      "store_rendered_output": true
+    }
+  },
+  "sample_values": {
+    "request_date": "2024-11-15",
+    "requester_org": "아이피유테크 법무팀",
+    "requester_person": "박지은 이사",
+    "requester_email": "park.jieun@ipu.co.kr",
+    "requester_phone": "010-1234-5678",
+    "counterparty_org": "미래솔루션 주식회사",
+    "counterparty_ceo": "이정현 대표이사",
+    "counterparty_address": "서울특별시 강남구 테헤란로 427, 타워원 15층",
+    "counterparty_phone": "02-3456-7890",
+    "counterparty_email": "legal@future-solution.co.kr",
+    "counterparty_business_id": "123-45-67890",
+    "contract_name": "AI 기반 데이터 분석 플랫폼 구축 및 유지보수 계약",
+    "contract_type": "연간 유지보수 계약 (1년 자동 연장)",
+    "contract_amount": "325,000,000원",
+    "dispute_resolution_clause": "서울중앙지방법원 관할",
+    "internal_review_points": "지적재산권 분배\n책임 한계\ntermination 조항"
+  }
+}

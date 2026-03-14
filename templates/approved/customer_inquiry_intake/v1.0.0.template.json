@@ -1,0 +1,283 @@
+{
+  "schema_version": "1.0",
+  "template_id": "customer_inquiry_intake",
+  "template_name": "고객 문의 접수서",
+  "document_type": "customer_inquiry",
+  "document_purpose": "고객 문의 접수와 후속 처리 정리",
+  "version": "1.0.0",
+  "status": "approved",
+  "created_at": "2026-03-14T09:30:00+09:00",
+  "updated_at": "2026-03-14T09:30:00+09:00",
+  "created_by": "llm-extractor",
+  "updated_by": "template-pipeline-integrator",
+  "approval": {
+    "approved_by": "service-owner@ipu.co.kr",
+    "approved_at": "2026-03-14T10:10:00+09:00"
+  },
+  "source_document": {
+    "origin": "approved_example_seed",
+    "path": "templates/examples/customer_inquiry.template.json"
+  },
+  "field_groups": [
+    {
+      "name": "customer",
+      "label": "고객 정보",
+      "fields": [
+        "customer_name",
+        "customer_org",
+        "customer_email",
+        "customer_phone"
+      ]
+    },
+    {
+      "name": "inquiry",
+      "label": "문의 정보",
+      "fields": [
+        "inquiry_received_at",
+        "requested_budget",
+        "inquiry_text"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "field_id": "customer_name",
+      "field_name": "customer_name",
+      "type": "person",
+      "label": "고객 이름",
+      "description": "문의 작성자 이름",
+      "required": true,
+      "placeholder": "홍길동",
+      "default_value": null,
+      "example_value": "김민수",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 1,
+        "group": "customer",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 20
+      },
+      "render": {
+        "token": "{{customer_name}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_org",
+      "field_name": "customer_org",
+      "type": "org",
+      "label": "고객사명",
+      "description": "문의 고객의 회사 또는 기관명",
+      "required": false,
+      "placeholder": "미래금융",
+      "default_value": null,
+      "example_value": "(주)아이피유테크",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 2,
+        "group": "customer",
+        "width": "half"
+      },
+      "validation": {
+        "min_length": 2,
+        "max_length": 100
+      },
+      "render": {
+        "token": "{{customer_org}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_email",
+      "field_name": "customer_email",
+      "type": "email",
+      "label": "이메일",
+      "description": "답변 회신용 이메일",
+      "required": true,
+      "placeholder": "customer@example.com",
+      "default_value": null,
+      "example_value": "security@ipu.co.kr",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "email",
+        "order": 3,
+        "group": "customer",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "render": {
+        "token": "{{customer_email}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "customer_phone",
+      "field_name": "customer_phone",
+      "type": "phone",
+      "label": "연락처",
+      "description": "필요 시 회신 가능한 번호",
+      "required": false,
+      "placeholder": "010-1111-2222",
+      "default_value": null,
+      "example_value": "02-555-1234",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "tel",
+        "order": 4,
+        "group": "customer",
+        "width": "half"
+      },
+      "validation": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])-\\d{3,4}-\\d{4}$"
+      },
+      "render": {
+        "token": "{{customer_phone}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "inquiry_received_at",
+      "field_name": "inquiry_received_at",
+      "type": "date",
+      "label": "문의 접수일",
+      "description": "문의가 접수된 날짜",
+      "required": true,
+      "placeholder": "2026-03-14",
+      "default_value": null,
+      "example_value": "2026-03-14",
+      "multiple": false,
+      "sensitive": false,
+      "ui": {
+        "widget": "date",
+        "order": 5,
+        "group": "inquiry",
+        "width": "half"
+      },
+      "validation": {
+        "format": "date"
+      },
+      "render": {
+        "token": "{{inquiry_received_at}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "requested_budget",
+      "field_name": "requested_budget",
+      "type": "amount",
+      "label": "예산 범위",
+      "description": "고객이 제시한 예상 예산",
+      "required": false,
+      "placeholder": "5천만원",
+      "default_value": null,
+      "example_value": "48,000,000원",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "text",
+        "order": 6,
+        "group": "inquiry",
+        "width": "half"
+      },
+      "validation": {
+        "currency": "KRW",
+        "min_value": 0
+      },
+      "render": {
+        "token": "{{requested_budget}}",
+        "inline": true
+      }
+    },
+    {
+      "field_id": "inquiry_text",
+      "field_name": "inquiry_text",
+      "type": "free_text",
+      "label": "문의 내용",
+      "description": "고객이 작성한 본문",
+      "required": true,
+      "placeholder": "문의 내용을 입력해 주세요.",
+      "default_value": null,
+      "example_value": "외부 LLM 전송 전 개인정보 치환 여부가 궁금합니다.",
+      "multiple": false,
+      "sensitive": true,
+      "ui": {
+        "widget": "textarea",
+        "order": 7,
+        "group": "inquiry",
+        "width": "full"
+      },
+      "validation": {
+        "min_length": 10,
+        "max_length": 4000
+      },
+      "render": {
+        "token": "{{inquiry_text}}",
+        "inline": false
+      }
+    }
+  ],
+  "template_text": "고객 문의가 접수되었습니다.\n고객명: {{customer_name}}\n고객사: {{customer_org}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n접수일: {{inquiry_received_at}}\n예산 범위: {{requested_budget}}\n문의 내용:\n{{inquiry_text}}",
+  "validation_rules": {
+    "required_fields": [
+      "customer_name",
+      "customer_email",
+      "inquiry_received_at",
+      "inquiry_text"
+    ],
+    "field_rules": {
+      "customer_email": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "customer_phone": {
+        "pattern": "^(01[0-9]|02|0[3-9][0-9])-\\d{3,4}-\\d{4}$"
+      },
+      "requested_budget": {
+        "currency": "KRW",
+        "min_value": 0
+      }
+    },
+    "cross_field_rules": []
+  },
+  "sensitivity_profile": {
+    "profile_id": "customer_inquiry_standard_v1",
+    "level": "medium",
+    "contains": [
+      "person",
+      "org",
+      "email",
+      "phone",
+      "amount",
+      "free_text"
+    ],
+    "default_masking": "strict_token",
+    "field_overrides": {
+      "inquiry_received_at": {
+        "masking": "none"
+      }
+    },
+    "retention": {
+      "store_original_input": false,
+      "store_rendered_output": true
+    }
+  },
+  "sample_values": {
+    "customer_name": "김민수",
+    "customer_org": "(주)아이피유테크",
+    "customer_email": "security@ipu.co.kr",
+    "customer_phone": "02-555-1234",
+    "inquiry_received_at": "2026-03-14",
+    "requested_budget": "48,000,000원",
+    "inquiry_text": "외부 LLM 전송 전 개인정보 치환 여부가 궁금합니다."
+  }
+}
