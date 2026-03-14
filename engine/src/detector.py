@@ -369,10 +369,10 @@ class RegexDetector:
             return True
         return detection_type in {"EMAIL", "PHONE", "PERSON"}
 
-    def _score_for_policy(self, policy: str) -> str:
+    def _score_for_policy(self, policy: str) -> float:
         if policy == "strict_token":
-            return "0.93"
-        return "0.88"
+            return 0.93
+        return 0.88
 
     def _note_for_policy(self, reason: str, policy: str) -> str:
         if policy == "strict_token":

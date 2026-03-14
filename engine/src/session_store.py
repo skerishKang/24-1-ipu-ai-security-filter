@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from threading import RLock
 from time import time
 from typing import Callable
 
@@ -24,40 +25,52 @@ class InMemorySessionStore:
         self.ttl_seconds = ttl_seconds
         self._clock = clock or time
         self._store: dict[str, SessionRecord] = {}
+        self._lock = RLock()
 
     def save_mapping(self, session_id: str, mapping: SessionMapping) -> None:
-        self.cleanup_expired_sessions()
-        record = self._store.get(session_id)
-        if record is None or self.is_expired(session_id):
-            record = SessionRecord(mappings=[], expires_at=self._build_expiration())
-            self._store[session_id] = record
+        with self._lock:
+            self._cleanup_expired_sessions_locked()
+            record = self._store.get(session_id)
+            if record is None or self._is_expired_locked(session_id):
+                record = SessionRecord(mappings=[], expires_at=self._build_expiration())
+                self._store[session_id] = record
 
-        record.mappings.append(mapping)
-        record.expires_at = self._build_expiration()
+            record.mappings.append(mapping)
+            record.expires_at = self._build_expiration()
 
     def get_mappings(self, session_id: str) -> list[SessionMapping]:
-        if self.is_expired(session_id):
-            self.clear(session_id)
-            return []
+        with self._lock:
+            if self._is_expired_locked(session_id):
+                self.clear(session_id)
+                return []
 
-        record = self._store.get(session_id)
-        if record is None:
-            return []
-        return list(record.mappings)
+            record = self._store.get(session_id)
+            if record is None:
+                return []
+            return list(record.mappings)
 
     def clear(self, session_id: str) -> None:
-        self._store.pop(session_id, None)
+        with self._lock:
+            self._store.pop(session_id, None)
 
     def cleanup_expired_sessions(self) -> None:
+        with self._lock:
+            self._cleanup_expired_sessions_locked()
+
+    def _cleanup_expired_sessions_locked(self) -> None:
         expired_ids = [
             session_id
             for session_id, record in self._store.items()
             if record.expires_at <= self._clock()
         ]
         for session_id in expired_ids:
-            self.clear(session_id)
+            self._store.pop(session_id, None)
 
     def is_expired(self, session_id: str) -> bool:
+        with self._lock:
+            return self._is_expired_locked(session_id)
+
+    def _is_expired_locked(self, session_id: str) -> bool:
         record = self._store.get(session_id)
         if record is None:
             return False

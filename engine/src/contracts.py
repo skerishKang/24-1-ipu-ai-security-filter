@@ -9,7 +9,7 @@ class Detection:
     label: str
     start: int
     end: int
-    score: str
+    score: float
     note: str
 
 
@@ -37,7 +37,7 @@ class SessionMapping:
     type: str
 
 
-def detection_to_dict(detection: Detection) -> dict[str, str | int]:
+def detection_to_dict(detection: Detection) -> dict[str, str | int | float]:
     return {
         "type": detection.type,
         "label": detection.label,

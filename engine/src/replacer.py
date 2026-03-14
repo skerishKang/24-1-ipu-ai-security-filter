@@ -18,11 +18,12 @@ class TokenReplacer:
         replaced_text = content
         replacements: list[Replacement] = []
         counters: dict[str, int] = {}
+        planned: list[tuple[int, int, str]] = []
 
         for detection in detections:
             counters[detection.type] = counters.get(detection.type, 0) + 1
             token = self._build_token(detection.type, counters[detection.type], strategy)
-            replaced_text = replaced_text.replace(detection.label, token, 1)
+            planned.append((detection.start, detection.end, token))
             replacement = Replacement(
                 type=detection.type,
                 original=detection.label,
@@ -39,6 +40,9 @@ class TokenReplacer:
                     type=detection.type,
                 ),
             )
+
+        for start, end, token in sorted(planned, key=lambda item: item[0], reverse=True):
+            replaced_text = replaced_text[:start] + token + replaced_text[end:]
 
         return replaced_text, replacements
 

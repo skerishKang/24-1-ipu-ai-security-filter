@@ -21,14 +21,14 @@ class ManualPreviewEngine:
         content: str,
         content_type: str = "text",
         policy: str = "default",
-    ) -> list[dict[str, str | int]]:
+    ) -> list[dict[str, str | int | float]]:
         detections = self.detector.detect(content, content_type=content_type, policy=policy)
         return [detection_to_dict(item) for item in detections]
 
     def replace(
         self,
         content: str,
-        detections: list[dict[str, str | int]],
+        detections: list[dict[str, str | int | float]],
         session_id: str,
         strategy: str = "strict_token",
     ) -> tuple[str, list[dict[str, str]]]:
@@ -48,7 +48,7 @@ class ManualPreviewEngine:
 
     def build_report(
         self,
-        detections: list[dict[str, str | int]],
+        detections: list[dict[str, str | int | float]],
         replacements: list[dict[str, str]],
         strategy: str = "strict_token",
     ) -> dict[str, str | int]:
@@ -115,7 +115,7 @@ class ManualPreviewEngine:
             ]
         )
 
-    def _coerce_detection(self, item: dict[str, str | int]):
+    def _coerce_detection(self, item: dict[str, str | int | float]):
         from engine.src.contracts import Detection
 
         return Detection(
@@ -123,7 +123,7 @@ class ManualPreviewEngine:
             label=str(item["label"]),
             start=int(item["start"]),
             end=int(item["end"]),
-            score=str(item["score"]),
+            score=float(item["score"]),
             note=str(item["note"]),
         )
 

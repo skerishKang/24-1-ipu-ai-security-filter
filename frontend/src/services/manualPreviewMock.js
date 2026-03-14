@@ -52,7 +52,7 @@ export function runManualPreviewMock(originalText) {
         label,
         start: match.index,
         end: (match.index ?? 0) + label.length,
-        score: "0.88",
+        score: 0.88,
         note: pattern.reason,
       });
       replacements.push({

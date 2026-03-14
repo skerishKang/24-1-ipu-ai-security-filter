@@ -12,7 +12,7 @@ class DetectionItem(BaseModel):
     label: str
     start: int
     end: int
-    score: str
+    score: float
     note: str
 
 
