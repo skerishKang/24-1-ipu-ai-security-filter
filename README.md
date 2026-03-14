@@ -2,6 +2,10 @@
 
 IPU AI Security Filter는 민감정보를 내부에서 탐지, 치환, 복원한 뒤 외부 SOTA AI를 더 안전하게 활용할 수 있도록 돕는 기업용 AI 보안 서비스다. IPU는 "I'll Protect You"의 약자이며, 초기 MVP는 완성형 AI 비서보다 "보안 치환 워크벤치"에 가깝게 설계한다.
 
+## 라이선스
+
+이 저장소는 `UNLICENSED` 상태의 proprietary repository다. 사전 서면 허가 없이 사용, 복제, 수정, 재배포할 수 없다.
+
 ## 빠른 문서 진입점
 
 - [docs/README.md](./docs/README.md)
@@ -17,6 +21,11 @@ IPU AI Security Filter는 민감정보를 내부에서 탐지, 치환, 복원한
 
 - backend: `8241`
 - frontend: `4241`
+
+## 실행 보조 스크립트
+
+- Windows: `run_demo_stack.bat`, `run_verification_suite.bat`
+- Linux/WSL/macOS: `run_demo_stack.sh`, `run_verification_suite.sh`
 
 ## 서비스 정의
 
