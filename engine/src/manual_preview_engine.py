@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from engine.src.contracts import detection_to_dict, replacement_to_dict, report_to_dict
+from engine.src.contracts import (
+    Detection,
+    Replacement,
+    detection_to_dict,
+    replacement_to_dict,
+    report_to_dict,
+)
 from engine.src.detector import RegexDetector
 from engine.src.report_builder import ReportBuilder
 from engine.src.replacer import TokenReplacer
@@ -77,7 +83,7 @@ class ManualPreviewEngine:
             session_id=session_id,
             strategy=effective_strategy,
         )
-        report = self.build_report(detections, replacements, strategy=policy)
+        report = self.build_report(detections, replacements, strategy=effective_strategy)
         return {
             "session_id": session_id,
             "original_text": content,
@@ -116,8 +122,6 @@ class ManualPreviewEngine:
         )
 
     def _coerce_detection(self, item: dict[str, str | int | float]):
-        from engine.src.contracts import Detection
-
         return Detection(
             type=str(item["type"]),
             label=str(item["label"]),
@@ -128,8 +132,6 @@ class ManualPreviewEngine:
         )
 
     def _coerce_replacement(self, item: dict[str, str]):
-        from engine.src.contracts import Replacement
-
         return Replacement(
             type=item["type"],
             original=item["original"],

@@ -75,7 +75,7 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
                     policy="default",
                 )
 
-                self.assertEqual(preview["report"]["strategy"], "default")
+                self.assertEqual(preview["report"]["strategy"], "alias")
                 self.assertEqual(preview["report"]["total_detections"], len(preview["detections"]))
                 self.assertIsInstance(preview["detections"], list)
                 self.assertIsInstance(preview["replacements"], list)

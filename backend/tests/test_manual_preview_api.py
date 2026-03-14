@@ -124,7 +124,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
             json={**strict_payload, "policy": "default"},
         )
         self.assertEqual(default_response.status_code, 200)
-        self.assertEqual(default_response.json()["report"]["strategy"], "default")
+        self.assertEqual(default_response.json()["report"]["strategy"], "alias")
 
 
 if __name__ == "__main__":

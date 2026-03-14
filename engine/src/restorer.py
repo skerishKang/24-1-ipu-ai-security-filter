@@ -9,6 +9,10 @@ class SessionRestorer:
 
     def restore(self, content: str, session_id: str) -> str:
         restored = content
-        for mapping in self._session_store.get_mappings(session_id):
+        for mapping in sorted(
+            self._session_store.get_mappings(session_id),
+            key=lambda item: len(item.replaced),
+            reverse=True,
+        ):
             restored = restored.replace(mapping.replaced, mapping.original)
         return restored

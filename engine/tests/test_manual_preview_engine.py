@@ -78,7 +78,7 @@ class ManualPreviewEngineTest(unittest.TestCase):
 
         self.assertEqual(session_store.get_mappings("ipu-cleanup-session"), [])
 
-    def test_policy_is_reflected_in_report_strategy(self) -> None:
+    def test_effective_strategy_is_reflected_in_report_strategy(self) -> None:
         content = "아이피유테크 홍길동 이사는 contact@ipu.co.kr 로 연락합니다."
 
         default_preview = self.engine.manual_preview(
@@ -92,7 +92,7 @@ class ManualPreviewEngineTest(unittest.TestCase):
             policy="strict_token",
         )
 
-        self.assertEqual(default_preview["report"]["strategy"], "default")
+        self.assertEqual(default_preview["report"]["strategy"], "alias")
         self.assertEqual(strict_preview["report"]["strategy"], "strict_token")
 
     def test_default_policy_uses_alias_tokens(self) -> None:
@@ -133,7 +133,7 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertIn("[ORG_", strict_preview["replaced_text"])
         self.assertNotIn("[AMOUNT_ALIAS_", default_preview["replaced_text"])
         self.assertIn("[AMOUNT_", strict_preview["replaced_text"])
-        self.assertEqual(default_preview["report"]["strategy"], "default")
+        self.assertEqual(default_preview["report"]["strategy"], "alias")
         self.assertEqual(strict_preview["report"]["strategy"], "strict_token")
 
     def test_strict_token_skips_generic_org_suffix_terms(self) -> None:

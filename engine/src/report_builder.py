@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from engine.src.contracts import Detection, Replacement, Report
 
+_MODERATE_THRESHOLD = 1
+_HIGH_THRESHOLD = 3
+
 
 class ReportBuilder:
     def build_report(
@@ -12,9 +15,9 @@ class ReportBuilder:
     ) -> Report:
         total = max(len(detections), len(replacements))
         risk_level = "low-risk"
-        if total >= 3:
+        if total >= _HIGH_THRESHOLD:
             risk_level = "high-risk"
-        elif total > 0:
+        elif total >= _MODERATE_THRESHOLD:
             risk_level = "moderate-risk"
 
         return Report(
