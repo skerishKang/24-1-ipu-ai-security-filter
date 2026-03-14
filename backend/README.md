@@ -106,6 +106,7 @@ curl -s -X POST http://127.0.0.1:8241/api/v1/mode/manual-preview/file \
 - 현재는 `.txt` 업로드만 지원한다.
 - `multipart/form-data` 로 파일을 받는다.
 - 내용은 UTF-8 텍스트로 해석한 뒤 기존 manual-preview 엔진 흐름에 연결한다.
+- 최대 파일 크기는 `1MB` 다.
 - `PDF`, `DOCX`, `HWP`, 바이너리 파일은 아직 지원하지 않는다.
 - 지원하지 않는 파일 형식은 `415` 에러로 응답한다.
 
@@ -148,10 +149,9 @@ curl -s -X POST http://127.0.0.1:8241/api/v1/mode/manual-preview/file \
 
 ## import 경로 처리
 
-- 백엔드는 보통 `backend/` 디렉터리에서 `uvicorn app.main:app --reload --port 8241` 로 실행한다.
-- 이 실행 방식에서는 sibling 디렉터리인 `engine/` 이 기본 Python import path에 없을 수 있다.
-- 그래서 `manual_preview_service.py` 에서 프로젝트 루트 경로를 계산해 `sys.path` 에 추가한 뒤 `engine.src.manual_preview_engine` 를 import 한다.
-- 이 처리는 최소 범위 임시 해법이며, 추후 패키징 또는 공용 workspace 설정으로 정리할 수 있다.
+- backend `requirements.txt` 는 `-e ..` 로 프로젝트 루트의 `engine` 패키지를 editable install 한다.
+- 따라서 `manual_preview_service.py` 는 `sys.path` 를 직접 조작하지 않고 `engine.src.manual_preview_engine` 를 import 한다.
+- 새 환경에서는 `pip install -r requirements.txt` 를 먼저 실행해야 한다.
 
 ## 다음 연동 포인트
 

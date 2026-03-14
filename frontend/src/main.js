@@ -37,6 +37,13 @@ const state = {
   status: createStatus(STATUS_TYPES.INITIAL_MOCK),
 };
 
+function getSessionBadge() {
+  if (!state.preview?.session_id) {
+    return "";
+  }
+  return `${state.preview.session_id} · ${state.source}`;
+}
+
 async function updatePreview(nextText, policy = state.policy) {
   state.originalText = nextText;
   state.policy = policy;
@@ -219,7 +226,7 @@ function render() {
       eyebrow: heroCopy.eyebrow,
       title: heroCopy.title,
       description: heroCopy.description,
-      sessionId: `${state.preview.session_id} · ${state.source}`,
+      sessionId: getSessionBadge(),
     },
     modeToggle,
     layoutMode: state.uiMode,
@@ -286,5 +293,4 @@ function render() {
   app.append(shell);
 }
 
-render();
 updatePreview(defaultText);

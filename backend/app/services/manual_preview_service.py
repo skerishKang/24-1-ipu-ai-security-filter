@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 import logging
-import sys
 from datetime import datetime, timezone
 from random import choices
 from string import ascii_lowercase, digits
-from pathlib import Path
 from time import monotonic
 
 from fastapi import UploadFile
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from engine.src.manual_preview_engine import ManualPreviewEngine
 
@@ -21,10 +15,12 @@ from app.api.schemas.manual_preview import (
     ManualPreviewReport,
     ManualPreviewRequest,
     ManualPreviewResponse,
+    PolicyName,
     ReplacementItem,
 )
 
 logger = logging.getLogger("uvicorn.error")
+MAX_TEXT_FILE_BYTES = 1_048_576
 
 
 class ManualPreviewService:
@@ -94,7 +90,7 @@ class ManualPreviewService:
     async def build_file_preview(
         self,
         file: UploadFile,
-        policy: str = "default",
+        policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
         session_id = self._create_session_id()
         content_type = file.content_type or "text/plain"
@@ -152,7 +148,7 @@ class ManualPreviewService:
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )
 
-    def _resolve_strategy(self, policy: str) -> str:
+    def _resolve_strategy(self, policy: PolicyName) -> str:
         if policy == "strict_token":
             return "strict_token"
         return "alias"
@@ -240,6 +236,8 @@ class ManualPreviewService:
             raise ValueError("현재 manual-preview 파일 업로드는 text/plain 만 지원합니다.")
 
         raw = await file.read()
+        if len(raw) > MAX_TEXT_FILE_BYTES:
+            raise ValueError("현재 manual-preview 파일 업로드는 1MB 이하의 .txt 파일만 지원합니다.")
         try:
             text = raw.decode("utf-8")
         except UnicodeDecodeError as error:
