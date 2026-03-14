@@ -46,7 +46,9 @@ export function runManualPreviewMock(originalText, policy = "default") {
     for (const match of matches) {
       const label = match[0];
       counters[pattern.type] = (counters[pattern.type] ?? 0) + 1;
-      const token = `[${pattern.token}_${String(counters[pattern.type]).padStart(2, "0")}]`;
+      const tokenPrefix =
+        strategy === "strict_token" ? pattern.token : `${pattern.token}_ALIAS`;
+      const token = `[${tokenPrefix}_${String(counters[pattern.type]).padStart(2, "0")}]`;
       detections.push({
         type: pattern.type,
         label,

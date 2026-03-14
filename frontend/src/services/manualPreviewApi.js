@@ -126,7 +126,7 @@ function classifyFileResponseCode(status, detail) {
     return "file-empty";
   }
 
-  if (status === 400 && detail.includes("1MB")) {
+  if (status === 413 || (status === 400 && detail.includes("1MB"))) {
     return "file-too-large";
   }
 
