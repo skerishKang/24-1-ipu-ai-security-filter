@@ -142,7 +142,7 @@ async function setSelectedFile(file) {
   } else if (file.size > MAX_UPLOAD_FILE_BYTES) {
     state.status = createStatus(STATUS_TYPES.FILE_TOO_LARGE);
   } else {
-    state.status = createStatus(STATUS_TYPES.FILE_EMPTY_SELECTION, {
+    state.status = createStatus(STATUS_TYPES.FILE_SELECTED, {
       detail: `${file.name} 파일을 선택했습니다. 미리보기를 생성해 주세요.`,
     });
   }
@@ -224,6 +224,8 @@ function getVisibleStatusMessage() {
       return "현재는 .txt 파일만 올릴 수 있습니다.";
     case STATUS_TYPES.FILE_EMPTY_SELECTION:
       return "먼저 .txt 파일을 선택해 주세요.";
+    case STATUS_TYPES.FILE_SELECTED:
+      return state.status.message;
     case STATUS_TYPES.FILE_EMPTY:
       return "내용이 있는 .txt 파일을 선택해 주세요.";
     case STATUS_TYPES.FILE_TOO_LARGE:

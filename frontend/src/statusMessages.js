@@ -8,6 +8,7 @@ export const STATUS_TYPES = {
   FILE_SUCCESS: "file-success",
   FILE_UNSUPPORTED: "file-unsupported",
   FILE_EMPTY_SELECTION: "file-empty-selection",
+  FILE_SELECTED: "file-selected",
   FILE_EMPTY: "file-empty",
   FILE_TOO_LARGE: "file-too-large",
   FILE_REQUEST_FAILED: "file-request-failed",
@@ -74,6 +75,14 @@ export function createStatus(type, options = {}) {
         type,
         tone: "error",
         message: "업로드할 .txt 파일을 먼저 선택하세요.",
+      };
+    case STATUS_TYPES.FILE_SELECTED:
+      return {
+        type,
+        tone: "info",
+        message:
+          options.detail ||
+          ".txt 파일을 선택했습니다. 미리보기를 생성해 주세요.",
       };
     case STATUS_TYPES.FILE_EMPTY:
       return {
