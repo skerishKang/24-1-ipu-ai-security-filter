@@ -4,13 +4,13 @@ IPU AI Security Filter는 민감정보를 내부에서 탐지, 치환, 복원한
 
 ## 빠른 문서 진입점
 
-- [docs/README.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/README.md)
+- [docs/README.md](./docs/README.md)
   - 전체 문서 허브
-- [00-master-roadmap.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/00-master-roadmap.md)
+- [00-master-roadmap.md](./docs/00-master-roadmap.md)
   - 상위 로드맵
-- [30-business-doc-index.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/business/30-business-doc-index.md)
+- [30-business-doc-index.md](./docs/business/30-business-doc-index.md)
   - 사업 문서 인덱스
-- [00-development-doc-index.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/00-development-doc-index.md)
+- [00-development-doc-index.md](./docs/development/00-development-doc-index.md)
   - 개발 문서 인덱스
 
 ## 기본 로컬 포트

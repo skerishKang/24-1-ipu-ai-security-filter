@@ -49,7 +49,7 @@ frontend/
 별도 의존성 없이 정적 파일로 열 수 있다.
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend
+cd frontend
 python3 -m http.server 4241
 ```
 
@@ -65,7 +65,7 @@ cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-security-filter\frontend
 node tests\runSmokeTests.js
 
 # Linux/WSL
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend
+cd frontend
 node tests/runSmokeTests.js
 ```
 
@@ -105,7 +105,7 @@ node tests\runLiveIntegrationTests.js
 
 ## API 설정 변경 방법
 
-기본 backend URL은 `http://127.0.0.1:8241` 이며, [`runtime-config.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/runtime-config.js) 에서 바꿀 수 있다.
+기본 backend URL은 `http://127.0.0.1:8241` 이며, [`runtime-config.js`](./runtime-config.js) 에서 바꿀 수 있다.
 
 ```js
 window.IPU_RUNTIME_CONFIG = {
@@ -113,7 +113,7 @@ window.IPU_RUNTIME_CONFIG = {
 };
 ```
 
-- 값이 없으면 [`src/config.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/config.js) 의 기본값으로 돌아간다.
+- 값이 없으면 [`src/config.js`](./src/config.js) 의 기본값으로 돌아간다.
 - 현재는 정적 서버 구조이므로 복잡한 환경변수 대신 런타임 설정 파일 1개만 바꾸면 된다.
 - `manualPreviewApi.js` 는 이 설정을 읽어 `/api/v1/mode/manual-preview` URL을 조합한다.
 
@@ -153,7 +153,7 @@ window.IPU_RUNTIME_CONFIG = {
 - 텍스트 입력은 backend 성공, backend 실패 후 mock fallback, 로딩 상태를 구분해 보여준다.
 - 파일 업로드는 `.txt` 미선택, 지원하지 않는 확장자, 비어 있는 파일, backend 요청 실패를 각각 다른 문구로 보여준다.
 - 파일 업로드는 mock fallback 없이 backend 결과 또는 에러 상태만 표시한다.
-- 상태 문구는 [`src/statusMessages.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/statusMessages.js) 에서 한 곳으로 관리한다.
+- 상태 문구는 [`src/statusMessages.js`](./src/statusMessages.js) 에서 한 곳으로 관리한다.
 
 ## policy 선택 사용 방법
 
@@ -183,13 +183,13 @@ window.IPU_RUNTIME_CONFIG = {
 
 기존 manual-preview 와 별개로, 저장된 승인 템플릿 JSON을 읽어 입력 폼을 만들고 문서 초안을 재구성하는 프론트엔드 전용 데모 진입점을 추가했다.
 
-- 진입 파일: [`template-mode.html`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/template-mode.html)
-- 메인 스크립트: [`src/template-mode-main.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/template-mode-main.js)
-- 템플릿 카탈로그: [`src/data/templateCatalog.js`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/frontend/src/data/templateCatalog.js)
+- 진입 파일: [`template-mode.html`](./template-mode.html)
+- 메인 스크립트: [`src/template-mode-main.js`](./src/template-mode-main.js)
+- 템플릿 카탈로그: [`src/data/templateCatalog.js`](./src/data/templateCatalog.js)
 - 현재 선택 가능 템플릿:
-  - 기본 승인 버전: [`templates/approved/contract_review_request/v1.1.0.template.json`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/contract_review_request/v1.1.0.template.json)
-  - [`templates/approved/customer_inquiry_intake/v1.1.0.template.json`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/customer_inquiry_intake/v1.1.0.template.json)
-  - [`templates/approved/internal_report_weekly/v1.1.0.template.json`](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/internal_report_weekly/v1.1.0.template.json)
+  - 기본 승인 버전: [`templates/approved/contract_review_request/v1.1.0.template.json`](../templates/approved/contract_review_request/v1.1.0.template.json)
+  - [`templates/approved/customer_inquiry_intake/v1.1.0.template.json`](../templates/approved/customer_inquiry_intake/v1.1.0.template.json)
+  - [`templates/approved/internal_report_weekly/v1.1.0.template.json`](../templates/approved/internal_report_weekly/v1.1.0.template.json)
 
 현재 템플릿 모드 범위:
 
@@ -204,7 +204,7 @@ window.IPU_RUNTIME_CONFIG = {
 실행 방법:
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter
+# 프로젝트 루트에서 실행
 python3 -m http.server 4241
 ```
 

@@ -144,7 +144,7 @@ python3 scripts/promote_template.py \
 
 ## 승인 가능한 템플릿의 기준 예시
 
-현재 승인 구조 예시는 [v1.0.0.template.json](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/templates/approved/contract_review_request/v1.0.0.template.json)에서 확인할 수 있다.
+현재 승인 구조 예시는 [v1.0.0.template.json](../../templates/approved/contract_review_request/v1.0.0.template.json)에서 확인할 수 있다.
 
 이 파일은 다음 특성을 가진다.
 

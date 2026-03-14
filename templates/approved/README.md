@@ -46,5 +46,5 @@ python3 scripts/promote_template.py \
 
 ## 참고 문서
 
-- [08-template-approval-workflow.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/08-template-approval-workflow.md)
-- [06-template-lifecycle-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/06-template-lifecycle-note.md)
+- [08-template-approval-workflow.md](../../docs/development/08-template-approval-workflow.md)
+- [06-template-lifecycle-note.md](../../docs/development/06-template-lifecycle-note.md)

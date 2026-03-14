@@ -6,55 +6,55 @@
 
 ## 핵심 개발 문서
 
-- [01-product-overview.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/01-product-overview.md)
+- [01-product-overview.md](./01-product-overview.md)
   - 개발 관점 제품 개요
-- [02-system-architecture.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/02-system-architecture.md)
+- [02-system-architecture.md](./02-system-architecture.md)
   - 현재 시스템 구조와 레이어 분리
-- [03-mvp-scope.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/03-mvp-scope.md)
+- [03-mvp-scope.md](./03-mvp-scope.md)
   - MVP 범위와 제외 범위
-- [04-backlog.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/04-backlog.md)
+- [04-backlog.md](./04-backlog.md)
   - 기술 백로그와 우선순위
-- [05-template-storage-design.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/05-template-storage-design.md)
+- [05-template-storage-design.md](./05-template-storage-design.md)
   - 템플릿 JSON 저장 포맷과 메타데이터 구조
-- [06-template-lifecycle-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/06-template-lifecycle-note.md)
+- [06-template-lifecycle-note.md](./06-template-lifecycle-note.md)
   - 템플릿 버전업, 수정, 승인 흐름 메모
-- [07-template-pipeline-integration.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/07-template-pipeline-integration.md)
+- [07-template-pipeline-integration.md](./07-template-pipeline-integration.md)
   - draft 추출부터 승인 템플릿 연동까지의 파이프라인 메모
-- [08-template-approval-workflow.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/08-template-approval-workflow.md)
+- [08-template-approval-workflow.md](./08-template-approval-workflow.md)
   - draft를 reviewed/approved로 승격하는 최소 운영 흐름
-- [09-first-approved-template-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/09-first-approved-template-note.md)
+- [09-first-approved-template-note.md](./09-first-approved-template-note.md)
   - 첫 approved 템플릿 승격 메모
-- [10-second-approved-template-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/10-second-approved-template-note.md)
+- [10-second-approved-template-note.md](./10-second-approved-template-note.md)
   - 두 번째 approved 템플릿 승격 메모
-- [11-commercialization-development-plan.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/11-commercialization-development-plan.md)
+- [11-commercialization-development-plan.md](./11-commercialization-development-plan.md)
   - 상용화 기준 개발 계획
-- [12-third-approved-template-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/12-third-approved-template-note.md)
+- [12-third-approved-template-note.md](./12-third-approved-template-note.md)
   - 세 번째 approved 템플릿 승격 메모
 
 ## 추천 읽기 순서
 
 ### 처음 참여하는 개발자
 
-1. [01-product-overview.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/01-product-overview.md)
-2. [02-system-architecture.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/02-system-architecture.md)
-3. [03-mvp-scope.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/03-mvp-scope.md)
-4. [04-backlog.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/04-backlog.md)
-5. [05-template-storage-design.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/05-template-storage-design.md)
-6. [06-template-lifecycle-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/06-template-lifecycle-note.md)
-7. [07-template-pipeline-integration.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/07-template-pipeline-integration.md)
-8. [08-template-approval-workflow.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/08-template-approval-workflow.md)
-9. [11-commercialization-development-plan.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/11-commercialization-development-plan.md)
+1. [01-product-overview.md](./01-product-overview.md)
+2. [02-system-architecture.md](./02-system-architecture.md)
+3. [03-mvp-scope.md](./03-mvp-scope.md)
+4. [04-backlog.md](./04-backlog.md)
+5. [05-template-storage-design.md](./05-template-storage-design.md)
+6. [06-template-lifecycle-note.md](./06-template-lifecycle-note.md)
+7. [07-template-pipeline-integration.md](./07-template-pipeline-integration.md)
+8. [08-template-approval-workflow.md](./08-template-approval-workflow.md)
+9. [11-commercialization-development-plan.md](./11-commercialization-development-plan.md)
 
 ### 구현 작업 직전
 
-1. [02-system-architecture.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/02-system-architecture.md)
-2. [03-mvp-scope.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/03-mvp-scope.md)
-3. [04-backlog.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/04-backlog.md)
-4. [05-template-storage-design.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/05-template-storage-design.md)
-5. [06-template-lifecycle-note.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/06-template-lifecycle-note.md)
-6. [07-template-pipeline-integration.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/07-template-pipeline-integration.md)
-7. [08-template-approval-workflow.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/08-template-approval-workflow.md)
-8. [11-commercialization-development-plan.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/11-commercialization-development-plan.md)
+1. [02-system-architecture.md](./02-system-architecture.md)
+2. [03-mvp-scope.md](./03-mvp-scope.md)
+3. [04-backlog.md](./04-backlog.md)
+4. [05-template-storage-design.md](./05-template-storage-design.md)
+5. [06-template-lifecycle-note.md](./06-template-lifecycle-note.md)
+6. [07-template-pipeline-integration.md](./07-template-pipeline-integration.md)
+7. [08-template-approval-workflow.md](./08-template-approval-workflow.md)
+8. [11-commercialization-development-plan.md](./11-commercialization-development-plan.md)
 
 ## 현재 개발 상태 요약
 

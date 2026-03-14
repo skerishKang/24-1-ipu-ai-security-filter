@@ -49,7 +49,7 @@
 
 ### 3. business 인덱스
 
-이미 [30-business-doc-index.md](/mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/business/30-business-doc-index.md)가 있다.  
+이미 [30-business-doc-index.md](./30-business-doc-index.md)가 있다.  
 이 문서를 business 진입 문서로 계속 유지하면 된다.
 
 ### 4. development 인덱스
