@@ -34,13 +34,15 @@ class ManualPreviewEngine:
     def replace(
         self,
         content: str,
-        detections: list[dict[str, str | int | float]],
+        detections: list[dict[str, str | int | float]] | None,
         session_id: str,
         strategy: str = "strict_token",
     ) -> tuple[str, list[dict[str, str]]]:
-        typed_detections = self.detector.detect(content) if not detections else [
-            self._coerce_detection(item) for item in detections
-        ]
+        typed_detections = (
+            self.detector.detect(content)
+            if detections is None
+            else [self._coerce_detection(item) for item in detections]
+        )
         replaced_text, replacements = self.replacer.replace(
             content=content,
             detections=typed_detections,

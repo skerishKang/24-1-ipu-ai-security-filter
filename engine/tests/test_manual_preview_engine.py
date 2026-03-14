@@ -169,6 +169,17 @@ class ManualPreviewEngineTest(unittest.TestCase):
         detected_types = {item["type"] for item in preview["detections"]}
         self.assertNotIn("PERSON", detected_types)
 
+    def test_replace_respects_explicit_empty_detection_list(self) -> None:
+        replaced_text, replacements = self.engine.replace(
+            content="민감정보 없는 일반 문장입니다.",
+            detections=[],
+            session_id="ipu-empty-detection-list",
+            strategy="alias",
+        )
+
+        self.assertEqual(replaced_text, "민감정보 없는 일반 문장입니다.")
+        self.assertEqual(replacements, [])
+
 
 if __name__ == "__main__":
     unittest.main()
