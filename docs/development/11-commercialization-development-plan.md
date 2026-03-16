@@ -98,6 +98,7 @@
 - LLM은 문맥형 민감정보 보조 탐지에 한정
 - strict_token을 PoC 기준 정책으로 유지
 - default는 preview 친화 정책으로 위치를 분명히 유지
+- 현재 제품 preset은 `default`, `strict_token` 두 가지로 고정하고, 새 preset 추가는 상용화 Phase 3 이후 검토
 
 ### 2. 템플릿
 
@@ -148,6 +149,7 @@
 
 - 고객사 전용 배포
 - 온프레미스 또는 사설망 설치 가능 구조 검토
+- dev/demo/ops 환경 구분 문서 기준으로 운영 요구사항을 분리
 
 ## 개발 우선순위
 

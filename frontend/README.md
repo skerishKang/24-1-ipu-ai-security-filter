@@ -6,8 +6,9 @@
 
 - 일반인 / 전문가 화면 모드 전환
 - 텍스트 입력 화면
-- `.txt` 파일 업로드 화면
-- `.txt` 파일 드래그앤드롭 업로드
+- `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, `.hwpx` 파일 업로드 화면
+- `.wav`, `.mp3`, `.m4a`, `.mp4`, `.webm` 음성 업로드 화면
+- 문서 파일 드래그앤드롭 업로드
 - 간단한 policy 선택 UI
 - 원문과 치환본 비교 패널
 - 탐지 리포트 패널
@@ -73,9 +74,10 @@ node tests/runSmokeTests.js
 
 - 첫 로드 시 4영역 워크벤치 렌더링
 - 텍스트 요청 fallback 상태 표시
-- `.txt` 파일 업로드 성공 상태와 결과 패널 반영
+- 텍스트 파일 업로드 성공 상태와 결과 패널 반영
 - 지원하지 않는 파일 선택 시 상태 문구
-- 빈 `.txt` 파일 선택 시 상태 문구
+- 빈 업로드 파일 선택 시 상태 문구
+- 일반인/전문가 모드 음성 업로드 성공 상태와 결과 패널 반영
 
 현재 smoke test는 프론트 상태 흐름 검증에 집중하기 위해 Playwright route interception을 사용한다. 즉, fallback 케이스는 backend 미연결 상태를, 파일 성공 케이스는 backend 성공 응답을 브라우저 레벨에서 재현한다.
 
@@ -99,9 +101,10 @@ node tests\runLiveIntegrationTests.js
 
 현재 검증 범위:
 
-- 첫 로드 시 backend 연결 상태 표시
-- 텍스트 요청 시 session/source 에 backend 표시
-- `.txt` 파일 업로드 시 session/source 에 backend-file 표시
+- 전문가 모드 첫 로드 시 session/source 에 backend 표시
+- 전문가 모드 텍스트 요청 시 session/source 에 backend 표시
+- 전문가 모드 파일 업로드 시 session/source 에 backend-file 표시
+- audio live integration은 기본 검증선에 포함하지 않는다. 현재는 backend Whisper 의존이 있어 opt-in smoke 로 분리한다.
 
 ## API 설정 변경 방법
 
@@ -119,10 +122,10 @@ window.IPU_RUNTIME_CONFIG = {
 
 런타임 smoke test 기준:
 
-- 백엔드가 정상 실행 중이면 상단 세션 표시가 `... · backend` 로 보인다.
+- 전문가 모드에서 백엔드가 정상 실행 중이면 상단 세션 표시가 `... · backend` 로 보인다.
 - 이때 입력 패널 상태 문구는 `백엔드 응답으로 치환 결과를 갱신했습니다.` 로 표시된다.
-- 백엔드가 꺼져 있거나 연결 실패하면 상단 세션 표시가 `... · mock-fallback` 으로 바뀐다.
-- 이때 입력 패널 상태 문구는 fallback 안내 문구로 바뀌며 화면은 계속 동작한다.
+- 전문가 모드에서 백엔드가 꺼져 있거나 연결 실패하면 상단 세션 표시가 `... · mock-fallback` 으로 바뀐다.
+- 일반인 모드에서는 session/source 를 숨기고, 상태 문구와 결과 카드만 보여준다.
 
 ## 화면 모드
 
@@ -137,23 +140,43 @@ window.IPU_RUNTIME_CONFIG = {
 - `전문가 모드`
   - 기존 4영역 워크벤치 구조를 그대로 유지
   - policy, 치환 상세, 탐지 리포트, 복사 프롬프트, session/source 정보를 확인 가능
+  - 텍스트, 문서 파일, 음성 파일 입력을 모두 다룬다
 - 일반인 모드에서는 `policy`, 상세 탐지 목록, 상세 치환 목록, 리포트 metric, session/source 같은 내부 정보는 숨긴다.
+- 음성 업로드는 현재 일반인/전문가 모드 모두에서 노출한다.
 
 ## 파일 업로드 사용 방법
 
-- 입력 패널에서 `.txt 파일 업로드` 모드를 선택한다.
-- `.txt` 파일을 고르거나 드롭존에 끌어다 놓은 뒤 `치환 미리보기 생성` 을 누르면 `POST /api/v1/mode/manual-preview/file` 로 요청한다.
+- 입력 패널에서 `텍스트 파일 업로드` 모드를 선택한다.
+- `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, `.hwpx` 파일을 고르거나 드롭존에 끌어다 놓은 뒤 `치환 미리보기 생성` 을 누르면 `POST /api/v1/mode/manual-preview/file` 로 요청한다.
 - 응답 결과는 기존과 동일하게 원문, 치환본, 리포트, 복사용 프롬프트 4영역에 렌더링된다.
 - 파일 업로드는 backend live 응답만 사용하며, 실패 시 명확한 상태 문구를 보여준다.
-- 현재 지원 범위는 `.txt` 와 UTF-8 텍스트뿐이다.
+- 현재 지원 범위는 `.txt`, `.md`, `.csv` 의 UTF-8 텍스트, 텍스트 추출 가능한 `.pdf`, 본문 텍스트가 있는 `.docx`, section XML에서 본문 텍스트를 읽을 수 있는 `.hwpx` 다.
+- 바이너리 `.hwp` 파일을 선택하면 직접 업로드하지 않고 `.hwpx`, `.pdf`, `.docx`, `.txt` 변환 안내 문구를 보여준다.
 - 리렌더 후에도 선택한 파일명은 패널에 유지되며, 다시 선택하지 않고 바로 재요청할 수 있다.
 
 현재 에러 상태 정리:
 
 - 텍스트 입력은 backend 성공, backend 실패 후 mock fallback, 로딩 상태를 구분해 보여준다.
-- 파일 업로드는 `.txt` 미선택, 지원하지 않는 확장자, 비어 있는 파일, backend 요청 실패를 각각 다른 문구로 보여준다.
+- 파일 업로드는 미선택, 지원하지 않는 확장자, 비어 있는 파일, backend 요청 실패를 각각 다른 문구로 보여준다.
 - 파일 업로드는 mock fallback 없이 backend 결과 또는 에러 상태만 표시한다.
 - 상태 문구는 [`src/statusMessages.js`](./src/statusMessages.js) 에서 한 곳으로 관리한다.
+
+## 음성 업로드 사용 방법
+
+- 입력 패널에서 `음성 업로드` 모드를 선택한다.
+- `.wav`, `.mp3`, `.m4a`, `.mp4`, `.webm` 파일을 고른 뒤 `치환 미리보기 생성` 을 누르면 `POST /api/v1/mode/manual-preview/audio` 로 요청한다.
+- backend 는 로컬 Whisper STT로 먼저 전사한 뒤, 전사 텍스트를 기존 manual-preview 엔진으로 보낸다.
+- 전문가 모드에서는 성공 시 session/source 가 `backend-audio` 로 표시된다.
+- 일반인 모드에서는 session/source 대신 상태 문구와 결과 카드로만 보여준다.
+- 음성 업로드는 mock fallback 없이 backend live 응답만 사용한다.
+- 로컬 STT가 준비되지 않았으면 별도 안내 문구를 보여준다.
+- 현재 데모에 바로 쓰는 권장 길이는 `5초 ~ 15초` 다.
+- `30초 미만`은 내부 검증 범위로 보지만, 품질과 속도를 기본 보장으로 말하지 않는다.
+- `1분 이상` 긴 음성은 현재 기본 경로로 권장하지 않고, 분할 후 업로드를 권장한다.
+- 현재는 segment / timestamp 를 UI에 노출하지 않고, plain text 전사 결과만 사용한다.
+- 다화자 음성, 회의 녹음 전체본, 화자별 결과 UI는 현재 기본 노출 범위에 넣지 않는다.
+
+자세한 기준은 [`../docs/development/25-long-audio-handling-policy.md`](../docs/development/25-long-audio-handling-policy.md), [`../docs/development/26-audio-segment-and-timestamp-policy.md`](../docs/development/26-audio-segment-and-timestamp-policy.md), [`../docs/development/27-multi-speaker-and-meeting-audio-policy.md`](../docs/development/27-multi-speaker-and-meeting-audio-policy.md) 를 따른다.
 
 ## policy 선택 사용 방법
 
@@ -168,9 +191,10 @@ window.IPU_RUNTIME_CONFIG = {
 - API base URL은 `runtime-config.js` -> `src/config.js` 순서로 결정된다.
 - 요청 본문은 `{ content, content_type: "text", policy }` 형태다.
 - 파일 업로드는 `multipart/form-data` 로 `POST /api/v1/mode/manual-preview/file` 를 호출한다.
+- 음성 업로드는 `multipart/form-data` 로 `POST /api/v1/mode/manual-preview/audio` 를 호출한다.
 - 백엔드가 정상 응답하면 해당 결과를 그대로 4영역에 렌더링한다.
 - 텍스트 입력에서 백엔드가 꺼져 있거나 실패하면 `src/services/manualPreviewMock.js` 로 자동 fallback 한다.
-- 파일 업로드는 mock fallback 없이 에러 상태만 보여준다.
+- 파일/음성 업로드는 mock fallback 없이 에러 상태만 보여준다.
 - mock 서비스는 비교용이자 비상 대체 경로로 유지한다.
 
 ## 다음 연동 포인트

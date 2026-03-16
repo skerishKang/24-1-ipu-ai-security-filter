@@ -1,0 +1,22 @@
+sample_id: meeting-audio-sample-001
+title: 카리나 인터뷰 단일 화자 짧은 샘플
+sample_status: observed
+source_type: single_speaker
+duration_seconds: 5
+speaker_count: 1
+language_profile: ko_en_mixed
+environment_profile: online_meeting_compressed
+overlap_level: none
+sensitive_content_profile: none
+demo_suitability: internal_only
+diarization_interest: low
+storage_path: /mnt/g/Ddrive/BatangD/task/workdiary/49-1-padiem-rnd/data/datasets/rvc_speaker_001/speaker_001/1_20240821_gJ5IX1jty3E_[ENG] 카리나의 여름 취향 A-Z까지 다 모았다! l 에스파 l 카리나 ㅣ톡톡 인터뷰_(Vocals)_seg0000.wav
+notes: 현재 회의 녹음 샘플셋이 없어서, 기존 공개 단일 화자 음성을 seed sample로 먼저 등록한다.
+expected_risks:
+  - 짧은 감탄/도입 구간에서 영어 비슷한 토큰으로 깨질 수 있다
+  - 한국어 짧은 발화에서도 Whisper small 품질이 흔들릴 수 있다
+whisper_observation_status: observe-only
+privacy_status: public_ok
+segment_ready: yes
+benchmark_ready: no
+observation_note_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/samples/meeting-audio-sample-001.observation.md

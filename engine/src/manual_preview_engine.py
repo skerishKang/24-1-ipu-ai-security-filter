@@ -11,11 +11,11 @@ from engine.src.detector import RegexDetector
 from engine.src.report_builder import ReportBuilder
 from engine.src.replacer import TokenReplacer
 from engine.src.restorer import SessionRestorer
-from engine.src.session_store import InMemorySessionStore
+from engine.src.session_store import InMemorySessionStore, SessionStore
 
 
 class ManualPreviewEngine:
-    def __init__(self, session_store: InMemorySessionStore | None = None) -> None:
+    def __init__(self, session_store: SessionStore | None = None) -> None:
         self.session_store = session_store or InMemorySessionStore()
         self.detector = RegexDetector()
         self.replacer = TokenReplacer(self.session_store)

@@ -8,7 +8,7 @@
 - `replace(content, detections, session_id, strategy="strict_token")`
 - `restore(content, session_id)`
 - `build_report(detections, replacements, strategy="strict_token")`
-- TTL이 적용된 메모리 기반 세션 매핑 저장소
+- TTL이 적용된 세션 매핑 저장소
 - 수동 모드 결과를 한 번에 조합하는 `ManualPreviewEngine`
 - `unittest` 기반 최소 테스트
 
@@ -35,7 +35,7 @@ engine/
 ## 모듈 역할
 
 - `contracts.py`: detection, replacement, report, session mapping 데이터 계약
-- `session_store.py`: 세션별 치환 매핑을 메모리에 저장하고 TTL 만료를 관리
+- `session_store.py`: 메모리/SQLite 기반 세션 매핑 저장소와 TTL 만료 관리
 - `detector.py`: 정규식 기반 최소 민감정보 탐지
 - `replacer.py`: 토큰 치환과 세션 매핑 저장
 - `restorer.py`: 세션 매핑으로 역치환
@@ -73,11 +73,15 @@ python3 engine/scripts/run_quality_harness.py
 - false positive 가능 문맥
 - false negative 가능 문맥
 - 복합 업무 문맥 1종
+- OCR 유사 줄바꿈/공백 노이즈 문맥
+- OCR 숫자/문자 혼동 관찰 문맥
 
 샘플은 두 그룹으로 나뉜다.
 
 - `baseline`: 현재 PoC 기준으로 최소한 안정적으로 잡혀야 하는 문맥
 - `observe-only`: false positive / false negative 가능성을 일부러 드러내는 관찰용 문맥
+- `ocr-baseline`: OCR 추출본처럼 줄바꿈과 공백이 흔들려도 현재 엔진이 잡아야 하는 문맥
+- `ocr-observe`: OCR 숫자/문자 혼동 같은 아직 남겨둔 한계를 드러내는 관찰용 문맥
 
 스크립트는 각 샘플에 대해 `default` 와 `strict_token` 을 모두 돌리고, 탐지 수, 치환 토큰, `report.strategy`, 치환 결과, `baseline_status` 를 사람이 읽기 쉽게 출력한다. 현재 `baseline` 통과 여부는 보수적 정책인 `strict_token` 기준으로 해석하는 것이 맞고, `default` 는 일부 타입만 alias 중심으로 보여주는 비교용 출력에 가깝다.
 
@@ -86,8 +90,9 @@ python3 engine/scripts/run_quality_harness.py
 - 고품질 NER가 아니라 정규식 기반 placeholder 탐지다.
 - 품질 harness는 “현재 어디까지 탐지되는지”를 반복 점검하는 기준선이며, 실제 정답 데이터셋 기반 평가까지는 아직 아니다.
 - false positive / false negative 샘플은 현재 한계를 숨기지 않고 드러내기 위한 관찰용 기준선이다.
-- 세션 저장소는 프로세스 메모리 기반이라 재시작 시 사라진다.
-- 기본 TTL은 코드 상수로 관리되며 아직 backend 설정과 연결되지 않았다.
+- 기본 세션 저장소는 메모리 기반이라 재시작 시 사라진다.
+- SQLite 저장소를 쓰면 TTL 범위 내에서 프로세스 재시작 후에도 restore 를 이어갈 수 있다.
+- 기본 TTL은 900초이며 backend 의 `IPU_SESSION_TTL_SECONDS` 설정으로 바꿀 수 있다.
 - 정책별 분기는 아직 최소 수준이며, 현재는 `default` 와 `strict_token` 만 다룬다.
 - 중복 표현, 문맥 기반 별칭, 문서/음성 처리 로직은 아직 비어 있다.
 
@@ -97,7 +102,7 @@ python3 engine/scripts/run_quality_harness.py
 - 새 매핑이 저장되면 해당 세션의 만료 시각이 갱신된다.
 - `get_mappings()` 와 `restore()` 는 만료된 세션을 자동으로 비우고 빈 결과처럼 처리한다.
 - `cleanup_expired_sessions()` 를 호출하면 만료된 세션을 한 번에 정리할 수 있다.
-- 현재 단계에서는 메모리 기반 안전장치이며, 추후 backend 또는 운영 설정에서 TTL 값을 주입하도록 확장할 수 있다.
+- 현재 단계에서는 메모리 기반 기본값과 SQLite 기반 지속 저장 옵션을 함께 제공하며, backend 에서 TTL 값을 주입한다.
 
 ## backend 연동 포인트
 
@@ -108,10 +113,12 @@ python3 engine/scripts/run_quality_harness.py
 
 ## policy 동작
 
+- 현재 공식 preset은 `default`, `strict_token` 두 가지뿐이다.
 - `default`: 완화된 기본 정책이다. 현재는 `EMAIL`, `PHONE`, `PERSON` 만 탐지하고, 치환 토큰도 `[EMAIL_ALIAS_01]` 같은 alias 형태로 만든다.
 - `strict_token`: 더 넓게 탐지하는 정책이다. 현재는 `EMAIL`, `PHONE`, `PERSON`, `ORG`, `AMOUNT` 를 모두 탐지하고, `[EMAIL_01]` 같은 타입 노출형 토큰으로 치환한다.
 - 두 정책 모두 응답 스키마는 같고, 차이는 `detections`, `replaced_text`, `replacements`, `report.total_detections`, `report.risk_level`, `report.strategy` 에 반영된다.
 - 이 분기는 "정말 차이가 존재한다"는 최소 기준선에 가깝다. 아직 고급 문맥 정책이나 운영 정책 엔진이라고 보기는 어렵다.
+- preset 기준 문서는 `docs/development/17-security-policy-presets.md` 를 따른다.
 
 현재 의도:
 

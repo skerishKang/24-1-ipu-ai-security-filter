@@ -1,13 +1,41 @@
+import io
+import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 import httpx
+from fastapi import UploadFile
+from starlette.datastructures import Headers
 
-from app.main import app
+from app.api.routes.manual_mode import get_manual_preview_service
+from app.main import create_app
+
+
+class FakeAudioTranscriber:
+    async def transcribe(self, file: UploadFile):
+        return type(
+            "TranscribedAudio",
+            (),
+            {
+                "text": "아이피유테크 홍길동 이사가 contact@ipu.co.kr 로 연락합니다.",
+                "content_type": file.content_type or "audio/wav",
+                "filename": file.filename or "sample.wav",
+                "engine_name": "fake-whisper",
+            },
+        )()
 
 
 class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        transport = httpx.ASGITransport(app=app)
+        self.temp_dir = TemporaryDirectory()
+        db_path = Path(self.temp_dir.name) / "manual_preview_sessions.sqlite3"
+        os.environ["IPU_SESSION_STORE_PATH"] = str(db_path)
+        os.environ["IPU_SESSION_STORE_KIND"] = "sqlite"
+        os.environ["IPU_AUDIO_TRANSCRIBER"] = "placeholder"
+        get_manual_preview_service.cache_clear()
+        self.app = create_app()
+        transport = httpx.ASGITransport(app=self.app)
         self.client = httpx.AsyncClient(
             transport=transport,
             base_url="http://testserver",
@@ -15,6 +43,11 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None:
         await self.client.aclose()
+        get_manual_preview_service.cache_clear()
+        os.environ.pop("IPU_SESSION_STORE_PATH", None)
+        os.environ.pop("IPU_SESSION_STORE_KIND", None)
+        os.environ.pop("IPU_AUDIO_TRANSCRIBER", None)
+        self.temp_dir.cleanup()
 
     async def test_health_endpoint(self) -> None:
         response = await self.client.get("/health")
@@ -65,6 +98,9 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
             "review_status",
         ):
             self.assertIn(field, report)
+        self.assertIn(report["risk_level"], {"low-risk", "moderate-risk", "high-risk"})
+        self.assertIn(report["strategy"], {"alias", "strict_token"})
+        self.assertIn(report["review_status"], {"clean", "review-required"})
 
         first_detection = body["detections"][0]
         for field in ("type", "label", "start", "end", "score", "note"):
@@ -73,6 +109,18 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         first_replacement = body["replacements"][0]
         for field in ("type", "original", "replaced", "reason"):
             self.assertIn(field, first_replacement)
+
+    async def test_manual_preview_endpoint_rejects_unknown_policy(self) -> None:
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview",
+            json={
+                "content": "contact@ipu.co.kr",
+                "content_type": "text",
+                "policy": "balanced",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
 
     async def test_manual_preview_file_endpoint_shape(self) -> None:
         files = {
@@ -95,6 +143,135 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(body["detections"], list)
         self.assertIsInstance(body["replacements"], list)
 
+    async def test_manual_preview_file_accepts_markdown_file(self) -> None:
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/file",
+            files={
+                "file": (
+                    "sample.md",
+                    "# 고객 메모\ncontact@ipu.co.kr\n010-2222-3333",
+                    "text/markdown",
+                )
+            },
+            data={"policy": "strict_token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("[EMAIL_", body["replaced_text"])
+        self.assertIn("[PHONE_", body["replaced_text"])
+
+    async def test_manual_preview_file_accepts_csv_file(self) -> None:
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/file",
+            files={
+                "file": (
+                    "sample.csv",
+                    "name,email\n홍길동,contact@ipu.co.kr",
+                    "text/csv",
+                )
+            },
+            data={"policy": "default"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("[EMAIL_ALIAS_", body["replaced_text"])
+
+    async def test_manual_preview_file_accepts_pdf_file(self) -> None:
+        pdf_bytes = build_pdf_bytes(["Contact contact@ipu.co.kr"])
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/file",
+            files={
+                "file": (
+                    "sample.pdf",
+                    pdf_bytes,
+                    "application/pdf",
+                )
+            },
+            data={"policy": "strict_token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("[EMAIL_", body["replaced_text"])
+
+    async def test_manual_preview_file_accepts_docx_file(self) -> None:
+        docx_bytes = build_docx_bytes(["아이피유테크 홍길동 이사", "contact@ipu.co.kr"])
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/file",
+            files={
+                "file": (
+                    "sample.docx",
+                    docx_bytes,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+            data={"policy": "strict_token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("[EMAIL_", body["replaced_text"])
+
+    async def test_manual_preview_file_accepts_hwpx_file(self) -> None:
+        hwpx_bytes = build_hwpx_bytes([["아이피유테크 홍길동 이사", "contact@ipu.co.kr"]])
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/file",
+            files={
+                "file": (
+                    "sample.hwpx",
+                    hwpx_bytes,
+                    "application/haansofthwpx",
+                )
+            },
+            data={"policy": "strict_token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("[EMAIL_", body["replaced_text"])
+
+    async def test_manual_preview_audio_endpoint_returns_not_implemented_placeholder(self) -> None:
+        response = await self.client.post(
+            "/api/v1/mode/manual-preview/audio",
+            files={
+                "file": (
+                    "sample.wav",
+                    b"fake-audio",
+                    "audio/wav",
+                )
+            },
+            data={"policy": "default"},
+        )
+
+        self.assertEqual(response.status_code, 501)
+        self.assertIn("STT", response.json()["detail"])
+
+    async def test_manual_preview_audio_endpoint_uses_transcriber_output(self) -> None:
+        service = get_manual_preview_service()
+        original_transcriber = service.audio_transcriber
+        service.audio_transcriber = FakeAudioTranscriber()
+        try:
+            response = await self.client.post(
+                "/api/v1/mode/manual-preview/audio",
+                files={
+                    "file": (
+                        "sample.wav",
+                        b"fake-audio",
+                        "audio/wav",
+                    )
+                },
+                data={"policy": "default"},
+            )
+        finally:
+            service.audio_transcriber = original_transcriber
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["original_text"], "아이피유테크 홍길동 이사가 contact@ipu.co.kr 로 연락합니다.")
+        self.assertIn("[EMAIL_ALIAS_", body["replaced_text"])
+
     async def test_manual_preview_file_rejects_unsupported_extension(self) -> None:
         files = {
             "file": ("sample.pdf", "fake pdf content", "application/pdf"),
@@ -108,18 +285,56 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(response.status_code, 415)
 
-    async def test_manual_preview_file_rejects_oversized_text_file(self) -> None:
-        files = {
-            "file": ("sample.txt", "a" * (1_048_576 + 1), "text/plain"),
-        }
-
+    async def test_manual_preview_file_rejects_binary_hwp_with_conversion_guidance(self) -> None:
         response = await self.client.post(
             "/api/v1/mode/manual-preview/file",
-            files=files,
+            files={
+                "file": (
+                    "sample.hwp",
+                    b"fake-hwp",
+                    "application/x-hwp",
+                )
+            },
             data={"policy": "default"},
         )
 
-        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.status_code, 415)
+        self.assertIn(".hwpx", response.json()["detail"])
+
+    async def test_manual_preview_file_returns_ocr_tool_guidance_for_scan_pdf_without_toolchain(self) -> None:
+        original_service = get_manual_preview_service()
+        original_parser = original_service.file_parser._pdf_parser
+        original_service.file_parser._pdf_parser = MissingOcrToolPdfFileParser()
+        try:
+            response = await self.client.post(
+                "/api/v1/mode/manual-preview/file",
+                files={
+                    "file": (
+                        "scan.pdf",
+                        build_blank_pdf_bytes(),
+                        "application/pdf",
+                    )
+                },
+                data={"policy": "default"},
+            )
+        finally:
+            original_service.file_parser._pdf_parser = original_parser
+
+        self.assertEqual(response.status_code, 415)
+        self.assertIn("tesseract", response.json()["detail"])
+
+    async def test_manual_preview_file_rejects_oversized_text_file(self) -> None:
+        oversized = UploadFile(
+            filename="sample.txt",
+            file=io.BytesIO(b"short"),
+            headers=Headers({"content-type": "text/plain"}),
+        )
+        oversized.size = 104_857_601
+
+        service = get_manual_preview_service()
+
+        with self.assertRaisesRegex(ValueError, "100MB"):
+            await service.build_file_preview(file=oversized, policy="default")
 
     async def test_manual_preview_policy_is_reflected_in_report(self) -> None:
         strict_payload = {
@@ -139,6 +354,209 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(default_response.status_code, 200)
         self.assertEqual(default_response.json()["report"]["strategy"], "alias")
 
+    async def test_manual_preview_creates_sqlite_session_store_file(self) -> None:
+        payload = {
+            "content": "아이피유테크 홍길동 이사는 contact@ipu.co.kr 로 연락합니다.",
+            "content_type": "text",
+            "policy": "strict_token",
+        }
+
+        response = await self.client.post("/api/v1/mode/manual-preview", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        db_path = Path(os.environ["IPU_SESSION_STORE_PATH"])
+        self.assertTrue(db_path.exists())
+        self.assertGreater(db_path.stat().st_size, 0)
+
+    async def test_manual_preview_restore_endpoint_restores_tokenized_text(self) -> None:
+        preview_payload = {
+            "content": "아이피유테크 홍길동 이사는 contact@ipu.co.kr 로 연락합니다.",
+            "content_type": "text",
+            "policy": "strict_token",
+        }
+
+        preview_response = await self.client.post("/api/v1/mode/manual-preview", json=preview_payload)
+        self.assertEqual(preview_response.status_code, 200)
+        preview_body = preview_response.json()
+
+        restore_response = await self.client.post(
+            "/api/v1/mode/manual-preview/restore",
+            json={
+                "session_id": preview_body["session_id"],
+                "replaced_text": preview_body["replaced_text"],
+            },
+        )
+
+        self.assertEqual(restore_response.status_code, 200)
+        restore_body = restore_response.json()
+        self.assertEqual(restore_body["session_id"], preview_body["session_id"])
+        self.assertEqual(restore_body["restored_text"], preview_payload["content"])
+        self.assertEqual(restore_body["restored"], True)
+
+    async def test_manual_preview_restore_endpoint_returns_original_text_when_session_missing(self) -> None:
+        restore_response = await self.client.post(
+            "/api/v1/mode/manual-preview/restore",
+            json={
+                "session_id": "missing-session",
+                "replaced_text": "[EMAIL_01] 에 연락해 주세요.",
+            },
+        )
+
+        self.assertEqual(restore_response.status_code, 200)
+        restore_body = restore_response.json()
+        self.assertEqual(restore_body["restored_text"], "[EMAIL_01] 에 연락해 주세요.")
+        self.assertEqual(restore_body["restored"], False)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def build_pdf_bytes(page_texts: list[str]) -> bytes:
+    objects = []
+    page_references = []
+
+    objects.append(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
+
+    for index, text in enumerate(page_texts):
+        page_object_number = 3 + (index * 2)
+        content_object_number = page_object_number + 1
+        page_references.append(f"{page_object_number} 0 R".encode("ascii"))
+
+        escaped = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+        stream = f"BT /F1 12 Tf 72 120 Td ({escaped}) Tj ET".encode("utf-8")
+
+        objects.append(
+            f"{page_object_number} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Contents {content_object_number} 0 R /Resources << /Font << /F1 {3 + (len(page_texts) * 2)} 0 R >> >> >>\nendobj\n".encode(
+                "ascii"
+            )
+        )
+        objects.append(
+            f"{content_object_number} 0 obj\n<< /Length {len(stream)} >>\nstream\n".encode("ascii")
+            + stream
+            + b"\nendstream\nendobj\n"
+        )
+
+    objects.insert(
+        1,
+        b"2 0 obj\n<< /Type /Pages /Kids ["
+        + b" ".join(page_references)
+        + b"] /Count "
+        + str(len(page_texts)).encode("ascii")
+        + b" >>\nendobj\n",
+    )
+    font_object_number = 3 + (len(page_texts) * 2)
+    objects.append(
+        f"{font_object_number} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n".encode(
+            "ascii"
+        )
+    )
+
+    header = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+    body = b""
+    offsets = [0]
+    current = len(header)
+    for obj in objects:
+        offsets.append(current)
+        body += obj
+        current += len(obj)
+
+    xref_offset = len(header) + len(body)
+    xref_entries = [b"0000000000 65535 f \n"]
+    for offset in offsets[1:]:
+        xref_entries.append(f"{offset:010d} 00000 n \n".encode("ascii"))
+
+    trailer = (
+        b"xref\n0 "
+        + str(len(offsets)).encode("ascii")
+        + b"\n"
+        + b"".join(xref_entries)
+        + b"trailer\n<< /Size "
+        + str(len(offsets)).encode("ascii")
+        + b" /Root 1 0 R >>\nstartxref\n"
+        + str(xref_offset).encode("ascii")
+        + b"\n%%EOF\n"
+    )
+
+    return header + body + trailer
+
+
+def build_docx_bytes(paragraphs: list[str]) -> bytes:
+    from zipfile import ZipFile
+
+    content_types = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>
+"""
+    rels = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>
+"""
+    paragraph_xml = "".join(
+        f"<w:p><w:r><w:t>{escape_xml(paragraph)}</w:t></w:r></w:p>" for paragraph in paragraphs
+    )
+    document = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>{paragraph_xml}</w:body>
+</w:document>
+"""
+
+    buffer = io.BytesIO()
+    with ZipFile(buffer, "w") as archive:
+        archive.writestr("[Content_Types].xml", content_types)
+        archive.writestr("_rels/.rels", rels)
+        archive.writestr("word/document.xml", document)
+    return buffer.getvalue()
+
+
+def escape_xml(text: str) -> str:
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def build_hwpx_bytes(sections: list[list[str]]) -> bytes:
+    from zipfile import ZipFile
+
+    buffer = io.BytesIO()
+    with ZipFile(buffer, "w") as archive:
+        archive.writestr("mimetype", "application/hwp+zip")
+        archive.writestr("version.xml", "<?xml version='1.0' encoding='UTF-8'?><version app='manual-preview'/>")
+        archive.writestr(
+            "Contents/content.hpf",
+            "<?xml version='1.0' encoding='UTF-8'?><opf:package xmlns:opf='http://www.idpf.org/2007/opf'/>",
+        )
+        for index, paragraphs in enumerate(sections):
+            para_xml = "".join(
+                f"<hp:p id='{1000 + paragraph_index}'><hp:run charPrIDRef='0'><hp:t>{escape_xml(paragraph)}</hp:t></hp:run></hp:p>"
+                for paragraph_index, paragraph in enumerate(paragraphs)
+            )
+            section_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section"
+        xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">
+  {para_xml}
+</hs:sec>
+"""
+            archive.writestr(f"Contents/section{index}.xml", section_xml)
+    return buffer.getvalue()
+
+
+def build_blank_pdf_bytes() -> bytes:
+    from pypdf import PdfWriter
+
+    buffer = io.BytesIO()
+    writer = PdfWriter()
+    writer.add_blank_page(width=300, height=200)
+    writer.write(buffer)
+    return buffer.getvalue()
+
+
+class MissingOcrToolPdfFileParser:
+    async def parse(self, file):
+        raise ValueError("스캔형 PDF OCR을 위한 로컬 도구가 없습니다. tesseract 와 pdftoppm 설치 후 다시 시도해 주세요.")

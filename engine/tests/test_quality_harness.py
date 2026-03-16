@@ -12,7 +12,7 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
 
     def test_quality_samples_cover_expected_detection_types(self) -> None:
         for sample in QUALITY_SAMPLES:
-            if sample.sample_group != "baseline":
+            if sample.sample_group not in {"baseline", "ocr-baseline"}:
                 continue
 
             with self.subTest(sample=sample.sample_id):
@@ -34,7 +34,7 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
 
     def test_replaced_text_contains_expected_tokens_for_quality_samples(self) -> None:
         for sample in QUALITY_SAMPLES:
-            if sample.sample_group != "baseline":
+            if sample.sample_group not in {"baseline", "ocr-baseline"}:
                 continue
 
             with self.subTest(sample=sample.sample_id):
@@ -63,9 +63,27 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
         self.assertNotIn("[ORG_ALIAS_", preview["replaced_text"])
         self.assertNotIn("[AMOUNT_ALIAS_", preview["replaced_text"])
 
+    def test_default_policy_leaves_obfuscated_email_sample_visible_while_strict_catches_it(self) -> None:
+        sample = next(item for item in QUALITY_SAMPLES if item.sample_id == "obfuscated_email_context")
+
+        default_preview = self.engine.manual_preview(
+            content=sample.content,
+            session_id="quality-default-obfuscated",
+            policy="default",
+        )
+        strict_preview = self.engine.manual_preview(
+            content=sample.content,
+            session_id="quality-strict-obfuscated",
+            policy="strict_token",
+        )
+
+        self.assertNotIn("[EMAIL_ALIAS_", default_preview["replaced_text"])
+        self.assertIn("[EMAIL_", strict_preview["replaced_text"])
+        self.assertLess(len(default_preview["detections"]), len(strict_preview["detections"]))
+
     def test_observe_only_samples_keep_current_limitations_visible_without_crashing(self) -> None:
         for sample in QUALITY_SAMPLES:
-            if sample.sample_group != "observe-only":
+            if sample.sample_group not in {"observe-only", "ocr-observe"}:
                 continue
 
             with self.subTest(sample=sample.sample_id):

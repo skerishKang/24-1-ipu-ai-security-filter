@@ -1,0 +1,21 @@
+# Copy this template when registering a new meeting or multi-speaker audio sample.
+sample_id: meeting-2speaker-001
+title: ""
+sample_status: planned
+source_type: single_speaker
+duration_seconds: 0
+speaker_count: 1
+language_profile: ko
+environment_profile: quiet_room
+overlap_level: none
+sensitive_content_profile: none
+demo_suitability: internal_only
+diarization_interest: low
+storage_path: ""
+notes: ""
+expected_risks: []
+whisper_observation_status: untested
+privacy_status: anonymized
+segment_ready: no
+benchmark_ready: no
+observation_note_path: ""

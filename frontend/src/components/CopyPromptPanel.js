@@ -1,10 +1,16 @@
 import { createPanelFrame } from "../ui/createPanelFrame.js";
 
-export function createCopyPromptPanel({ copyReadyPrompt }) {
+export function createCopyPromptPanel({
+  copyReadyPrompt,
+  onRestore,
+  restoredText = "",
+  restoreStatus = "아직 복원 테스트를 실행하지 않았습니다.",
+  isRestoring = false,
+}) {
   const panel = createPanelFrame({
     title: "4. 외부 AI용 복사 프롬프트",
     description:
-      "수동 모드에서는 아래 치환 프롬프트를 검토 후 외부 SOTA 모델에 직접 붙여넣습니다.",
+      "수동 모드에서는 아래 치환 프롬프트를 검토 후 외부 SOTA 모델에 직접 붙여넣고, 현재 세션 매핑으로 복원 테스트도 확인할 수 있습니다.",
     badge: "Copy Ready",
   });
 
@@ -29,6 +35,33 @@ export function createCopyPromptPanel({ copyReadyPrompt }) {
     }
   });
 
-  panel.body.append(prompt, actions);
+  const restoreSection = document.createElement("div");
+  restoreSection.className = "copy-panel__restore";
+  restoreSection.innerHTML = `
+    <div class="copy-panel__restore-header">
+      <strong>복원 테스트</strong>
+      <button type="button" class="button button--ghost" data-testid="restore-preview">${isRestoring ? "복원 중..." : "현재 치환본 복원"}</button>
+    </div>
+    <p class="copy-panel__restore-status" data-testid="restore-status">${escapeHtml(restoreStatus)}</p>
+    <div class="text-card">
+      <p class="text-card__label">복원 결과</p>
+      <p class="text-card__content" data-testid="restored-text">${escapeHtml(restoredText || "복원 전")}</p>
+    </div>
+  `;
+
+  const restoreButton = restoreSection.querySelector("[data-testid='restore-preview']");
+  restoreButton.disabled = isRestoring;
+  restoreButton.addEventListener("click", () => {
+    onRestore?.();
+  });
+
+  panel.body.append(prompt, actions, restoreSection);
   return panel.element;
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }

@@ -258,6 +258,35 @@ textarea {
   line-height: 1.5;
 }
 
+.input-panel__policy-summary,
+.report-policy-box {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.input-panel__policy-summary-title,
+.report-policy-box__title,
+.simple-result__policy {
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.input-panel__policy-summary-body,
+.input-panel__policy-summary-meta,
+.report-policy-box__body,
+.report-policy-box__meta,
+.simple-result__policy-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .input-panel__mode-option {
   display: inline-flex;
   align-items: center;
@@ -598,6 +627,11 @@ textarea {
   font-weight: 800;
 }
 
+.simple-result__policy,
+.simple-result__policy-meta {
+  margin: 0;
+}
+
 .copy-panel__prompt {
   width: 100%;
   min-height: 280px;
@@ -624,6 +658,27 @@ textarea {
 .copy-panel__status {
   color: var(--muted);
   font-size: 13px;
+}
+
+.copy-panel__restore {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.copy-panel__restore-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.copy-panel__restore-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .simple-result__label {

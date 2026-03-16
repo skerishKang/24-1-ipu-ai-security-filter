@@ -7,6 +7,10 @@ FRONTEND_DIR="$ROOT/frontend"
 BACKEND_URL="http://127.0.0.1:8241/health"
 FRONTEND_URL="http://127.0.0.1:4241"
 
+echo "[IPU] Checking demo-stack dependencies..."
+python3 "$ROOT/scripts/check_demo_stack_deps.py"
+echo
+
 if [[ -x "$BACKEND_DIR/.venv/bin/python" ]]; then
   BACKEND_PY="$BACKEND_DIR/.venv/bin/python"
 elif [[ -x "$BACKEND_DIR/.venv-win/Scripts/python.exe" ]]; then

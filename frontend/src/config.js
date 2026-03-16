@@ -18,3 +18,11 @@ export function getManualPreviewUrl() {
 export function getManualPreviewFileUrl() {
   return `${getManualPreviewUrl()}/file`;
 }
+
+export function getManualPreviewAudioUrl() {
+  return `${getManualPreviewUrl()}/audio`;
+}
+
+export function getManualPreviewRestoreUrl() {
+  return `${getManualPreviewUrl()}/restore`;
+}

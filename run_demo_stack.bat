@@ -7,6 +7,10 @@ set "FRONTEND_DIR=%ROOT%frontend"
 set "BACKEND_URL=http://127.0.0.1:8241/health"
 set "FRONTEND_URL=http://127.0.0.1:4241"
 
+echo [IPU] Checking demo-stack dependencies...
+python "%ROOT%scripts\check_demo_stack_deps.py"
+echo.
+
 set "BACKEND_PY="
 if exist "%BACKEND_DIR%\.venv-win\Scripts\python.exe" set "BACKEND_PY=%BACKEND_DIR%\.venv-win\Scripts\python.exe"
 if not defined BACKEND_PY if exist "%BACKEND_DIR%\.venv\Scripts\python.exe" set "BACKEND_PY=%BACKEND_DIR%\.venv\Scripts\python.exe"

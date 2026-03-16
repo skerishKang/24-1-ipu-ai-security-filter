@@ -1,6 +1,6 @@
 import { createPanelFrame } from "../ui/createPanelFrame.js";
 
-export function createReportPanel({ detections, report }) {
+export function createReportPanel({ detections, report, policySummary }) {
   const panel = createPanelFrame({
     title: "3. 탐지 리포트",
     description:
@@ -26,6 +26,14 @@ export function createReportPanel({ detections, report }) {
     </div>
   `;
 
+  const policyBox = document.createElement("div");
+  policyBox.className = "report-policy-box";
+  policyBox.innerHTML = `
+    <strong class="report-policy-box__title">${escapeHtml(policySummary?.title || report.strategy)}</strong>
+    <p class="report-policy-box__body">${escapeHtml(policySummary?.description || "")}</p>
+    <p class="report-policy-box__meta">${escapeHtml(policySummary?.examples || "")}</p>
+  `;
+
   const list = document.createElement("div");
   list.className = "detection-list";
   list.innerHTML = detections
@@ -44,6 +52,13 @@ export function createReportPanel({ detections, report }) {
     )
     .join("");
 
-  panel.body.append(summary, list);
+  panel.body.append(summary, policyBox, list);
   return panel.element;
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }

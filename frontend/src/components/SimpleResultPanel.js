@@ -5,6 +5,7 @@ export function createSimpleResultPanel({
   replacedText,
   protectedCount,
   previewLabel = "최근 미리보기 결과",
+  policySummary,
 }) {
   const panel = createPanelFrame({
     title: "결과 확인",
@@ -17,6 +18,8 @@ export function createSimpleResultPanel({
   summary.innerHTML = `
     <strong class="simple-result__count">🔒 ${protectedCount}개 민감 정보를 가렸어요</strong>
     <p class="simple-result__label">${escapeHtml(previewLabel)}</p>
+    <p class="simple-result__policy">${escapeHtml(policySummary?.title || "")}</p>
+    <p class="simple-result__policy-meta">${escapeHtml(policySummary?.description || "")}</p>
     <p class="simple-result__hint">💡 이제 이걸 복사해서 AI에 붙여넣으세요!</p>
   `;
 

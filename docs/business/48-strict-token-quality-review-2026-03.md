@@ -15,7 +15,8 @@
   - 탐지 / 치환 / 리포트
 - 리뷰 입력 세트:
   - internal sample set
-  - quality harness baseline + observe-only samples
+- quality harness baseline + observe-only samples
+  - OCR-like baseline + OCR-like observe-only samples
 
 ## 현재 정책 정의
 
@@ -50,6 +51,8 @@
 ### baseline 판단
 
 - strict_token 기준으로 현재 baseline 샘플은 전부 `baseline-pass`
+- OCR-like baseline 샘플도 현재 strict_token 기준으로 `baseline-pass`
+- backend PDF 품질 샘플도 현재 기준선에서 통과한다
 - observe-only 샘플은 의도대로 현재 한계를 드러내는 용도로 유지
 
 ## 샘플 기준 품질 평가
@@ -106,6 +109,8 @@
 
 특히 `report.strategy = strict_token` 이 실제로 현재 정책과 일치하므로, 프론트와 백엔드, 엔진 설명이 어긋나지 않는다.
 
+현재 리포트 표준값은 `low-risk / moderate-risk / high-risk`, `alias / strict_token`, `clean / review-required` 로 고정한다.
+
 ## D. false positive / false negative 상태
 
 ### 줄어든 false negative
@@ -114,10 +119,17 @@
 - 비정형 전화번호
 - 한국어 혼합 금액 표현
 - 제한된 직함 없는 이름 문맥
+- OCR 추출본처럼 줄바꿈과 공백이 흔들린 연락처/금액 문맥
 
 ### 줄어든 false positive
 
 - `브랜드 대표` 문맥 PERSON 과탐 완화
+
+### 아직 남겨둔 OCR 한계
+
+- `O1O` 같은 숫자/문자 혼동 전화번호
+- `security @ ipu . co.kr` 같은 공백 분리 이메일
+- 텍스트 레이어 PDF 생성기에서 한글 금액 문자열 인코딩이 깨지는 합성 테스트 한계
 - `협력기업`, `외부회사`, `중견기업` 같은 generic suffix ORG 과탐 완화
 - `외부 담당에게` 같은 일반 명사 PERSON 과탐 완화
 

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from engine.src.contracts import Detection, Replacement, SessionMapping
-from engine.src.session_store import InMemorySessionStore
+from engine.src.session_store import SessionStore
 
 
 class TokenReplacer:
-    def __init__(self, session_store: InMemorySessionStore) -> None:
+    def __init__(self, session_store: SessionStore) -> None:
         self._session_store = session_store
 
     def replace(

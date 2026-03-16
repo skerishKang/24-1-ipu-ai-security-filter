@@ -153,6 +153,16 @@ class RegexDetector:
         "에게 회신",
         "에게 보내",
     )
+    _STRICT_OBFUSCATED_EMAIL_PATTERN = re.compile(
+        r"""
+        [A-Z0-9._%+-]+\s+(?:at|AT)\s+[A-Z0-9.-]+
+        (?:
+            \s+(?:dot|DOT)\s+[A-Z]{2,}
+        )+
+        (?:\s+[A-Z]{2,})?
+        """,
+        re.IGNORECASE | re.VERBOSE,
+    )
 
     def __init__(self) -> None:
         self._patterns = self._build_patterns()
@@ -186,18 +196,8 @@ class RegexDetector:
             DetectionPattern(
                 type="EMAIL",
                 regex=re.compile(
-                    r"""
-                    (?:
-                        [A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}
-                        |
-                        [A-Z0-9._%+-]+\s+(?:at|AT)\s+[A-Z0-9.-]+
-                        (?:
-                            \s+(?:dot|DOT)\s+[A-Z]{2,}
-                        )+
-                        (?:\s+[A-Z]{2,})?
-                    )
-                    """,
-                    re.IGNORECASE | re.VERBOSE,
+                    r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}",
+                    re.IGNORECASE,
                 ),
                 reason="외부 전송 시 이메일 주소 직접 노출 방지",
             ),
@@ -277,6 +277,7 @@ class RegexDetector:
                 )
         if policy == "strict_token":
             candidates.extend(self._find_strict_person_candidates(content, len(self._patterns)))
+            candidates.extend(self._find_strict_obfuscated_email_candidates(content, len(self._patterns) + 1))
         return candidates
 
     def _is_valid_candidate(self, detection_type: str, label: str) -> bool:
@@ -342,6 +343,22 @@ class RegexDetector:
                     start=match.start(1),
                     end=match.end(1),
                     reason="직함 없는 실명 문맥 보강",
+                    priority=priority,
+                )
+            )
+        return candidates
+
+    def _find_strict_obfuscated_email_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
+        candidates: list[DetectionCandidate] = []
+        for match in self._STRICT_OBFUSCATED_EMAIL_PATTERN.finditer(content):
+            label = match.group(0).strip()
+            candidates.append(
+                DetectionCandidate(
+                    type="EMAIL",
+                    label=label,
+                    start=match.start(),
+                    end=match.end(),
+                    reason="변형 이메일 표기까지 보수적으로 보호",
                     priority=priority,
                 )
             )

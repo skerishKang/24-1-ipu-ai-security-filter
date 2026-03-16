@@ -1,0 +1,25 @@
+sample_id: meeting-audio-sample-003
+title: 3명 이상 회의 녹음 샘플 후보
+sample_status: planned
+source_type: multi_speaker_meeting
+duration_seconds: 180
+speaker_count: 3
+language_profile: ko_en_mixed
+environment_profile: online_meeting_compressed
+overlap_level: moderate
+sensitive_content_profile: high
+demo_suitability: not_for_demo
+diarization_interest: high
+storage_path: TBD
+asset_acquisition_todo_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/34-sample-003-asset-acquisition-todo.md
+notes: 아직 실제 3명 이상 회의 녹음 자산은 큐레이션되지 않았다. 실제 파일 확보 전까지 planned sample 메타로 유지한다.
+expected_risks:
+  - 화자 교대와 겹침 발화가 섞여 plain-text 전사만으로는 해석이 크게 흔들릴 수 있다
+  - 이름, 직함, 연락처, 금액 등 민감정보가 회의 문맥 안에서 혼합될 수 있다
+  - diarization이 없으면 발화자 기준 검토와 복원 전략을 분리하기 어렵다
+  - 긴 음성 처리 비용과 warm/cold 편차 때문에 benchmark 기준도 흔들릴 수 있다
+whisper_observation_status: untested
+privacy_status: anonymized
+segment_ready: no
+benchmark_ready: no
+observation_note_path: ""

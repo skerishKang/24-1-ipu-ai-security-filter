@@ -1,7 +1,9 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from engine.src.manual_preview_engine import ManualPreviewEngine
-from engine.src.session_store import InMemorySessionStore
+from engine.src.session_store import InMemorySessionStore, SQLiteSessionStore
 
 
 class FakeClock:
@@ -31,6 +33,9 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertEqual(preview["original_text"], content)
         self.assertIn("replaced_text", preview)
         self.assertGreaterEqual(preview["report"]["total_detections"], 1)
+        self.assertIn(preview["report"]["risk_level"], {"low-risk", "moderate-risk", "high-risk"})
+        self.assertIn(preview["report"]["strategy"], {"alias", "strict_token"})
+        self.assertIn(preview["report"]["review_status"], {"clean", "review-required"})
         self.assertTrue(preview["detections"])
         self.assertTrue(preview["replacements"])
         self.assertIn("[Redacted Input]", preview["copy_ready_prompt"])
@@ -159,6 +164,29 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertIn("[EMAIL_", preview["replaced_text"])
         self.assertIn("[PERSON_", preview["replaced_text"])
 
+    def test_default_policy_skips_obfuscated_email_but_strict_token_detects_it(self) -> None:
+        content = "문의는 security at ipu dot co kr 로 보내고, 박지은에게 먼저 공유해 주세요."
+
+        default_preview = self.engine.manual_preview(
+            content=content,
+            session_id="ipu-default-obfuscated-email",
+            policy="default",
+        )
+        strict_preview = self.engine.manual_preview(
+            content=content,
+            session_id="ipu-strict-obfuscated-email-compare",
+            policy="strict_token",
+        )
+
+        default_types = {item["type"] for item in default_preview["detections"]}
+        strict_types = {item["type"] for item in strict_preview["detections"]}
+
+        self.assertEqual(default_types, set())
+        self.assertIn("EMAIL", strict_types)
+        self.assertIn("PERSON", strict_types)
+        self.assertNotIn("[EMAIL_ALIAS_", default_preview["replaced_text"])
+        self.assertIn("[EMAIL_", strict_preview["replaced_text"])
+
     def test_strict_token_rejects_generic_person_phrase(self) -> None:
         preview = self.engine.manual_preview(
             content="브랜드 대표 색상은 청록색이며, 소개 문구는 다음 주에 교체합니다.",
@@ -179,6 +207,50 @@ class ManualPreviewEngineTest(unittest.TestCase):
 
         self.assertEqual(replaced_text, "민감정보 없는 일반 문장입니다.")
         self.assertEqual(replacements, [])
+
+    def test_sqlite_session_store_restores_after_engine_restart(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            db_path = Path(temp_dir) / "session_store.sqlite3"
+            first_engine = ManualPreviewEngine(
+                session_store=SQLiteSessionStore(db_path=db_path, ttl_seconds=900)
+            )
+            content = "문의는 010-1234-5678 또는 contact@ipu.co.kr 로 주세요."
+
+            preview = first_engine.manual_preview(
+                content=content,
+                session_id="ipu-sqlite-restart-session",
+                policy="strict_token",
+            )
+
+            second_engine = ManualPreviewEngine(
+                session_store=SQLiteSessionStore(db_path=db_path, ttl_seconds=900)
+            )
+            restored = second_engine.restore(
+                preview["replaced_text"],
+                "ipu-sqlite-restart-session",
+            )
+
+            self.assertEqual(restored, content)
+
+    def test_sqlite_session_store_cleans_up_expired_sessions(self) -> None:
+        clock = FakeClock()
+        with TemporaryDirectory() as temp_dir:
+            db_path = Path(temp_dir) / "session_store.sqlite3"
+            session_store = SQLiteSessionStore(
+                db_path=db_path,
+                ttl_seconds=1,
+                clock=clock.now,
+            )
+            engine = ManualPreviewEngine(session_store=session_store)
+            content = "문의는 010-1234-5678 또는 contact@ipu.co.kr 로 주세요."
+
+            preview = engine.manual_preview(content=content, session_id="ipu-sqlite-ttl")
+            self.assertEqual(engine.restore(preview["replaced_text"], "ipu-sqlite-ttl"), content)
+
+            clock.advance(2)
+            session_store.cleanup_expired_sessions()
+
+            self.assertEqual(engine.restore(preview["replaced_text"], "ipu-sqlite-ttl"), preview["replaced_text"])
 
 
 if __name__ == "__main__":

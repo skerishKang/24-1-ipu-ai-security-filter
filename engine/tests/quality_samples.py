@@ -146,6 +146,38 @@ QUALITY_SAMPLES: tuple[QualitySample, ...] = (
         expected_token_types=("ORG", "PERSON", "EMAIL", "PHONE", "AMOUNT"),
     ),
     QualitySample(
+        sample_id="ocr_scan_mixed_contact_sheet",
+        description="OCR 추출본처럼 줄바꿈이 섞인 연락처 시트",
+        sample_group="ocr-baseline",
+        content=(
+            "미래전자\n"
+            "김민수 부장\n"
+            "security@ipu.co.kr\n"
+            "010 2222 3333\n"
+            "계약금액 120,000,000 원"
+        ),
+        minimum_detections=5,
+        expected_types=("ORG", "PERSON", "EMAIL", "PHONE", "AMOUNT"),
+        expected_token_types=("ORG", "PERSON", "EMAIL", "PHONE", "AMOUNT"),
+        observation_note="줄바꿈과 띄어쓰기가 섞인 OCR 본문에서도 핵심 패턴은 유지돼야 한다",
+    ),
+    QualitySample(
+        sample_id="ocr_scan_internal_report",
+        description="스캔 보고서형 OCR 본문",
+        sample_group="ocr-baseline",
+        content=(
+            "아이피유테크 주간 보고\n"
+            "이준호 과장\n"
+            "support@ipu.co.kr\n"
+            "02 3456 7890\n"
+            "예산 75,000,000 원 검토"
+        ),
+        minimum_detections=5,
+        expected_types=("ORG", "PERSON", "EMAIL", "PHONE", "AMOUNT"),
+        expected_token_types=("ORG", "PERSON", "EMAIL", "PHONE", "AMOUNT"),
+        observation_note="보고서형 OCR 텍스트에서 연락처와 금액, 조직, 담당자 검출을 유지한다",
+    ),
+    QualitySample(
         sample_id="false_positive_candidate",
         description="false positive 가능 문맥",
         sample_group="observe-only",
@@ -174,5 +206,25 @@ QUALITY_SAMPLES: tuple[QualitySample, ...] = (
         expected_types=(),
         expected_token_types=(),
         observation_note="generic suffix 용어는 조직명으로 과탐하지 않아야 한다",
+    ),
+    QualitySample(
+        sample_id="ocr_observe_confused_digits",
+        description="OCR 숫자/문자 혼동 관찰용",
+        sample_group="ocr-observe",
+        content="긴급 연락처는 O1O-2222-3333 이고 문의 메일은 securlty@ipu.co.kr 로 보입니다.",
+        minimum_detections=0,
+        expected_types=(),
+        expected_token_types=(),
+        observation_note="O와 0, l과 i 혼동은 현재 정규식 기반 탐지 한계로 남겨 둔다",
+    ),
+    QualitySample(
+        sample_id="ocr_observe_spaced_email",
+        description="OCR 공백 분리 이메일 관찰용",
+        sample_group="ocr-observe",
+        content="외부 문의는 security @ ipu . co.kr 로 보내고, 회신은 운영팀이 담당합니다.",
+        minimum_detections=0,
+        expected_types=(),
+        expected_token_types=(),
+        observation_note="기호 주변 공백이 많은 OCR 이메일은 아직 직접 패턴으로 잡지 못한다",
     ),
 )
