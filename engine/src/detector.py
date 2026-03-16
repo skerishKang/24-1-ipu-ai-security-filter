@@ -135,6 +135,40 @@ class RegexDetector:
         "실",
         "팀",
     }
+    _ENGLISH_PERSON_TITLES = (
+        "Dr\\.",
+        "Drs\\.",
+        "Prof\\.",
+        "Prof\\s+\\.",
+        "Mr\\.",
+        "Ms\\.",
+        "Mrs\\.",
+        "Miss\\.",
+    )
+    _ENGLISH_ORG_SUFFIXES = (
+        "Inc\\.",
+        "Corp\\.",
+        "LLC",
+        "Ltd\\.",
+        "Co\\.",
+        "Holdings",
+        "Group",
+        "Technologies",
+        "Systems",
+        "Solutions",
+        "Enterprises",
+        "Partners",
+    )
+    _ENGLISH_PERSON_NAME_INDICATORS = (
+        "CEO", "CTO", "CFO", "COO", "CMO", "CIO", "VP",
+        "Director", "Manager", "Lead", "Engineer", "Developer",
+        "Designer", "Analyst", "Consultant", "Advisor", "Attorney",
+    )
+    _ENGLISH_GENERIC_WORDS = {
+        "company", "corporation", "incorporated", "limited", "llc", "inc", "corp",
+        "the company", "this company", "our company", "your company",
+        "example", "sample", "test", "demo", "mock", "fake",
+    }
     _STRICT_BARE_NAME_PARTICLES = (
         "에게",
         "에게는",
@@ -191,6 +225,9 @@ class RegexDetector:
     def _build_patterns(self) -> list[DetectionPattern]:
         person_titles = "|".join(sorted(self._PERSON_TITLES, key=len, reverse=True))
         org_suffixes = "|".join(sorted(self._ORG_SUFFIXES, key=len, reverse=True))
+        english_person_titles = "|".join(sorted(self._ENGLISH_PERSON_TITLES, key=len, reverse=True))
+        english_org_suffixes = "|".join(sorted(self._ENGLISH_ORG_SUFFIXES, key=len, reverse=True))
+        english_person_indicators = "|".join(sorted(self._ENGLISH_PERSON_NAME_INDICATORS, key=len, reverse=True))
 
         return [
             DetectionPattern(
@@ -214,7 +251,7 @@ class RegexDetector:
                         \d{1,3}(?:,\d{3})+(?:\.\d+)?\s*(?:원|천원|만원|천만원|억원|조원)
                         |
                         \d+(?:\.\d+)?\s*(?:조|억|천만|백만|십만|만|천|백|십)
-                        (?:\s*\d+(?:\.\d+)?\s*(?:천만|백만|십만|만|천|백|십))*
+                        (?:\s*\d+(?:\.\d+)?\s*(?:천만|백만|십만|万|천|백|십))*
                         \s*원?
                         |
                         [일이삼사오육칠팔구영공십백천만억조]+\s*
@@ -234,9 +271,13 @@ class RegexDetector:
                         [가-힣]{{2,4}}\s*(?:{person_titles})(?:님)?
                         |
                         (?:{person_titles})\s+[가-힣]{{2,4}}
+                        |
+                        (?:{english_person_titles})\s+[A-Z][a-z]{{1,15}}\s+[A-Z][a-z]{{1,15}}
+                        |
+                        [A-Z][a-z]{{1,15}}\s+[A-Z][a-z]{{1,15}}\s*,\s*(?:{english_person_indicators})
                     )
                     """,
-                    re.VERBOSE,
+                    re.VERBOSE | re.IGNORECASE,
                 ),
                 reason="담당자 실명 및 직함 보호",
             ),
@@ -245,12 +286,14 @@ class RegexDetector:
                 regex=re.compile(
                     rf"""
                     (?:
-                        (?:주식회사|\(주\)|㈜)\s*[가-힣A-Za-z0-9]+(?:\s*[가-힣A-Za-z0-9]+){{0,2}}
+                        (?:주식회사|\(주\)|재단)\s*[가-힣A-Za-z0-9]+(?:\s*[가-힣A-Za-z0-9]+){{0,2}}
                         |
                         [가-힣A-Za-z0-9]{{2,}}(?:{org_suffixes})
+                        |
+                        (?:[A-Z][a-zA-Z0-9]{{1,25}}\s+){{1,3}}(?:{english_org_suffixes})
                     )
                     """,
-                    re.VERBOSE,
+                    re.VERBOSE | re.IGNORECASE,
                 ),
                 reason="조직명 보호",
             ),
@@ -287,22 +330,9 @@ class RegexDetector:
             return self._is_valid_person_candidate(label)
         return True
 
-    def _is_valid_org_candidate(self, label: str) -> bool:
-        normalized = re.sub(r"\s+", "", label)
-        if normalized in self._GENERIC_ORG_LABELS:
-            return False
-
-        if normalized.startswith(("주식회사", "(주)", "㈜")):
-            body = normalized
-            for prefix in ("주식회사", "(주)", "㈜"):
-                if body.startswith(prefix):
-                    body = body[len(prefix):]
-                    break
-            return len(body) >= 2
-
-        return normalized not in self._ORG_SUFFIXES
-
     def _is_valid_person_candidate(self, label: str) -> bool:
+        if re.search(r"[A-Za-z]", label):
+            return self._is_valid_english_person(label)
         normalized = re.sub(r"\s+", "", label)
         core_name = normalized
 
@@ -324,6 +354,65 @@ class RegexDetector:
         if core_name in self._GENERIC_PERSON_LABELS:
             return False
         return core_name.isalpha() and all("가" <= char <= "힣" for char in core_name)
+
+    def _is_valid_org_candidate(self, label: str) -> bool:
+        if re.search(r"[A-Za-z]", label):
+            return self._is_valid_english_org(label)
+        normalized = re.sub(r"\s+", "", label)
+        if normalized in self._GENERIC_ORG_LABELS:
+            return False
+
+        if normalized.startswith(("주식회사", "(주)", "재단", "협회")):
+            body = normalized
+            for prefix in ("주식회사", "(주)", "재단", "협회"):
+                if body.startswith(prefix):
+                    body = body[len(prefix):]
+                    break
+            return len(body) >= 2
+
+        return normalized not in self._ORG_SUFFIXES
+
+    def _is_valid_english_person(self, label: str) -> bool:
+        if not label:
+            return False
+        label_clean = label.strip()
+        if "," in label_clean:
+            label_clean = label_clean.split(",")[0].strip()
+        for title in ("Dr.", "Drs.", "Prof.", "Mr.", "Ms.", "Mrs.", "Miss."):
+            label_clean = label_clean.replace(title, "").strip()
+        parts = label_clean.split()
+        if len(parts) != 2:
+            return False
+        first, last = parts
+        if not (first[0].isupper() and first[1:].islower() and last[0].isupper() and last[1:].islower()):
+            return False
+        return True
+
+    def _is_valid_english_org(self, label: str) -> bool:
+        if not label:
+            return False
+        label_lower = label.lower().strip()
+        
+        # Reject generic words
+        for generic in self._ENGLISH_GENERIC_WORDS:
+            if label_lower == generic or label_lower.startswith("the " + generic):
+                return False
+        
+        # Check if it has an org suffix
+        org_suffixes_lower = {s.lower() for s in self._ENGLISH_ORG_SUFFIXES}
+        for part in label.split():
+            if part.rstrip(".").lower() in org_suffixes_lower:
+                return True
+        
+        # If no suffix, must be 2+ words (e.g., "Samsung Electronics")
+        parts = label.split()
+        if len(parts) >= 2:
+            # Avoid single common words like "announced", "meeting", etc.
+            common_verbs = {"announced", "meeting", "report", "summary", "update", "following", "regarding", "attached", "please", "kindly", "regards", "thanks", "dear", "hello", "hi"}
+            if label_lower not in common_verbs:
+                return True
+        
+        return False
 
     def _find_strict_person_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
         particles = "|".join(re.escape(item) for item in sorted(self._STRICT_BARE_NAME_PARTICLES, key=len, reverse=True))
@@ -384,7 +473,7 @@ class RegexDetector:
     def _is_enabled_for_policy(self, detection_type: str, policy: str) -> bool:
         if policy == "strict_token":
             return True
-        return detection_type in {"EMAIL", "PHONE", "PERSON"}
+        return detection_type in {"EMAIL", "PHONE", "PERSON", "ORG"}
 
     def _score_for_policy(self, policy: str) -> float:
         if policy == "strict_token":
