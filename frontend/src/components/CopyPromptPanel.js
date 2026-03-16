@@ -41,22 +41,29 @@ export function createCopyPromptPanel({
     `;
   }
 
+  const isReadyToCopy = !readiness || readiness.ready_to_send !== false;
+  const copyButtonLabel = isReadyToCopy ? "프롬프트 복사" : "⚠️ 재검토 필요";
+
   const actions = document.createElement("div");
   actions.className = "copy-panel__actions";
   actions.innerHTML = `
-    <span class="copy-panel__status">복사 후 외부 AI에 직접 붙여넣는 수동 모드 전용 흐름입니다.</span>
-    <button type="button" class="button button--ghost">프롬프트 복사</button>
+    <span class="copy-panel__status">${isReadyToCopy ? "복사 후 외부 AI에 직접 붙여넣는 수동 모드 전용 흐름입니다." : "보안 검토가 필요합니다. 위 메시지를 확인 후 다시 시도해 주세요."}</span>
+    <button type="button" class="button button--ghost" data-testid="copy-prompt" ${!isReadyToCopy ? "disabled" : ""}>${copyButtonLabel}</button>
   `;
 
   const status = actions.querySelector(".copy-panel__status");
-  actions.querySelector("button").addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(copyReadyPrompt);
-      status.textContent = "클립보드에 치환 프롬프트를 복사했습니다.";
-    } catch (error) {
-      status.textContent = "브라우저 권한 문제로 복사에 실패했습니다.";
-    }
-  });
+  const copyButton = actions.querySelector("[data-testid='copy-prompt']");
+  
+  if (isReadyToCopy) {
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(copyReadyPrompt);
+        status.textContent = "클립보드에 치환 프롬프트를 복사했습니다.";
+      } catch (error) {
+        status.textContent = "브라우저 권한 문제로 복사에 실패했습니다.";
+      }
+    });
+  }
 
   const restoreSection = document.createElement("div");
   restoreSection.className = "copy-panel__restore";
