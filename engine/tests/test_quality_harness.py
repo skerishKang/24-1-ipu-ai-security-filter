@@ -60,7 +60,7 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
         self.assertIn("[PERSON_ALIAS_", preview["replaced_text"])
         self.assertIn("[EMAIL_ALIAS_", preview["replaced_text"])
         self.assertIn("[PHONE_ALIAS_", preview["replaced_text"])
-        self.assertNotIn("[ORG_ALIAS_", preview["replaced_text"])
+        self.assertIn("[ORG_ALIAS_", preview["replaced_text"])
         self.assertNotIn("[AMOUNT_ALIAS_", preview["replaced_text"])
 
     def test_default_policy_leaves_obfuscated_email_sample_visible_while_strict_catches_it(self) -> None:

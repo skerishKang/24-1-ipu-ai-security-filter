@@ -130,11 +130,11 @@ class ManualPreviewEngineTest(unittest.TestCase):
         default_types = {item["type"] for item in default_preview["detections"]}
         strict_types = {item["type"] for item in strict_preview["detections"]}
 
-        self.assertEqual(default_types, {"PERSON", "EMAIL", "PHONE"})
+        self.assertEqual(default_types, {"ORG", "PERSON", "EMAIL", "PHONE"})
         self.assertEqual(strict_types, {"ORG", "PERSON", "EMAIL", "PHONE", "AMOUNT"})
         self.assertIn("[PERSON_ALIAS_", default_preview["replaced_text"])
         self.assertIn("[PERSON_", strict_preview["replaced_text"])
-        self.assertNotIn("[ORG_ALIAS_", default_preview["replaced_text"])
+        self.assertIn("[ORG_ALIAS_", default_preview["replaced_text"])
         self.assertIn("[ORG_", strict_preview["replaced_text"])
         self.assertNotIn("[AMOUNT_ALIAS_", default_preview["replaced_text"])
         self.assertIn("[AMOUNT_", strict_preview["replaced_text"])
