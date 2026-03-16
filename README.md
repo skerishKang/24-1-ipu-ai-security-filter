@@ -29,6 +29,22 @@ IPU AI Security Filter는 민감정보를 내부에서 탐지, 치환, 복원한
 - WSL mounted drive 환경에서 backend 테스트가 느리면 `scripts/ensure_fast_backend_venv.sh` 로 `/tmp` 기반 빠른 검증용 venv를 준비할 수 있다
 - demo-stack 기동 전에는 `scripts/check_demo_stack_deps.py` 로 Python/Node/OCR 도구 상태를 확인할 수 있다
 
+## 주요 환경변수
+
+| 변수 | 기본값 | 설명 |
+| --- | --- | --- |
+| `IPU_SESSION_STORE_KIND` | `sqlite` | 세션 저장소 종류. 세션 히스토리 API는 `sqlite` 모드에서만 지원한다. |
+| `IPU_SESSION_STORE_PATH` | `data/runtime/manual_preview_sessions.sqlite3` | SQLite 세션 DB 경로 |
+| `IPU_SESSION_TTL_SECONDS` | `900` | 세션 TTL(초) |
+| `IPU_AUDIO_TRANSCRIBER` | `whisper` | 음성 전사기 종류 (`whisper`, `placeholder`) |
+| `IPU_WHISPER_MODEL_NAME` | `small` | Whisper 모델 이름 |
+| `IPU_WHISPER_MODEL_DIR` | 환경별 기본 경로 | Whisper 모델 디렉터리 override |
+| `IPU_WHISPER_LANGUAGE` | `auto` | Whisper 언어 설정. `auto`면 자동 감지 |
+| `IPU_WHISPER_TASK` | `transcribe` | Whisper 작업 종류 |
+| `IPU_WHISPER_USE_GPU` | `true` | GPU 사용 여부 |
+
+세션 히스토리 API와 관련된 운영 기준은 [`docs/development/41-session-history-api.md`](./docs/development/41-session-history-api.md)를 따른다.
+
 ## 서비스 정의
 
 - 사용자가 텍스트, 문서, 음성 데이터를 업로드한다.

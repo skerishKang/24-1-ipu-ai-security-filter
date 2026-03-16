@@ -11,6 +11,7 @@ venv/
 .venv*/
 *.venv*/
 backend/DdriveBatangDtaskworkdiary24-1-ipu-ai-security-filterbackend.venv-win/
+*.egg-info/
 
 # Node / browser test artifacts
 node_modules/

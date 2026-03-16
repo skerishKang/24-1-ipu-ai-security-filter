@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from engine.src.session_store import (
-    InMemorySessionStore,
     SessionStore,
     SQLiteSessionStore,
 )
