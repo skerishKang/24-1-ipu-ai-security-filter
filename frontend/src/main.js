@@ -50,6 +50,7 @@ const state = {
   isLoading: false,
   source: "mock",
   policy: "default",
+  taskType: "",
   inputMode: "text",
   selectedFile: null,
   selectedFileName: "",
@@ -61,6 +62,10 @@ const state = {
   restoredText: "",
   restoreStatus: "아직 복원 테스트를 실행하지 않았습니다.",
   isRestoring: false,
+  aiResponseText: "",
+  aiRestoreStatus: "외부 AI 응답을 복원하려면 먼저 응답을 붙여넣고 버튼을 누르세요.",
+  aiRestoredText: "",
+  isAiRestoring: false,
 };
 
 function getPolicySummary(policy) {
@@ -74,18 +79,22 @@ function getSessionBadge() {
   return `${state.preview.session_id} · ${state.source}`;
 }
 
-async function updatePreview(nextText, policy = state.policy) {
+async function updatePreview(nextText, policy = state.policy, taskType = state.taskType) {
   state.originalText = nextText;
   state.policy = policy;
+  state.taskType = taskType;
   state.lastPreviewLabel = "텍스트 입력 결과";
   state.restoredText = "";
   state.restoreStatus = "아직 복원 테스트를 실행하지 않았습니다.";
+  state.aiResponseText = "";
+  state.aiRestoreStatus = "외부 AI 응답을 복원하려면 먼저 응답을 붙여넣고 버튼을 누르세요.";
+  state.aiRestoredText = "";
   state.isLoading = true;
   state.status = createStatus(STATUS_TYPES.BACKEND_REQUEST_LOADING, { policy });
   render();
 
   try {
-    const preview = await fetchManualPreview(nextText, policy);
+    const preview = await fetchManualPreview(nextText, policy, taskType);
     state.preview = preview;
     state.source = "backend";
     state.status = createStatus(STATUS_TYPES.BACKEND_SUCCESS, { policy });
@@ -294,6 +303,38 @@ async function restoreCurrentPreview() {
   }
 }
 
+async function restoreAiResponse() {
+  if (!state.preview?.session_id || !state.aiResponseText) {
+    state.aiRestoreStatus = "세션 정보가 없거나 복원할 응답이 없습니다.";
+    render();
+    return;
+  }
+
+  state.isAiRestoring = true;
+  state.aiRestoreStatus = "외부 AI 응답을 복원하는 중입니다.";
+  render();
+
+  try {
+    const restored = await restoreManualPreview(
+      state.preview.session_id,
+      state.aiResponseText,
+    );
+    state.aiRestoredText = restored.restored_text;
+    state.aiRestoreStatus = restored.restored
+      ? "AI 응답 복원이 완료되었습니다."
+      : "복원할 토큰이 없어 그대로 반환되었습니다.";
+  } catch (error) {
+    state.aiRestoreStatus = error?.message || "AI 응답 복원에 실패했습니다.";
+  } finally {
+    state.isAiRestoring = false;
+    render();
+  }
+}
+
+function handleAiResponseChange(text) {
+  state.aiResponseText = text;
+}
+
 function getHeroCopy() {
   if (state.uiMode === "general") {
     return {
@@ -420,6 +461,9 @@ function render() {
     onPolicyChange: (policy) => {
       state.policy = policy;
     },
+    onTaskTypeChange: (taskType) => {
+      state.taskType = taskType;
+    },
     selectedFileName: state.selectedFileName,
     selectedFileContent: state.selectedFileContent,
     isDragActive: state.isDragActive,
@@ -461,10 +505,17 @@ function render() {
 
     const copyPanel = createCopyPromptPanel({
       copyReadyPrompt: state.preview.copy_ready_prompt,
+      readiness: state.preview.readiness,
       onRestore: restoreCurrentPreview,
       restoredText: state.restoredText,
       restoreStatus: state.restoreStatus,
       isRestoring: state.isRestoring,
+      aiResponseText: state.aiResponseText,
+      onAiResponseChange: handleAiResponseChange,
+      onRestoreAiResponse: restoreAiResponse,
+      aiRestoreStatus: state.aiRestoreStatus,
+      aiRestoredText: state.aiRestoredText,
+      isAiRestoring: state.isAiRestoring,
     });
 
     shell.querySelector("[data-slot='result']").append(resultPanel);

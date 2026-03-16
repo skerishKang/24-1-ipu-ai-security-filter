@@ -5,8 +5,8 @@ import {
   getManualPreviewUrl,
 } from "../config.js";
 
-export async function fetchManualPreview(content, policy = "default") {
-  const payload = buildManualPreviewPayload(content, policy);
+export async function fetchManualPreview(content, policy = "default", taskType = "") {
+  const payload = buildManualPreviewPayload(content, policy, taskType);
   const manualPreviewUrl = getManualPreviewUrl();
 
   let response;
@@ -177,12 +177,16 @@ export async function restoreManualPreview(sessionId, replacedText) {
   };
 }
 
-export function buildManualPreviewPayload(content, policy = "default") {
-  return {
+export function buildManualPreviewPayload(content, policy = "default", taskType = "") {
+  const payload = {
     content,
     content_type: "text",
     policy,
   };
+  if (taskType) {
+    payload.task_type = taskType;
+  }
+  return payload;
 }
 
 function normalizeManualPreviewResponse(data) {
@@ -198,6 +202,7 @@ function normalizeManualPreviewResponse(data) {
       strategy: normalizeStrategy(data.report?.strategy),
       review_status: normalizeReviewStatus(data.report?.review_status),
     },
+    readiness: normalizeReadiness(data.readiness),
     copy_ready_prompt: data.copy_ready_prompt ?? "",
   };
 }
@@ -224,6 +229,28 @@ function normalizeReviewStatus(value) {
   }
 
   return "clean";
+}
+
+function normalizeReadiness(readiness) {
+  if (!readiness) {
+    return {
+      ready_to_send: true,
+      review_status: "pass",
+      reason: "Readiness 정보 없음 (안전으로 간주)",
+      remaining_risks: [],
+      detection_count: 0,
+      risk_level: "low-risk",
+    };
+  }
+
+  return {
+    ready_to_send: Boolean(readiness.ready_to_send),
+    review_status: readiness.review_status ?? "pass",
+    reason: readiness.reason ?? "",
+    remaining_risks: Array.isArray(readiness.remaining_risks) ? readiness.remaining_risks : [],
+    detection_count: Number(readiness.detection_count) ?? 0,
+    risk_level: readiness.risk_level ?? "low-risk",
+  };
 }
 
 function createApiError(code, message) {

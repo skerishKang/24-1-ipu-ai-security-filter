@@ -78,13 +78,30 @@ export function createInputPanel({
       <p class="input-panel__policy-summary-body">${escapeHtml(policySummary?.description || "")}</p>
       <p class="input-panel__policy-summary-meta">${escapeHtml(policySummary?.examples || "")}</p>
     </div>
+    <label class="input-panel__policy-label" style="margin-top: 12px;">
+      <span>작업 유형</span>
+      <select class="input-panel__policy-select" data-testid="task-type-select">
+        <option value="">없음 (기본 프롬프트)</option>
+        <option value="summarize">요약</option>
+        <option value="risk_review">리스크 검토</option>
+        <option value="action_items">액션 아이템 추출</option>
+      </select>
+    </label>
+    <p class="input-panel__policy-hint">외부 AI에 요청할 작업을 선택하세요.</p>
   `;
-  const policySelect = policyRow.querySelector("select");
+  const policySelect = policyRow.querySelector("select[data-testid='policy-select']");
+  const taskTypeSelect = policyRow.querySelector("select[data-testid='task-type-select']");
   policySelect.value = policy;
   policySelect.disabled = isLoading;
+  taskTypeSelect.disabled = isLoading;
   policySelect.addEventListener("change", () => {
     onPolicyChange(policySelect.value);
   });
+  if (onTaskTypeChange) {
+    taskTypeSelect.addEventListener("change", () => {
+      onTaskTypeChange(taskTypeSelect.value);
+    });
+  }
 
   const textarea = document.createElement("textarea");
   textarea.className = "input-panel__textarea";

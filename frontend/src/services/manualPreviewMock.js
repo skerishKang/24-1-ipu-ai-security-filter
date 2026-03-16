@@ -33,7 +33,7 @@ const PATTERNS = [
   },
 ];
 
-export function runManualPreviewMock(originalText, policy = "default") {
+export function runManualPreviewMock(originalText, policy = "default", taskType = "") {
   const sessionId = createSessionId();
   const detections = [];
   const replacements = [];
@@ -80,6 +80,7 @@ export function runManualPreviewMock(originalText, policy = "default") {
   }
 
   const report = buildMockReport(detections, replacements, strategy);
+  const readiness = buildMockReadiness(detections, report);
 
   return {
     session_id: sessionId,
@@ -88,7 +89,9 @@ export function runManualPreviewMock(originalText, policy = "default") {
     detections,
     replacements,
     report,
-    copy_ready_prompt: buildCopyReadyPrompt(replacedText, report),
+    task_type: taskType,
+    readiness,
+    copy_ready_prompt: buildCopyReadyPrompt(replacedText, report, taskType),
   };
 }
 
@@ -103,8 +106,62 @@ function buildMockReport(detections, replacements, strategy) {
   };
 }
 
-function buildCopyReadyPrompt(replacedText, report) {
-  return [
+function buildMockReadiness(detections, report) {
+  const totalDetections = detections.length;
+  const riskLevel = report.risk_level;
+  const reviewStatus = report.review_status;
+
+  let readyToSend = true;
+  let status = "pass";
+  let reason = "";
+  const remainingRisks = [...new Set(detections.map((d) => d.type))];
+
+  if (totalDetections === 0) {
+    readyToSend = true;
+    status = "pass";
+    reason = "탐지된 민감정보가 없습니다. 외부 전송이 안전합니다.";
+  } else if (reviewStatus === "clean") {
+    readyToSend = true;
+    status = "pass";
+    reason = "검토 상태가 clean입니다.";
+  } else if (riskLevel === "high-risk") {
+    readyToSend = false;
+    status = "fail";
+    reason = `높은 위험도(high-risk)로 탐지된 ${totalDetections}개의 민감정보를 먼저 검토해야 합니다.`;
+  } else if (riskLevel === "moderate-risk") {
+    readyToSend = false;
+    status = "review-required";
+    reason = `중간 위험도(moderate-risk)로 ${totalDetections}개의 민감정보가 탐지되었습니다. 전송 전 검토가 필요합니다.`;
+  } else {
+    readyToSend = false;
+    status = "review-required";
+    reason = `${totalDetections}개의 민감정보가 탐지되었습니다. 전송 전 검토가 필요합니다.`;
+  }
+
+  return {
+    ready_to_send: readyToSend,
+    review_status: status,
+    reason,
+    remaining_risks: remainingRisks,
+    detection_count: totalDetections,
+    risk_level: riskLevel,
+  };
+}
+
+const TASK_GUIDES = {
+  summarize: "아래 문서의 핵심 내용을 3~5문장 이내로 요약해 주세요.",
+  risk_review: "아래 문서에서 확인되는 잠재적 리스크와 문제점을 검토하고 정리해 주세요.",
+  action_items: "아래 문서에서 수행해야 할 작업이나 액션 아이템을 추출해 주세요.",
+};
+
+const RESPONSE_FORMAT_GUIDES = {
+  summarize: "요약은 단락으로 작성해 주세요.",
+  risk_review: "리스크 검토는 항목별로 (1) 리스크 내용 (2) 심각도 (3) 권장 조치 형태로 작성해 주세요.",
+  action_items: "액션 아이템은 체크리스트 형태로 작성해 주세요.",
+};
+
+function buildCopyReadyPrompt(replacedText, report, taskType = "") {
+  const lines = [
     "[IPU Manual Mode Prompt]",
     "아래 내용은 민감정보가 세션 기반 토큰으로 치환된 상태입니다.",
     "토큰을 유지한 채 문맥만 분석하고, 토큰의 실제 의미를 추정하지 마세요.",
@@ -113,7 +170,13 @@ function buildCopyReadyPrompt(replacedText, report) {
     `risk_level: ${report.risk_level}`,
     `review_status: ${report.review_status}`,
     "",
-    "[Redacted Input]",
-    replacedText,
-  ].join("\n");
+  ];
+
+  if (taskType && TASK_GUIDES[taskType]) {
+    lines.push("[Task]", TASK_GUIDES[taskType], "", "[Response Format]", RESPONSE_FORMAT_GUIDES[taskType], "");
+  }
+
+  lines.push("[Redacted Input]", replacedText);
+
+  return lines.join("\n");
 }

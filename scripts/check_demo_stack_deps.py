@@ -2,10 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import os
+import platform
 import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+
+def is_windows() -> bool:
+    return platform.system() == "Windows"
 
 
 @dataclass(frozen=True)
@@ -18,6 +24,22 @@ class DependencyCheck:
 
 def command_exists(command: str) -> bool:
     return shutil.which(command) is not None
+
+
+def check_venv_python(backend_dir: Path) -> bool:
+    if is_windows():
+        win_venv = backend_dir / ".venv-win" / "Scripts" / "python.exe"
+        if win_venv.exists():
+            return True
+        win_venv2 = backend_dir / ".venv" / "Scripts" / "python.exe"
+        if win_venv2.exists():
+            return True
+        return False
+    else:
+        linux_venv = backend_dir / ".venv" / "bin" / "python"
+        if linux_venv.exists():
+            return True
+        return False
 
 
 def build_checks(root: Path) -> list[DependencyCheck]:
@@ -38,10 +60,10 @@ def build_checks(root: Path) -> list[DependencyCheck]:
             detail=str(frontend_dir),
         ),
         DependencyCheck(
-            name="python3",
-            ok=command_exists("python3") or command_exists("python"),
+            name="python",
+            ok=command_exists("python") or command_exists("python3"),
             required=True,
-            detail="python3 or python",
+            detail="python or python3",
         ),
         DependencyCheck(
             name="node",
@@ -51,10 +73,7 @@ def build_checks(root: Path) -> list[DependencyCheck]:
         ),
         DependencyCheck(
             name="uvicorn-venv",
-            ok=(
-                (backend_dir / ".venv" / "bin" / "python").exists()
-                or (backend_dir / ".venv-win" / "Scripts" / "python.exe").exists()
-            ),
+            ok=check_venv_python(backend_dir),
             required=False,
             detail="preferred backend runtime; fallback python is still allowed",
         ),

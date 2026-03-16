@@ -16,6 +16,7 @@ from app.api.schemas.manual_preview import (
     ManualRestoreRequest,
     ManualRestoreResponse,
     ManualPreviewReport,
+    ManualPreviewReadiness,
     ManualPreviewRequest,
     ManualPreviewResponse,
     PolicyName,
@@ -62,6 +63,7 @@ class ManualPreviewService:
                 content_type=payload.content_type,
                 policy=payload.policy,
                 strategy=strategy,
+                task_type=payload.task_type,
             )
         except Exception as error:
             self._log_request_failed(
@@ -96,6 +98,7 @@ class ManualPreviewService:
                 ReplacementItem(**item) for item in engine_result["replacements"]
             ],
             report=ManualPreviewReport(**engine_result["report"]),
+            readiness=ManualPreviewReadiness(**engine_result["readiness"]),
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )
 
@@ -173,6 +176,7 @@ class ManualPreviewService:
                 ReplacementItem(**item) for item in engine_result["replacements"]
             ],
             report=ManualPreviewReport(**engine_result["report"]),
+            readiness=ManualPreviewReadiness(**engine_result["readiness"]),
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )
 
@@ -230,6 +234,7 @@ class ManualPreviewService:
             detections=[DetectionItem(**item) for item in engine_result["detections"]],
             replacements=[ReplacementItem(**item) for item in engine_result["replacements"]],
             report=ManualPreviewReport(**engine_result["report"]),
+            readiness=ManualPreviewReadiness(**engine_result["readiness"]),
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )
 

@@ -7,6 +7,7 @@ ContentTypeName = Literal["text"]
 ReportRiskLevelName = Literal["low-risk", "moderate-risk", "high-risk"]
 ReportStrategyName = Literal["alias", "strict_token"]
 ReportReviewStatusName = Literal["clean", "review-required"]
+TaskTypeName = Literal["summarize", "risk_review", "action_items"]
 
 
 class ManualPreviewRequest(BaseModel):
@@ -20,6 +21,10 @@ class ManualPreviewRequest(BaseModel):
     policy: PolicyName = Field(
         default="default",
         description="Security policy preset: default for readable preview, strict_token for conservative masking",
+    )
+    task_type: TaskTypeName | None = Field(
+        default=None,
+        description="Task type for secure prompt generation: summarize, risk_review, or action_items",
     )
 
 
@@ -46,6 +51,15 @@ class ManualPreviewReport(BaseModel):
     review_status: ReportReviewStatusName
 
 
+class ManualPreviewReadiness(BaseModel):
+    ready_to_send: bool
+    review_status: str
+    reason: str
+    remaining_risks: list[str]
+    detection_count: int
+    risk_level: str
+
+
 class ManualPreviewResponse(BaseModel):
     session_id: str
     original_text: str
@@ -53,6 +67,7 @@ class ManualPreviewResponse(BaseModel):
     detections: list[DetectionItem]
     replacements: list[ReplacementItem]
     report: ManualPreviewReport
+    readiness: ManualPreviewReadiness
     copy_ready_prompt: str
 
 
