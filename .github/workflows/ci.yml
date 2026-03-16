@@ -24,6 +24,9 @@ jobs:
           pip install -r backend/requirements.txt
           pip install -e .
 
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+
       - name: Run engine tests
         working-directory: engine
         run: python -m unittest discover -s tests -p "test_*.py" -v
