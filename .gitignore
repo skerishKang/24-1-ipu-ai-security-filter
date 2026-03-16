@@ -22,6 +22,9 @@ tests/screenshots/
 # Logs
 *.log
 
+# Runtime data
+data/runtime/
+
 # Environment / local overrides
 .env
 .env.*
@@ -31,3 +34,7 @@ tests/screenshots/
 Thumbs.db
 .idea/
 .vscode/
+
+# Local scripts
+auto.bat
+nul
