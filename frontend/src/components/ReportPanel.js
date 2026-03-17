@@ -2,15 +2,18 @@ import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createReportPanel({ detections, report, policySummary }) {
   const panel = createPanelFrame({
-    title: "3. 탐지 리포트",
+    title: "📋 3단계: 탐지 리포트",
     description:
-      "탐지 개수, 위험도, 분류별 상세 정보를 보여주며 현재 세션에서 어떤 민감정보가 마스킹됐는지 검토합니다.",
+      "탐지 결과를 확인하고 외부 전송 가능 여부를 판단하세요.",
     badge: report.risk_level,
     badgeVariant: "warning",
   });
 
   const summary = document.createElement("div");
   summary.className = "report-summary";
+  const nextStepText = report.review_status === "clean"
+    ? "✅ 탐지 사항 없음 - 오른쪽 '4단계'로 이동하여 프롬프트를 복사하세요."
+    : "⚠️ 탐지됨 - 오른쪽 '4단계'에서 보안 검토 후 진행하세요.";
   summary.innerHTML = `
     <div class="metric">
       <span class="metric__label">탐지 개수</span>
@@ -24,6 +27,9 @@ export function createReportPanel({ detections, report, policySummary }) {
       <span class="metric__label">검토 상태</span>
       <strong class="metric__value">${report.review_status}</strong>
     </div>
+    <p style="font-size: 13px; font-weight: 600; color: ${report.review_status === 'clean' ? '#22c55e' : '#ef4444'}; margin-top: 12px;">
+      ${nextStepText}
+    </p>
   `;
 
   const policyBox = document.createElement("div");
