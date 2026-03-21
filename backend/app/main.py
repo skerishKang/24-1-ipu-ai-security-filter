@@ -18,7 +18,7 @@ def _allowed_origins() -> list[str]:
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="IPU AI Security Filter Backend",
+        title="IPU AI Firewall Backend",
         description="Manual mode security replacement workbench API",
         version="0.1.0",
     )
@@ -33,7 +33,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     async def root() -> dict[str, str]:
-        return {"status": "running", "service": "ipu-ai-security-filter-backend"}
+        return {"status": "running", "service": "ipu-ai-firewall-backend"}
 
     @app.get("/health")
     async def health() -> dict[str, str]:

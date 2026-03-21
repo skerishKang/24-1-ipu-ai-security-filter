@@ -4,7 +4,7 @@ const { spawn } = require("node:child_process");
 const path = require("node:path");
 const { chromium } = require("playwright");
 
-const FRONTEND_DIR = "G:\\Ddrive\\BatangD\\task\\workdiary\\24-1-ipu-ai-security-filter\\frontend";
+const FRONTEND_DIR = "G:\\Ddrive\\BatangD\\task\\workdiary\\24-1-ipu-ai-firewall\\frontend";
 const BASE_URL = "http://127.0.0.1:4241";
 const SERVER_START_TIMEOUT_MS = 10000;
 
