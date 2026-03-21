@@ -1,8 +1,8 @@
-import { createPanelFrame } from "../ui/createPanelFrame.js";
+﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createInputPanel({
   title = "1. 문서 입력",
-  description = "검사할 텍스트를 붙여넣거나 문서/음성 파일을 업로드합니다.",
+  description = "검토할 텍스트를 붙여넣거나 문서·음성 파일을 업로드합니다.",
   value,
   inputMode,
   onModeChange,
@@ -23,12 +23,12 @@ export function createInputPanel({
   statusTone,
   showPolicy = true,
   allowAudioUpload = false,
-  metaText = "텍스트는 즉시 검사하고, 파일 업로드는 백엔드 처리 결과를 사용합니다.",
+  metaText = "텍스트는 즉시 실행하고, 파일과 음성은 백엔드 처리 결과를 사용합니다.",
 }) {
   const panel = createPanelFrame({
     title,
     description,
-    badge: "Inspection",
+    badge: "입력 점검",
   });
 
   const modeSwitch = document.createElement("div");
@@ -58,9 +58,9 @@ export function createInputPanel({
   modeHint.className = "input-panel__mode-hint";
   modeHint.textContent =
     inputMode === "audio"
-      ? "음성 파일을 업로드하면 전사 후 민감정보 검사를 진행합니다."
+      ? "음성 파일을 업로드하면 전사 후 민감정보 검토를 진행합니다."
       : inputMode === "file"
-        ? "문서 파일을 업로드하면 텍스트 추출 후 민감정보 검사를 진행합니다."
+        ? "문서 파일을 업로드하면 텍스트를 추출한 뒤 민감정보 검토를 진행합니다."
         : "검사할 텍스트를 직접 붙여넣어 결과를 확인합니다.";
 
   const policyRow = document.createElement("div");
@@ -131,8 +131,8 @@ export function createInputPanel({
       <strong>${inputMode === "audio" ? "음성 파일 업로드" : "문서 파일 업로드"}</strong>
       <span>${
         inputMode === "audio"
-          ? "업로드한 음성 파일은 전사 후 검사합니다."
-          : "업로드한 문서에서 텍스트를 추출한 뒤 검사합니다."
+          ? "업로드한 음성 파일을 전사한 뒤 검토합니다."
+          : "업로드한 문서에서 텍스트를 추출한 뒤 검토합니다."
       }</span>
     </div>
     <div class="input-panel__file-area${isDragActive ? " input-panel__file-area--drag-active" : ""}">
@@ -147,7 +147,7 @@ export function createInputPanel({
         <input class="input-panel__file-input" type="file" accept="${inputMode === "audio" ? ".wav,.mp3,.m4a,.mp4,.webm,audio/wav,audio/mpeg,audio/mp4,audio/webm,video/mp4" : ".txt,.md,.csv,.pdf,.docx,.hwpx,.hwp,text/plain,text/markdown,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/haansofthwpx,application/x-hwp"}" data-testid="file-input" />
       </label>
       <div class="input-panel__dropzone" data-testid="file-dropzone">
-        <strong>${inputMode === "audio" ? "여기로 음성 파일을 끌어오세요" : "여기로 문서 파일을 끌어오세요"}</strong>
+        <strong>${inputMode === "audio" ? "여기로 음성 파일을 끌어다 놓으세요" : "여기로 문서 파일을 끌어다 놓으세요"}</strong>
         <span>버튼으로 선택해도 됩니다.</span>
       </div>
       ${
@@ -160,7 +160,7 @@ export function createInputPanel({
       `
           : ""
       }
-      <p class="input-panel__file-hint">${inputMode === "audio" ? "긴 음성은 분할 업로드를 권장합니다." : "바이너리 .hwp는 직접 지원하지 않습니다. 가능하면 .hwpx, .pdf, .docx, .txt로 변환하세요."}</p>
+      <p class="input-panel__file-hint">${inputMode === "audio" ? "긴 음성은 분할 업로드를 권장합니다." : "바이너리 .hwp는 직접 지원하지 않습니다. 먼저 .hwpx, .pdf, .docx, .txt로 변환하세요."}</p>
     </div>
   `;
   const fileInput = fileArea.querySelector("input");

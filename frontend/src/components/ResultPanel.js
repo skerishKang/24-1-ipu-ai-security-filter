@@ -1,4 +1,4 @@
-import { createPanelFrame } from "../ui/createPanelFrame.js";
+﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createResultPanel({
   originalText,
@@ -15,7 +15,7 @@ export function createResultPanel({
   const panel = createPanelFrame({
     title: "2. 비식별 결과",
     description: "원문과 처리 결과를 나란히 확인하고, 어떤 항목이 어떤 정책으로 치환됐는지 검토합니다.",
-    badge: `${report.total_detections} detections`,
+    badge: `${report.total_detections}건 탐지`,
   });
 
   panel.element.classList.add("panel--review-surface");
@@ -135,10 +135,15 @@ function createCompareSection({ comparison, selectedPolicy, onLoadComparison, on
   if (!comparison?.strictToken || !comparison?.localRewrite) {
     const hint = document.createElement("p");
     hint.className = "compare-panel__hint";
-    hint.textContent = "현재 정책 결과를 검토한 뒤 필요할 때 비교 버튼으로 두 결과를 나란히 확인하세요.";
+    hint.textContent = "현재 정책 결과를 검토한 뒤 필요하면 비교 버튼으로 두 결과를 나란히 확인하세요.";
     section.append(hint);
     return section;
   }
+
+  const insight = document.createElement("p");
+  insight.className = "compare-panel__hint";
+  insight.textContent = "strict_token은 더 보수적이고, local_rewrite는 더 읽기 쉬운 결과를 목표로 합니다.";
+  section.append(insight);
 
   const grid = document.createElement("div");
   grid.className = "compare-grid";
@@ -156,8 +161,8 @@ function createCompareCard(policy, preview, policyLookup) {
   const summary = policyLookup?.(policy);
   card.innerHTML = `
     <div class="compare-card__topline">
-      <span class="policy-badge policy-badge--${policy === "local_rewrite" ? "rewrite" : "strict"}">policy ${policy}</span>
-      <span class="review-badge review-badge--${preview.report.review_status === "review-required" ? "warning" : "clean"}">${preview.report.review_status} · ${preview.report.risk_level}</span>
+      <span class="policy-badge policy-badge--${policy === "local_rewrite" ? "rewrite" : "strict"}">정책 ${policy}</span>
+      <span class="review-badge review-badge--${preview.report.review_status === "review-required" ? "warning" : "clean"}">${formatReviewStatus(preview.report.review_status)} · ${preview.report.risk_level}</span>
     </div>
     <strong class="compare-card__title">${escapeHtml(summary?.title || policy)}</strong>
     <p class="compare-card__description">${escapeHtml(summary?.description || "")}</p>
@@ -185,7 +190,7 @@ function createModeBadge(selectedPolicy, strategy) {
   const mode = selectedPolicy || strategy || "default";
   const variant = mode === "local_rewrite" ? "rewrite" : mode === "strict_token" ? "strict" : "default";
   badge.className = `policy-badge policy-badge--${variant}`;
-  badge.textContent = `policy ${mode}`;
+  badge.textContent = `정책 ${mode}`;
   return badge;
 }
 
@@ -193,8 +198,14 @@ function createStatusBadge(report) {
   const badge = document.createElement("span");
   const variant = report.review_status === "review-required" ? "warning" : "clean";
   badge.className = `review-badge review-badge--${variant}`;
-  badge.textContent = `${report.review_status} · ${report.risk_level}`;
+  badge.textContent = `${formatReviewStatus(report.review_status)} · ${report.risk_level}`;
   return badge;
+}
+
+function formatReviewStatus(value) {
+  if (value === "review-required") return "검토 필요";
+  if (value === "clean") return "전송 가능";
+  return value;
 }
 
 function highlightText(text, values, className) {

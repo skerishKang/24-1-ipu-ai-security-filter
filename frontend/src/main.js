@@ -435,7 +435,7 @@ function getHeroCopy() {
   }
 
   return {
-    eyebrow: "IPU Firewall Console",
+    eyebrow: "IPU 방화벽 콘솔",
     title: "문서 검토 콘솔",
     description:
       "입력 원문, 정책 상태, 비식별 결과, 외부 전달 보조를 한 화면에서 검토합니다.",
@@ -454,7 +454,7 @@ function getInputPanelCopy() {
   }
 
   return {
-    title: "1. Document input",
+    title: "1. 문서 입력",
     description:
       "검토할 텍스트를 붙여넣거나 문서·음성 파일을 업로드합니다.",
     showPolicy: true,

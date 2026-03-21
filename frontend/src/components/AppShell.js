@@ -1,4 +1,4 @@
-export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSession = true }) {
+﻿export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSession = true }) {
   const shell = document.createElement("main");
   shell.className = "app-shell";
   shell.innerHTML = `
@@ -16,7 +16,7 @@ export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSe
           showSession
             ? `
         <aside class="hero__session">
-          <span class="hero__session-label">Session</span>
+          <span class="hero__session-label">세션</span>
           <strong class="hero__session-value" data-testid="session-source">${hero.sessionId}</strong>
         </aside>
         `

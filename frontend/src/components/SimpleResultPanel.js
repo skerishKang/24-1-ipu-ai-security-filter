@@ -1,4 +1,4 @@
-import { createPanelFrame } from "../ui/createPanelFrame.js";
+﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createSimpleResultPanel({
   originalText,
@@ -14,7 +14,7 @@ export function createSimpleResultPanel({
   const panel = createPanelFrame({
     title: "2. 처리 결과",
     description: "비식별 결과를 빠르게 확인합니다.",
-    badge: `${protectedCount} protected`,
+    badge: `${protectedCount}건 보호`,
   });
 
   panel.element.classList.add("panel--review-surface");
@@ -34,7 +34,7 @@ export function createSimpleResultPanel({
   summary.className = "simple-result__summary";
   const nextStepText = protectedCount > 0
     ? "처리 결과를 확인한 뒤, 필요하면 검토 패널에서 세부 항목을 점검하세요."
-    : "탐지 항목이 없습니다. 바로 다음 작업으로 진행할 수 있습니다.";
+    : "탐지된 항목이 없습니다. 바로 다음 작업으로 진행할 수 있습니다.";
   summary.innerHTML = `
     <strong class="simple-result__count">${protectedCount}개 항목 보호</strong>
     <p class="simple-result__label">${escapeHtml(previewLabel)}</p>
@@ -74,7 +74,7 @@ export function createSimpleResultPanel({
       await navigator.clipboard.writeText(replacedText);
       status.textContent = "복사 완료";
     } catch (error) {
-      status.textContent = "복사 실패. 직접 선택 후 복사하세요.";
+      status.textContent = "복사에 실패했습니다. 직접 선택해 복사하세요.";
     }
   });
 
@@ -101,7 +101,7 @@ function createModeBadge(selectedPolicy, strategy) {
   const mode = selectedPolicy || strategy || "default";
   const variant = mode === "local_rewrite" ? "rewrite" : mode === "strict_token" ? "strict" : "default";
   badge.className = `policy-badge policy-badge--${variant}`;
-  badge.textContent = `policy ${mode}`;
+  badge.textContent = `정책 ${mode}`;
   return badge;
 }
 
@@ -109,8 +109,14 @@ function createStatusBadge(report) {
   const badge = document.createElement("span");
   const variant = report.review_status === "review-required" ? "warning" : "clean";
   badge.className = `review-badge review-badge--${variant}`;
-  badge.textContent = `${report.review_status} · ${report.risk_level}`;
+  badge.textContent = `${formatReviewStatus(report.review_status)} · ${report.risk_level}`;
   return badge;
+}
+
+function formatReviewStatus(value) {
+  if (value === "review-required") return "검토 필요";
+  if (value === "clean") return "전송 가능";
+  return value;
 }
 
 function highlightText(text, values, className) {
