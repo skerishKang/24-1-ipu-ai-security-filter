@@ -10,7 +10,7 @@ export function createCopyPromptPanel({
   aiResponseText = "",
   onAiResponseChange = () => {},
   onRestoreAiResponse = () => {},
-  aiRestoreStatus = "외부 AI 응답을 붙여넣은 뒤 복원할 수 있습니다.",
+  aiRestoreStatus = "외부 응답을 붙여넣으면 원문 용어를 복원할 수 있습니다.",
   aiRestoredText = "",
   isAiRestoring = false,
 }) {
@@ -32,7 +32,7 @@ export function createCopyPromptPanel({
     const statusText = isReady ? "전달 가능" : "검토 필요";
     const nextActionText = isReady
       ? "필요하면 아래 텍스트를 복사해 외부 AI에 전달하세요."
-      : "탐지 결과를 먼저 확인한 뒤 외부 전달 여부를 결정하세요.";
+      : "현재 결과를 먼저 확인한 뒤 외부 전달 여부를 결정하세요.";
     readinessSection.innerHTML = `
       <div class="copy-panel__readiness-badge" style="background: ${statusColor}; color: white; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 8px;">
         ${statusText}
@@ -66,9 +66,9 @@ export function createCopyPromptPanel({
     copyButton.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(copyReadyPrompt);
-        status.textContent = "복사 완료";
+        status.textContent = "복사가 완료되었습니다.";
       } catch (error) {
-        status.textContent = "복사 실패. 직접 선택 후 복사하세요.";
+        status.textContent = "복사에 실패했습니다. 직접 선택해서 복사하세요.";
       }
     });
   }
@@ -101,7 +101,7 @@ export function createCopyPromptPanel({
     <div class="copy-panel__ai-response-header">
       <strong>외부 응답 복원</strong>
       <p class="copy-panel__ai-response-desc" style="font-size: 13px; color: #666; margin: 4px 0;">
-        외부 도구가 반환한 응답에 토큰이 남아 있으면 복원할 수 있습니다.
+        외부 도구가 반환한 응답에 토큰이 남아 있으면 원문 용어를 복원할 수 있습니다.
       </p>
     </div>
     <textarea
