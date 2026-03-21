@@ -1,4 +1,4 @@
-# IPU AI 보안필터 Docs Linking Plan
+# IPU AI 방화벽 Docs Linking Plan
 
 ## 목적
 

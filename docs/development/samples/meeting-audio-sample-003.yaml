@@ -11,7 +11,7 @@ sensitive_content_profile: high
 demo_suitability: not_for_demo
 diarization_interest: high
 storage_path: TBD
-asset_acquisition_todo_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/34-sample-003-asset-acquisition-todo.md
+asset_acquisition_todo_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall/docs/development/34-sample-003-asset-acquisition-todo.md
 notes: 아직 실제 3명 이상 회의 녹음 자산은 큐레이션되지 않았다. 실제 파일 확보 전까지 planned sample 메타로 유지한다.
 expected_risks:
   - 화자 교대와 겹침 발화가 섞여 plain-text 전사만으로는 해석이 크게 흔들릴 수 있다

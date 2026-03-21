@@ -1,4 +1,4 @@
-# IPU AI 보안필터 Board Update Template
+# IPU AI 방화벽 Board Update Template
 
 ## 목적
 
@@ -14,8 +14,8 @@
 
 ## 문서 제목 예시
 
-- `IPU AI 보안필터 Monthly Update - YYYY.MM`
-- `IPU AI 보안필터 Board Update - QX YYYY`
+- `IPU AI 방화벽 Monthly Update - YYYY.MM`
+- `IPU AI 방화벽 Board Update - QX YYYY`
 
 ## 1. 한 줄 요약
 
@@ -146,4 +146,4 @@
 ## 결론
 
 좋은 board update는 “우리가 얼마나 바빴는가”를 보여주는 문서가 아니라, `우리가 어디까지 왔고, 무엇이 리스크이며, 다음에 무엇을 할 것인가`를 빠르게 이해시키는 문서다.  
-IPU AI 보안필터는 기술과 사업이 같이 움직여야 하므로, 두 축을 함께 업데이트하는 형식이 중요하다.
+IPU AI 방화벽은 기술과 사업이 같이 움직여야 하므로, 두 축을 함께 업데이트하는 형식이 중요하다.

@@ -1,4 +1,4 @@
-# IPU AI 보안필터 Commercialization Development Plan
+# IPU AI 방화벽 Commercialization Development Plan
 
 ## 목적
 

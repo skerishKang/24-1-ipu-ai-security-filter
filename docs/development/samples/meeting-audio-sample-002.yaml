@@ -12,7 +12,7 @@ demo_suitability: internal_only
 diarization_interest: medium
 storage_path: TBD
 notes: 아직 실제 2명 대화 자산은 큐레이션되지 않았다. 실제 파일 확보 전까지 planned sample 메타로 유지한다.
-asset_acquisition_todo_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/33-sample-002-asset-acquisition-todo.md
+asset_acquisition_todo_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall/docs/development/33-sample-002-asset-acquisition-todo.md
 expected_risks:
   - 화자 교대 구간에서 plain-text 전사만으로 문맥이 흔들릴 수 있다
   - 사람 이름, 연락처, 금액 같은 민감정보가 섞이면 치환 전후 해석이 어려울 수 있다

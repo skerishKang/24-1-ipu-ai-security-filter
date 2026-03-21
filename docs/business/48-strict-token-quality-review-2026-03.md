@@ -1,4 +1,4 @@
-# IPU AI 보안필터 strict_token Quality Review 2026-03
+# IPU AI 방화벽 strict_token Quality Review 2026-03
 
 ## 목적
 
@@ -20,7 +20,7 @@
 
 ## 현재 정책 정의
 
-`strict_token`은 현재 기준으로 IPU AI 보안필터의 `초기 고객 PoC용 기준 정책`이다.
+`strict_token`은 현재 기준으로 IPU AI 방화벽의 `초기 고객 PoC용 기준 정책`이다.
 
 현재 의미:
 

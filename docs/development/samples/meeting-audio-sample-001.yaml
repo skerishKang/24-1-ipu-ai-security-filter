@@ -19,4 +19,4 @@ whisper_observation_status: observe-only
 privacy_status: public_ok
 segment_ready: yes
 benchmark_ready: no
-observation_note_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/docs/development/samples/meeting-audio-sample-001.observation.md
+observation_note_path: /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall/docs/development/samples/meeting-audio-sample-001.observation.md

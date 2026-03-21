@@ -1,4 +1,4 @@
-# IPU AI 보안필터 Business Document Index
+# IPU AI 방화벽 Business Document Index
 
 ## 목적
 

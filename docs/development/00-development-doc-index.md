@@ -1,4 +1,4 @@
-# IPU AI 보안필터 Development Document Index
+# IPU AI 방화벽 Development Document Index
 
 ## 목적
 
