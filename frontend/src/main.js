@@ -31,25 +31,25 @@ const defaultText =
   "고객 문의가 접수되었습니다. 연락처는 contact@ipu.co.kr, 010-1234-5678이며 계약 금액은 12,500,000 KRW입니다.";
 const POLICY_PRESETS = {
   default: {
-    title: "default | readable baseline",
+    title: "default | 읽기 쉬운 기본 보호",
     description:
-      "Masks common items such as email, phone number, and person names with readable alias tokens.",
+      "이메일, 전화번호, 담당자명처럼 자주 나오는 항목을 읽기 쉬운 alias 토큰으로 치환합니다.",
     examples:
-      "e.g. contact@ipu.co.kr, 010-1234-5678, Hong Gil-dong director",
+      "예: contact@ipu.co.kr, 010-1234-5678, 홍길동 과장",
   },
   strict_token: {
-    title: "strict_token | conservative masking",
+    title: "strict_token | 보수적 비식별화",
     description:
-      "Detects a wider range including organization and amount, then replaces them with explicit strict tokens.",
+      "조직명과 금액까지 더 넓게 탐지하고, 유형이 드러나는 strict token으로 치환합니다.",
     examples:
-      "e.g. security at ipu dot co kr, deliver to Park, 120,000,000 KRW, Mirae Electronics",
+      "예: security at ipu dot co kr, 박 부장 전달, 120,000,000 KRW, 미래전자",
   },
   local_rewrite: {
-    title: "local_rewrite | local-model rewrite",
+    title: "local_rewrite | 로컬 모델 보조 치환",
     description:
-      "Uses strict_token-level detection and rewrites the result into more readable generalized business text.",
+      "strict_token 수준으로 탐지한 뒤, 더 읽기 쉬운 일반화 문장으로 다시 씁니다.",
     examples:
-      "e.g. Contact 1, Company A 1, Email 1, Private amount 1",
+      "예: 담당자 1, A사 1, 이메일 주소 1, 비공개 금액 1",
   },
 };
 const state = {
