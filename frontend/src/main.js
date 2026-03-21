@@ -20,6 +20,8 @@ import {
   STATUS_TYPES,
 } from "./statusMessages.js";
 
+document.title = "IPU AI Firewall Console";
+
 const app = document.querySelector("#app");
 const MAX_UPLOAD_FILE_BYTES = 104_857_600;
 const SUPPORTED_UPLOAD_EXTENSIONS = [".txt", ".md", ".csv", ".pdf", ".docx", ".hwpx"];
@@ -41,6 +43,13 @@ const POLICY_PRESETS = {
       "조직명, 금액, 변형 이메일, 전달 문맥까지 더 넓게 탐지하고 타입 토큰으로 치환합니다.",
     examples:
       "예: security at ipu dot co kr, 박팀장에게 전달, 120,000,000원, 미래전자",
+  },
+  local_rewrite: {
+    title: "local_rewrite · 로컬 모델 보조 치환",
+    description:
+      "strict_token 수준으로 탐지한 뒤, 로컬 모델 또는 fallback 규칙으로 더 읽기 쉬운 일반화 문구를 생성합니다.",
+    examples:
+      "예: 담당자 1, A사, 연락처, 비공개 금액",
   },
 };
 const state = {

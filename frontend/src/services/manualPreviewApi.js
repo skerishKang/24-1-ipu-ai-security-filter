@@ -216,7 +216,7 @@ function normalizeRiskLevel(value) {
 }
 
 function normalizeStrategy(value) {
-  if (value === "alias" || value === "strict_token") {
+  if (value === "alias" || value === "strict_token" || value === "local_rewrite") {
     return value;
   }
 

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from dataclasses import dataclass
@@ -64,13 +64,13 @@ class OllamaLocalRewriter:
             return LocalRewriteResult(replacements=[], used_fallback=False, raw_response="")
 
         prompt = self._build_prompt(content, detections)
-        raw_response = self._client.generate(
-            model=self._model,
-            system=self.SYSTEM_PROMPT,
-            prompt=prompt,
-        )
-
+        raw_response = ""
         try:
+            raw_response = self._client.generate(
+                model=self._model,
+                system=self.SYSTEM_PROMPT,
+                prompt=prompt,
+            )
             replacements = self._parse_response(raw_response, detections)
             return LocalRewriteResult(
                 replacements=replacements,
@@ -111,11 +111,12 @@ class OllamaLocalRewriter:
             raise ValueError("replacement_count_mismatch")
 
         replacements: list[Replacement] = []
-        for item, detection in zip(items, detections, strict=True):
+        for index, (item, detection) in enumerate(zip(items, detections, strict=True), start=1):
             replacement = str(item["replacement"]).strip()
             reason = str(item.get("reason", "local_rewrite")).strip() or "local_rewrite"
             if not replacement or replacement == detection.label:
                 raise ValueError("invalid_replacement")
+            replacement = self._ensure_stable_replacement_text(replacement, detection.type, index)
             replacements.append(
                 Replacement(
                     type=detection.type,
@@ -145,11 +146,26 @@ class OllamaLocalRewriter:
         if detection_type == "PERSON":
             return f"담당자 {index}"
         if detection_type == "ORG":
-            return f"A사{'' if index == 1 else index}"
+            return f"A사 {index}"
         if detection_type == "EMAIL":
-            return "이메일 주소"
+            return f"이메일 주소 {index}"
         if detection_type == "PHONE":
-            return "연락처"
+            return f"연락처 {index}"
         if detection_type == "AMOUNT":
-            return "비공개 금액"
+            return f"비공개 금액 {index}"
         return f"비식별 정보 {index}"
+
+    def _ensure_stable_replacement_text(self, replacement: str, detection_type: str, index: int) -> str:
+        if str(index) in replacement:
+            return replacement
+        if detection_type == "PERSON":
+            return f"{replacement} {index}"
+        if detection_type == "ORG":
+            return f"{replacement} {index}"
+        if detection_type == "EMAIL":
+            return f"{replacement} {index}"
+        if detection_type == "PHONE":
+            return f"{replacement} {index}"
+        if detection_type == "AMOUNT":
+            return f"{replacement} {index}"
+        return f"{replacement} {index}"

@@ -1,0 +1,14 @@
+# Python cache
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+
+# Test/runtime cache
+.pytest_cache
+data/runtime
+data/runtime/**
+*.sqlite3
+
+# Local journals
+_FOSSIL_-journal

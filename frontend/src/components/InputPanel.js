@@ -71,9 +71,10 @@ export function createInputPanel({
       <select class="input-panel__policy-select" data-testid="policy-select">
         <option value="default">default · 읽기 쉬운 기본 보호</option>
         <option value="strict_token">strict_token · 보수적 비식별화</option>
+        <option value="local_rewrite">local_rewrite · 로컬 모델 보조 치환</option>
       </select>
     </label>
-    <p class="input-panel__policy-hint">현재 manual preview는 default와 strict_token 두 가지 preset을 지원합니다.</p>
+    <p class="input-panel__policy-hint">현재 manual preview는 default, strict_token, local_rewrite 세 가지 preset을 지원합니다.</p>
     <div class="input-panel__policy-summary">
       <strong class="input-panel__policy-summary-title">${escapeHtml(policySummary?.title || "")}</strong>
       <p class="input-panel__policy-summary-body">${escapeHtml(policySummary?.description || "")}</p>

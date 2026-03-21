@@ -239,6 +239,8 @@ class ManualPreviewService:
         )
 
     def _resolve_strategy(self, policy: PolicyName) -> str:
+        if policy == "local_rewrite":
+            return "local_rewrite"
         if policy == "strict_token":
             return "strict_token"
         return "alias"

@@ -8,10 +8,12 @@ from engine.src.contracts import (
     report_to_dict,
 )
 from engine.src.detector import RegexDetector
+from engine.src.local_rewriter import OllamaLocalRewriter
 from engine.src.report_builder import ReportBuilder
 from engine.src.replacer import TokenReplacer
 from engine.src.restorer import SessionRestorer
 from engine.src.session_store import InMemorySessionStore, SessionStore
+from engine.src.contracts import SessionMapping
 
 
 class ManualPreviewEngine:
@@ -27,12 +29,17 @@ class ManualPreviewEngine:
         "action_items": "체크리스트 형태로 짧고 명확하게 작성해 주세요.",
     }
 
-    def __init__(self, session_store: SessionStore | None = None) -> None:
+    def __init__(
+        self,
+        session_store: SessionStore | None = None,
+        local_rewriter: OllamaLocalRewriter | None = None,
+    ) -> None:
         self.session_store = session_store or InMemorySessionStore()
         self.detector = RegexDetector()
         self.replacer = TokenReplacer(self.session_store)
         self.restorer = SessionRestorer(self.session_store)
         self.report_builder = ReportBuilder()
+        self.local_rewriter = local_rewriter or OllamaLocalRewriter()
 
     def detect(
         self,
@@ -63,6 +70,26 @@ class ManualPreviewEngine:
         )
         return replaced_text, [replacement_to_dict(item) for item in replacements]
 
+    def replace_with_local_rewrite(
+        self,
+        content: str,
+        detections: list[dict[str, str | int | float]] | None,
+        session_id: str,
+    ) -> tuple[str, list[dict[str, str]]]:
+        typed_detections = (
+            self.detector.detect(content, policy="strict_token")
+            if detections is None
+            else [self._coerce_detection(item) for item in detections]
+        )
+        rewrite_result = self.local_rewriter.rewrite(content, typed_detections)
+        replaced_text = self._apply_custom_replacements(
+            content=content,
+            detections=typed_detections,
+            replacements=rewrite_result.replacements,
+            session_id=session_id,
+        )
+        return replaced_text, [replacement_to_dict(item) for item in rewrite_result.replacements]
+
     def restore(self, content: str, session_id: str) -> str:
         return self.restorer.restore(content, session_id)
 
@@ -91,13 +118,21 @@ class ManualPreviewEngine:
         task_type: str | None = None,
     ) -> dict[str, object]:
         effective_strategy = self._resolve_strategy(policy=policy, strategy=strategy)
-        detections = self.detect(content, content_type=content_type, policy=policy)
-        replaced_text, replacements = self.replace(
-            content=content,
-            detections=detections,
-            session_id=session_id,
-            strategy=effective_strategy,
-        )
+        detection_policy = "strict_token" if policy == "local_rewrite" else policy
+        detections = self.detect(content, content_type=content_type, policy=detection_policy)
+        if effective_strategy == "local_rewrite":
+            replaced_text, replacements = self.replace_with_local_rewrite(
+                content=content,
+                detections=detections,
+                session_id=session_id,
+            )
+        else:
+            replaced_text, replacements = self.replace(
+                content=content,
+                detections=detections,
+                session_id=session_id,
+                strategy=effective_strategy,
+            )
         report = self.build_report(detections, replacements, strategy=effective_strategy)
         readiness = self.check_send_readiness(replaced_text, detections, report, task_type)
         return {
@@ -115,9 +150,38 @@ class ManualPreviewEngine:
     def _resolve_strategy(self, policy: str, strategy: str | None) -> str:
         if strategy is not None:
             return strategy
+        if policy == "local_rewrite":
+            return "local_rewrite"
         if policy == "strict_token":
             return "strict_token"
         return "alias"
+
+    def _apply_custom_replacements(
+        self,
+        content: str,
+        detections: list[Detection],
+        replacements: list[Replacement],
+        session_id: str,
+    ) -> str:
+        replaced_text = content
+        planned: list[tuple[int, int, str]] = []
+
+        for detection, replacement in zip(detections, replacements, strict=True):
+            planned.append((detection.start, detection.end, replacement.replaced))
+            self.session_store.save_mapping(
+                session_id,
+                SessionMapping(
+                    session_id=session_id,
+                    original=detection.label,
+                    replaced=replacement.replaced,
+                    type=detection.type,
+                ),
+            )
+
+        for start, end, value in sorted(planned, key=lambda item: item[0], reverse=True):
+            replaced_text = replaced_text[:start] + value + replaced_text[end:]
+
+        return replaced_text
 
     def _build_copy_ready_prompt(
         self,

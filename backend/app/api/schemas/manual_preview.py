@@ -2,10 +2,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-PolicyName = Literal["default", "strict_token"]
+PolicyName = Literal["default", "strict_token", "local_rewrite"]
 ContentTypeName = Literal["text"]
 ReportRiskLevelName = Literal["low-risk", "moderate-risk", "high-risk"]
-ReportStrategyName = Literal["alias", "strict_token"]
+ReportStrategyName = Literal["alias", "strict_token", "local_rewrite"]
 ReportReviewStatusName = Literal["clean", "review-required"]
 TaskTypeName = Literal["summarize", "risk_review", "action_items"]
 
@@ -20,7 +20,7 @@ class ManualPreviewRequest(BaseModel):
     content_type: ContentTypeName = Field(default="text", description="Input content type")
     policy: PolicyName = Field(
         default="default",
-        description="Security policy preset: default for readable preview, strict_token for conservative masking",
+        description="Security policy preset: default for readable preview, strict_token for conservative masking, local_rewrite for local-model-assisted rewrite",
     )
     task_type: TaskTypeName | None = Field(
         default=None,

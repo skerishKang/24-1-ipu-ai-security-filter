@@ -25,7 +25,7 @@ def main() -> None:
         if sample.observation_note:
             print(f"- observation_note: {sample.observation_note}")
 
-        for policy in ("default", "strict_token"):
+        for policy in ("default", "strict_token", "local_rewrite"):
             preview = engine.manual_preview(
                 content=sample.content,
                 session_id=f"quality-script-{sample.sample_id}-{policy}",

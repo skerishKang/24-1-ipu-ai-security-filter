@@ -39,7 +39,8 @@ export function runManualPreviewMock(originalText, policy = "default", taskType 
   const replacements = [];
   const replacementPlan = [];
   const counters = {};
-  const strategy = policy === "strict_token" ? "strict_token" : "alias";
+  const strategy =
+    policy === "strict_token" ? "strict_token" : policy === "local_rewrite" ? "local_rewrite" : "alias";
 
   for (const pattern of PATTERNS) {
     const matches = [...originalText.matchAll(pattern.regex)];
@@ -48,6 +49,7 @@ export function runManualPreviewMock(originalText, policy = "default", taskType 
       counters[pattern.type] = (counters[pattern.type] ?? 0) + 1;
       const tokenPrefix = strategy === "strict_token" ? pattern.token : `${pattern.token}_ALIAS`;
       const token = `[${tokenPrefix}_${String(counters[pattern.type]).padStart(2, "0")}]`;
+      const localRewriteText = buildLocalRewriteText(pattern.type, counters[pattern.type]);
       detections.push({
         type: pattern.type,
         label,
@@ -59,13 +61,13 @@ export function runManualPreviewMock(originalText, policy = "default", taskType 
       replacements.push({
         type: pattern.type,
         original: label,
-        replaced: token,
+        replaced: strategy === "local_rewrite" ? localRewriteText : token,
         reason: pattern.reason,
       });
       replacementPlan.push({
         start: match.index ?? 0,
         end: (match.index ?? 0) + label.length,
-        token,
+        token: strategy === "local_rewrite" ? localRewriteText : token,
       });
     }
   }
@@ -178,4 +180,23 @@ function buildCopyReadyPrompt(replacedText, report, taskType = "") {
   lines.push("[Sanitized Text]", replacedText);
 
   return lines.join("\n");
+}
+
+function buildLocalRewriteText(type, index) {
+  if (type === "PERSON") {
+    return `담당자 ${index}`;
+  }
+  if (type === "ORG") {
+    return `A사 ${index}`;
+  }
+  if (type === "EMAIL") {
+    return `이메일 주소 ${index}`;
+  }
+  if (type === "PHONE") {
+    return `연락처 ${index}`;
+  }
+  if (type === "AMOUNT") {
+    return `비공개 금액 ${index}`;
+  }
+  return `비식별 정보 ${index}`;
 }
