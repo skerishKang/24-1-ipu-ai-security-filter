@@ -715,36 +715,129 @@
       </section>
 
       <section class="section">
-        <h2>7. 개발 우선순위 그래프</h2>
+        <h2>7. 이 프로젝트에 들어간 핵심 기술 이론</h2>
         <p class="section-intro">
-          현재 시점의 우선순위는 UI 프레임워크 교체가 아니라 보안 엔진 품질과 자동 모드 진입
-          준비입니다.
+          이 프로젝트는 단순한 웹페이지가 아니라, “민감정보를 먼저 다루고 나서 외부 AI를 쓴다”는
+          순서를 기술적으로 구현한 구조입니다. 아래 이론을 이해하면 왜 이 제품이 필요한지 더 쉽게 보입니다.
         </p>
-        <div class="bars" id="priority-bars">
-          <div class="bar-row"><label>보안 엔진 정확도</label><div class="bar-track"><div class="bar-fill" data-width="92"></div></div><span>92</span></div>
-          <div class="bar-row"><label>자동 모드 연동</label><div class="bar-track"><div class="bar-fill alt" data-width="78"></div></div><span>78</span></div>
-          <div class="bar-row"><label>파일 파서 확장</label><div class="bar-track"><div class="bar-fill" data-width="70"></div></div><span>70</span></div>
-          <div class="bar-row"><label>UI/UX 정리</label><div class="bar-track"><div class="bar-fill alt" data-width="64"></div></div><span>64</span></div>
-          <div class="bar-row"><label>SSO / Audit</label><div class="bar-track"><div class="bar-fill" data-width="46"></div></div><span>46</span></div>
+        <div class="lead-box">
+          <p>
+            특히 중요한 점은 이 제품이 한 번의 규칙 검사로 끝나는 구조가 아니라는 것입니다.
+            현재 방향은 <strong>1차 규칙 기반 탐지</strong>, <strong>2차 로컬 모델 검토/치환</strong>,
+            <strong>3차 규칙·템플릿 보완</strong>의 3단계 구조로 발전하는 것입니다.
+          </p>
+          <p>
+            즉 처음에는 규칙이 안전망 역할을 하고, 그 다음에는 로컬 모델이 문맥을 한 번 더 보고,
+            마지막에는 반복적으로 발견된 패턴을 다시 규칙으로 승격해 시스템 전체를 더 강하게 만드는 방식입니다.
+          </p>
         </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>정책형 게이트웨이</h3>
+            <p>
+              사용자가 문서를 외부 AI에 직접 보내는 것이 아니라, 중간에 보안 레이어가 먼저 개입합니다.
+              즉 입력을 먼저 읽고, 위험 요소를 정리한 뒤, 안전한 버전만 외부 AI로 전달하는 구조입니다.
+            </p>
+          </div>
+          <div class="card">
+            <h3>탐지와 치환의 분리</h3>
+            <p>
+              이름, 전화번호, 이메일, 조직명 같은 항목을 찾는 단계와, 그것을 어떤 토큰이나 대체 문구로
+              바꿀지를 결정하는 단계는 분리되어 있습니다. 이 분리가 있어야 품질 검증과 정책 변경이 쉬워집니다.
+            </p>
+          </div>
+          <div class="card">
+            <h3>세션 기반 복원</h3>
+            <p>
+              치환만 하고 끝나는 것이 아니라, 어떤 원문이 어떤 토큰으로 바뀌었는지를 세션 단위로 기억합니다.
+              그래서 검토가 끝난 뒤 원문 기준 복원도 가능해집니다.
+            </p>
+          </div>
+          <div class="card">
+            <h3>다층 정책</h3>
+            <p>
+              지금은 기본 모드와 strict_token 같은 보수적 정책이 중심이고, local rewrite는 문맥을 덜 깨는
+              다음 단계 실험입니다. 즉 규칙 기반과 더 자연스러운 치환 실험이 함께 가는 구조입니다.
+            </p>
+          </div>
+        </div>
+        <table class="matrix" style="margin-top: 18px;">
+          <thead>
+            <tr><th>단계</th><th>무엇을 하나</th><th>왜 필요한가</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1차 규칙 기반</td>
+              <td>이메일, 전화번호, 이름, 조직명, 일부 금액 같은 명시적 패턴을 빠르게 탐지하고 토큰화</td>
+              <td>속도가 빠르고, 설명 가능하고, 최소 안전망 역할을 한다</td>
+            </tr>
+            <tr>
+              <td>2차 로컬 모델</td>
+              <td>규칙이 놓친 문맥형 민감정보를 다시 보고, 더 자연스러운 치환문을 제안</td>
+              <td>규칙만으로는 잡기 어려운 표현과 문맥을 보완할 수 있다</td>
+            </tr>
+            <tr>
+              <td>3차 규칙 보완</td>
+              <td>반복적으로 발견되는 패턴을 새 템플릿·규칙으로 승격</td>
+              <td>시간이 갈수록 시스템이 누적 학습되듯 강해진다</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="section">
-        <h2>8. 전략 옵션 비교</h2>
+        <h2>8. 실제 구현은 어떻게 되어 있나</h2>
         <p class="section-intro">
-          지금 당장의 기술 선택보다 중요한 것은 무엇을 먼저 검증할지입니다. 아래 표는 CTO
-          관점에서 본 우선순위의 차이를 보여줍니다.
+          아래는 이 제품이 화면 뒤에서 실제로 어떻게 동작하는지를 정리한 것입니다. 비전공자는 흐름을,
+          전공자는 계층 분리를 보면 됩니다.
         </p>
         <table class="matrix">
           <thead>
-            <tr><th>항목</th><th>지금 상태</th><th>권장 판단</th><th>비고</th></tr>
+            <tr><th>구성요소</th><th>역할</th><th>실전 의미</th><th>현재 상태</th></tr>
           </thead>
           <tbody>
-            <tr><td>Frontend 프레임워크</td><td>Vanilla JS</td><td><span class="pill warn">보류</span></td><td>React 전환보다 검토 흐름과 정보 구조 정리가 먼저입니다.</td></tr>
-            <tr><td>DB</td><td>SQLite</td><td><span class="pill ok">유지</span></td><td>MVP에서는 충분합니다. 운영 조건이 커질 때 PostgreSQL 전환을 검토합니다.</td></tr>
-            <tr><td>보안 엔진</td><td>규칙 기반 + local rewrite 실험</td><td><span class="pill ok">집중</span></td><td>제품 경쟁력의 핵심입니다. 탐지·치환 품질이 먼저입니다.</td></tr>
-            <tr><td>자동 모드</td><td>계획 단계</td><td><span class="pill warn">다음 단계</span></td><td>수동 모드 품질이 충분히 검증된 뒤 확장하는 것이 안전합니다.</td></tr>
-            <tr><td>공공 문서 포맷</td><td>HWPX 지원, HWP는 변환 안내</td><td><span class="pill ok">강화</span></td><td>공공기관/행정 문서 시장을 노리면 중요한 진입 장벽입니다.</td></tr>
+            <tr>
+              <td>Frontend</td>
+              <td>입력, 결과 확인, 검토 흐름 제공</td>
+              <td>사용자가 문서나 텍스트를 넣고 결과를 바로 확인하는 콘솔</td>
+              <td>수동 검토형 UI 동작 중</td>
+            </tr>
+            <tr>
+              <td>Backend</td>
+              <td>요청 수신, 파일 파싱, 엔진 호출</td>
+              <td>웹 화면과 보안 엔진 사이의 연결 레이어</td>
+              <td>FastAPI 기반으로 안정화됨</td>
+            </tr>
+            <tr>
+              <td>Regex Detector</td>
+              <td>이메일, 전화번호, 사람, 조직, 일부 금액 탐지</td>
+              <td>지금 제품의 기본 안전장치</td>
+              <td>운영 중</td>
+            </tr>
+            <tr>
+              <td>Token Replacer</td>
+              <td>`[PERSON_ALIAS_01]` 같은 치환 토큰 생성</td>
+              <td>외부 AI에 바로 보내도 되는 버전으로 만드는 단계</td>
+              <td>운영 중</td>
+            </tr>
+            <tr>
+              <td>Session Store</td>
+              <td>원문 ↔ 치환 토큰 매핑 저장</td>
+              <td>나중에 복원 가능하게 만드는 핵심 장치</td>
+              <td>운영 중</td>
+            </tr>
+            <tr>
+              <td>Local Rewrite</td>
+              <td>더 자연스러운 치환문 생성 실험</td>
+              <td>토큰형 결과보다 사람 친화적인 결과를 노리는 다음 단계</td>
+              <td>실험 중</td>
+            </tr>
+            <tr>
+              <td>File Parser</td>
+              <td>TXT, PDF, DOCX, HWPX 등 입력 해석</td>
+              <td>실제 업무 문서를 받을 수 있게 해주는 관문</td>
+              <td>HWPX 포함 연결됨</td>
+            </tr>
           </tbody>
         </table>
       </section>
