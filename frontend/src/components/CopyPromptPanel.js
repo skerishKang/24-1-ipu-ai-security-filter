@@ -1,4 +1,4 @@
-import { createPanelFrame } from "../ui/createPanelFrame.js";
+﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createCopyPromptPanel({
   copyReadyPrompt,
@@ -17,7 +17,7 @@ export function createCopyPromptPanel({
   const panel = createPanelFrame({
     title: "4. 외부 전달 보조",
     description: "필요한 경우 외부 AI에 전달할 안전 텍스트를 복사하고, 응답 복원도 확인합니다.",
-    badge: "optional",
+    badge: "선택 기능",
   });
 
   const prompt = document.createElement("pre");
@@ -38,7 +38,7 @@ export function createCopyPromptPanel({
         ${statusText}
       </div>
       <p class="copy-panel__readiness-reason" style="font-size: 14px; color: #666; margin: 0 0 8px 0;">
-        ${escapeHtml(readiness.reason)}
+        ${escapeHtml(localizeReadinessReason(readiness.reason))}
       </p>
       <p class="copy-panel__next-action" style="font-size: 13px; color: ${statusColor}; margin: 0; font-weight: 600;">
         ${nextActionText}
@@ -136,6 +136,14 @@ export function createCopyPromptPanel({
 
   panel.body.append(readinessSection, prompt, actions, restoreSection, aiResponseSection);
   return panel.element;
+}
+
+function localizeReadinessReason(text) {
+  return String(text)
+    .replaceAll("clean", "정리됨")
+    .replaceAll("high-risk", "높음")
+    .replaceAll("moderate-risk", "중간")
+    .replaceAll("low-risk", "낮음");
 }
 
 function escapeHtml(value) {

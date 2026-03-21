@@ -109,13 +109,20 @@ function createStatusBadge(report) {
   const badge = document.createElement("span");
   const variant = report.review_status === "review-required" ? "warning" : "clean";
   badge.className = `review-badge review-badge--${variant}`;
-  badge.textContent = `${formatReviewStatus(report.review_status)} · ${report.risk_level}`;
+  badge.textContent = `${formatReviewStatus(report.review_status)} · ${formatRiskLevel(report.risk_level)}`;
   return badge;
 }
 
 function formatReviewStatus(value) {
   if (value === "review-required") return "검토 필요";
   if (value === "clean") return "전송 가능";
+  return value;
+}
+
+function formatRiskLevel(value) {
+  if (value === "high-risk") return "높음";
+  if (value === "moderate-risk") return "중간";
+  if (value === "low-risk") return "낮음";
   return value;
 }
 

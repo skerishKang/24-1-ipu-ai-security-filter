@@ -162,7 +162,7 @@ function createCompareCard(policy, preview, policyLookup) {
   card.innerHTML = `
     <div class="compare-card__topline">
       <span class="policy-badge policy-badge--${policy === "local_rewrite" ? "rewrite" : "strict"}">정책 ${policy}</span>
-      <span class="review-badge review-badge--${preview.report.review_status === "review-required" ? "warning" : "clean"}">${formatReviewStatus(preview.report.review_status)} · ${preview.report.risk_level}</span>
+      <span class="review-badge review-badge--${preview.report.review_status === "review-required" ? "warning" : "clean"}">${formatReviewStatus(preview.report.review_status)} · ${formatRiskLevel(preview.report.risk_level)}</span>
     </div>
     <strong class="compare-card__title">${escapeHtml(summary?.title || policy)}</strong>
     <p class="compare-card__description">${escapeHtml(summary?.description || "")}</p>
@@ -198,13 +198,20 @@ function createStatusBadge(report) {
   const badge = document.createElement("span");
   const variant = report.review_status === "review-required" ? "warning" : "clean";
   badge.className = `review-badge review-badge--${variant}`;
-  badge.textContent = `${formatReviewStatus(report.review_status)} · ${report.risk_level}`;
+  badge.textContent = `${formatReviewStatus(report.review_status)} · ${formatRiskLevel(report.risk_level)}`;
   return badge;
 }
 
 function formatReviewStatus(value) {
   if (value === "review-required") return "검토 필요";
   if (value === "clean") return "전송 가능";
+  return value;
+}
+
+function formatRiskLevel(value) {
+  if (value === "high-risk") return "높음";
+  if (value === "moderate-risk") return "중간";
+  if (value === "low-risk") return "낮음";
   return value;
 }
 
