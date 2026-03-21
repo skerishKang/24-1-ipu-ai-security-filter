@@ -1,7 +1,7 @@
 # Minimax Browser Verification Prompt
 
 프로젝트 경로:
-`G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-security-filter`
+`G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall`
 
 ## 역할
 
