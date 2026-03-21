@@ -10,7 +10,7 @@ __pycache__/
 venv/
 .venv*/
 *.venv*/
-backend/DdriveBatangDtaskworkdiary24-1-ipu-ai-security-filterbackend.venv-win/
+backend/DdriveBatangDtaskworkdiary24-1-ipu-ai-firewallbackend.venv-win/
 *.egg-info/
 
 # Node / browser test artifacts
@@ -25,6 +25,10 @@ tests/screenshots/
 # Runtime data
 data/runtime/
 
+# Local SCM metadata
+_FOSSIL_
+*.local.fossil
+
 # Environment / local overrides
 .env
 .env.*
@@ -37,4 +41,6 @@ Thumbs.db
 
 # Local scripts
 auto.bat
+run_demo_stack.bat
 nul
+다음재부팅때볼파일/
