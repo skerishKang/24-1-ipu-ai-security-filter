@@ -1,11 +1,10 @@
-import { createPanelFrame } from "../ui/createPanelFrame.js";
+﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createResultPanel({ originalText, replacedText, replacements }) {
   const panel = createPanelFrame({
-    title: "2. 치환 결과",
-    description:
-      "원문과 치환본을 나란히 보여주고, 어떤 값이 어떤 토큰으로 바뀌었는지 확인합니다.",
-    badge: `${replacements.length} replacements`,
+    title: "2. 비식별 결과",
+    description: "원문과 처리 결과를 나란히 확인하고, 어떤 값이 어떤 방식으로 치환됐는지 검토합니다.",
+    badge: `${replacements.length} items`,
   });
 
   const grid = document.createElement("div");
@@ -16,7 +15,7 @@ export function createResultPanel({ originalText, replacedText, replacements }) 
       <p class="text-card__content" data-testid="original-text">${escapeHtml(originalText)}</p>
     </article>
     <article class="text-card">
-      <p class="text-card__label">치환본</p>
+      <p class="text-card__label">처리 결과</p>
       <p class="text-card__content" data-testid="replaced-text">${escapeHtml(replacedText)}</p>
     </article>
   `;

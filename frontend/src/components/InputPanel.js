@@ -1,8 +1,8 @@
-import { createPanelFrame } from "../ui/createPanelFrame.js";
+﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createInputPanel({
-  title = "1. 원문 입력",
-  description = "사내 메모, 계약서 초안, 고객 대응 문구 등 민감정보가 포함될 수 있는 원문을 붙여넣거나 텍스트 파일로 업로드합니다.",
+  title = "1. 문서 입력",
+  description = "검사할 텍스트를 붙여넣거나 문서/음성 파일을 업로드합니다.",
   value,
   inputMode,
   onModeChange,
@@ -12,6 +12,7 @@ export function createInputPanel({
   policy,
   policySummary,
   onPolicyChange,
+  onTaskTypeChange,
   selectedFileName,
   selectedFileContent,
   isDragActive,
@@ -22,12 +23,12 @@ export function createInputPanel({
   statusTone,
   showPolicy = true,
   allowAudioUpload = false,
-  metaText = "텍스트 입력은 fallback을 유지하고, 파일 업로드는 backend live 응답만 사용합니다.",
+  metaText = "텍스트는 즉시 검사할 수 있고, 파일 업로드는 백엔드 처리 결과를 사용합니다.",
 }) {
   const panel = createPanelFrame({
     title,
     description,
-    badge: "Manual Preview",
+    badge: "Inspection",
   });
 
   const modeSwitch = document.createElement("div");
@@ -35,18 +36,18 @@ export function createInputPanel({
   modeSwitch.innerHTML = `
     <label class="input-panel__mode-option${inputMode === "text" ? " input-panel__mode-option--active" : ""}">
       <input type="radio" name="input-mode" value="text" data-testid="input-mode-text" />
-      <span>텍스트 입력</span>
+      <span>텍스트</span>
     </label>
     <label class="input-panel__mode-option${inputMode === "file" ? " input-panel__mode-option--active" : ""}">
       <input type="radio" name="input-mode" value="file" data-testid="input-mode-file" />
-      <span>텍스트 파일 업로드</span>
+      <span>문서 파일</span>
     </label>
     ${
       allowAudioUpload
         ? `
     <label class="input-panel__mode-option${inputMode === "audio" ? " input-panel__mode-option--active" : ""}">
       <input type="radio" name="input-mode" value="audio" data-testid="input-mode-audio" />
-      <span>음성 업로드</span>
+      <span>음성 파일</span>
     </label>
     `
         : ""
@@ -57,22 +58,22 @@ export function createInputPanel({
   modeHint.className = "input-panel__mode-hint";
   modeHint.textContent =
     inputMode === "audio"
-      ? "🎙️ 음성을 전사한 뒤 민감 정보를 가립니다"
+      ? "음성 파일을 업로드하면 전사 후 민감정보 검사를 진행합니다."
       : inputMode === "file"
-      ? "📁 파일을 올리면 민감 정보가 가려져요"
-      : "✏️ 글을 바로 붙여넣으면 민감 정보가 가려져요";
+      ? "문서 파일을 업로드하면 텍스트 추출 후 민감정보 검사를 진행합니다."
+      : "검사할 텍스트를 직접 붙여넣어 결과를 확인합니다.";
 
   const policyRow = document.createElement("div");
   policyRow.className = "input-panel__policy-row";
   policyRow.innerHTML = `
     <label class="input-panel__policy-label">
-      <span>Policy</span>
+      <span>정책</span>
       <select class="input-panel__policy-select" data-testid="policy-select">
         <option value="default">default · 읽기 쉬운 기본 보호</option>
-        <option value="strict_token">strict_token · 더 보수적 비식별화</option>
+        <option value="strict_token">strict_token · 보수적 비식별화</option>
       </select>
     </label>
-    <p class="input-panel__policy-hint">현재 manual-preview는 default와 strict_token 두 가지 공식 preset만 지원합니다.</p>
+    <p class="input-panel__policy-hint">현재 manual preview는 default와 strict_token 두 가지 preset을 지원합니다.</p>
     <div class="input-panel__policy-summary">
       <strong class="input-panel__policy-summary-title">${escapeHtml(policySummary?.title || "")}</strong>
       <p class="input-panel__policy-summary-body">${escapeHtml(policySummary?.description || "")}</p>
@@ -81,13 +82,13 @@ export function createInputPanel({
     <label class="input-panel__policy-label" style="margin-top: 12px;">
       <span>작업 유형</span>
       <select class="input-panel__policy-select" data-testid="task-type-select">
-        <option value="">없음 (기본 프롬프트)</option>
+        <option value="">없음</option>
         <option value="summarize">요약</option>
         <option value="risk_review">리스크 검토</option>
-        <option value="action_items">액션 아이템 추출</option>
+        <option value="action_items">액션 아이템</option>
       </select>
     </label>
-    <p class="input-panel__policy-hint">외부 AI에 요청할 작업을 선택하세요.</p>
+    <p class="input-panel__policy-hint">필요할 때만 외부 전달용 작업 유형을 지정합니다.</p>
   `;
   const policySelect = policyRow.querySelector("select[data-testid='policy-select']");
   const taskTypeSelect = policyRow.querySelector("select[data-testid='task-type-select']");
@@ -107,7 +108,7 @@ export function createInputPanel({
   textarea.className = "input-panel__textarea";
   textarea.dataset.testid = "text-input";
   textarea.value = value;
-  textarea.placeholder = "분석할 원문을 입력하세요.";
+  textarea.placeholder = "검사할 텍스트를 입력하세요.";
   textarea.disabled = isLoading;
 
   const textSection = document.createElement("div");
@@ -115,8 +116,8 @@ export function createInputPanel({
   textSection.style.display = inputMode === "text" ? "block" : "none";
   textSection.innerHTML = `
     <div class="input-panel__section-header">
-      <strong>✏️ 글 직접 입력</strong>
-      <span>편지, 메모, 채팅 내용을 그대로 붙여넣으세요</span>
+      <strong>직접 입력</strong>
+      <span>메모, 계약 초안, 고객 문구 등을 그대로 붙여넣을 수 있습니다.</span>
     </div>
   `;
   textSection.append(textarea);
@@ -126,39 +127,39 @@ export function createInputPanel({
   fileArea.style.display = inputMode === "text" ? "none" : "block";
   fileArea.innerHTML = `
     <div class="input-panel__section-header">
-      <strong>${inputMode === "audio" ? "🎙️ 음성 파일 올리기" : "📁 파일로 올리기"}</strong>
+      <strong>${inputMode === "audio" ? "음성 파일 업로드" : "문서 파일 업로드"}</strong>
       <span>${
         inputMode === "audio"
-          ? "짧은 음성 파일을 올리면 전사 후 민감정보를 가립니다"
-          : "컴퓨터에 있는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일을 올리면 편해요"
+          ? "업로드한 음성 파일을 전사한 뒤 검사를 진행합니다."
+          : "업로드한 문서에서 텍스트를 추출한 뒤 검사를 진행합니다."
       }</span>
     </div>
     <div class="input-panel__file-area${isDragActive ? " input-panel__file-area--drag-active" : ""}">
-    <label class="input-panel__file-label">
-      <span>${inputMode === "audio" ? "🎧 .wav / .mp3 / .m4a / .mp4 / .webm 지원" : "📄 .txt / .md / .csv / .pdf / .docx / .hwpx 지원"}</span>
-      <div class="input-panel__file-picker-row">
-        <span class="button button--ghost input-panel__file-trigger">파일 선택</span>
-        <span class="input-panel__file-name-inline" data-testid="selected-file-inline">
-          ${selectedFileName || "선택된 파일 없음"}
-        </span>
+      <label class="input-panel__file-label">
+        <span>${inputMode === "audio" ? "지원 형식: .wav, .mp3, .m4a, .mp4, .webm" : "지원 형식: .txt, .md, .csv, .pdf, .docx, .hwpx"}</span>
+        <div class="input-panel__file-picker-row">
+          <span class="button button--ghost input-panel__file-trigger">파일 선택</span>
+          <span class="input-panel__file-name-inline" data-testid="selected-file-inline">
+            ${selectedFileName || "선택된 파일 없음"}
+          </span>
+        </div>
+        <input class="input-panel__file-input" type="file" accept="${inputMode === "audio" ? ".wav,.mp3,.m4a,.mp4,.webm,audio/wav,audio/mpeg,audio/mp4,audio/webm,video/mp4" : ".txt,.md,.csv,.pdf,.docx,.hwpx,.hwp,text/plain,text/markdown,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/haansofthwpx,application/x-hwp"}" data-testid="file-input" />
+      </label>
+      <div class="input-panel__dropzone" data-testid="file-dropzone">
+        <strong>${inputMode === "audio" ? "여기에 음성 파일을 놓으세요" : "여기에 문서 파일을 놓으세요"}</strong>
+        <span>버튼으로 선택해도 됩니다.</span>
       </div>
-      <input class="input-panel__file-input" type="file" accept="${inputMode === "audio" ? ".wav,.mp3,.m4a,.mp4,.webm,audio/wav,audio/mpeg,audio/mp4,audio/webm,video/mp4" : ".txt,.md,.csv,.pdf,.docx,.hwpx,.hwp,text/plain,text/markdown,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/haansofthwpx,application/x-hwp"}" data-testid="file-input" />
-    </label>
-    <div class="input-panel__dropzone" data-testid="file-dropzone">
-      <strong>${inputMode === "audio" ? "🎙️ 음성 파일을 여기에 끌어다 놓거나" : "📁 파일을 여기에 끌어다 놓거나"}</strong>
-      <span>버튼으로 선택해도 돼요</span>
-    </div>
-    ${
-      selectedFileName && inputMode !== "audio"
-        ? `
-    <details class="input-panel__file-preview">
-      <summary>파일 내용 보기</summary>
-      <div class="input-panel__file-preview-box">${escapeHtml(selectedFileContent || "파일 내용을 불러오는 중이거나 표시할 수 없습니다.")}</div>
-    </details>
-    `
-        : ""
-    }
-    <p class="input-panel__file-hint">${inputMode === "audio" ? "현재는 .wav, .mp3, .m4a, .mp4, .webm 음성 파일을 고려합니다. 일반인/전문가 모드 모두에서 노출하며 backend live 응답만 사용합니다. 긴 음성은 분할 후 업로드를 권장합니다." : "현재는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일을 지원합니다. 바이너리 .hwp 는 먼저 .hwpx, .pdf, .docx, .txt 중 하나로 변환해야 합니다."}</p>
+      ${
+        selectedFileName && inputMode !== "audio"
+          ? `
+      <details class="input-panel__file-preview">
+        <summary>추출 텍스트 미리보기</summary>
+        <div class="input-panel__file-preview-box">${escapeHtml(selectedFileContent || "파일 내용을 불러오는 중이거나 미리보기가 없습니다.")}</div>
+      </details>
+      `
+          : ""
+      }
+      <p class="input-panel__file-hint">${inputMode === "audio" ? "긴 음성은 분할 업로드를 권장합니다." : "바이너리 .hwp는 직접 지원하지 않습니다. 가능하면 .hwpx, .pdf, .docx, .txt로 변환하세요."}</p>
     </div>
   `;
   const fileInput = fileArea.querySelector("input");
@@ -178,7 +179,7 @@ export function createInputPanel({
   toolbar.className = "input-panel__toolbar";
   toolbar.innerHTML = `
     <span class="input-panel__meta">${metaText}</span>
-    <button type="button" class="button" data-testid="submit-preview">${isLoading ? "불러오는 중..." : "치환 미리보기 생성"}</button>
+    <button type="button" class="button" data-testid="submit-preview">${isLoading ? "처리 중..." : "검사 실행"}</button>
   `;
 
   const submitButton = toolbar.querySelector("button");

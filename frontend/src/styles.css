@@ -1,16 +1,16 @@
 :root {
-  --bg: #f4efe5;
-  --surface: rgba(255, 250, 243, 0.88);
-  --surface-strong: #fffaf0;
-  --border: rgba(91, 73, 53, 0.18);
-  --text: #1f1b16;
-  --muted: #6f665c;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
-  --accent-soft: rgba(15, 118, 110, 0.12);
-  --warning: #92400e;
-  --danger-soft: rgba(146, 64, 14, 0.12);
-  --shadow: 0 20px 50px rgba(31, 27, 22, 0.08);
+  --bg: #eef2f6;
+  --surface: rgba(251, 253, 255, 0.92);
+  --surface-strong: #ffffff;
+  --border: rgba(71, 85, 105, 0.18);
+  --text: #0f172a;
+  --muted: #5b6474;
+  --accent: #0f5ea8;
+  --accent-strong: #0b4d88;
+  --accent-soft: rgba(15, 94, 168, 0.12);
+  --warning: #9a5b12;
+  --danger-soft: rgba(154, 91, 18, 0.12);
+  --shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-sm: 12px;
@@ -26,8 +26,8 @@ body {
   margin: 0;
   font-family: var(--sans);
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.12), transparent 28%),
+    radial-gradient(circle at top left, rgba(15, 94, 168, 0.08), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(100, 116, 139, 0.08), transparent 30%),
     var(--bg);
   color: var(--text);
 }
@@ -45,11 +45,15 @@ textarea {
 .hero {
   max-width: 1240px;
   margin: 0 auto 24px;
-  padding: 28px;
+  padding: 18px 22px;
   border: 1px solid var(--border);
-  border-radius: 28px;
-  background: linear-gradient(135deg, rgba(255, 250, 243, 0.94), rgba(246, 241, 233, 0.92));
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 252, 0.94));
   box-shadow: var(--shadow);
+}
+
+.hero--compact {
+  margin-bottom: 18px;
 }
 
 .hero__eyebrow {
@@ -81,17 +85,28 @@ textarea {
   margin-top: 18px;
 }
 
+.hero__body--compact {
+  align-items: center;
+  margin-top: 10px;
+}
+
+.hero__identity {
+  display: grid;
+  gap: 8px;
+}
+
 .hero h1 {
   margin: 0 0 10px;
-  font-size: clamp(2rem, 4vw, 3.3rem);
+  font-size: clamp(1.45rem, 2.6vw, 2.1rem);
   line-height: 1;
 }
 
 .hero p {
-  max-width: 760px;
+  max-width: 820px;
   margin: 0;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.45;
+  font-size: 0.96rem;
 }
 
 .hero__session {
