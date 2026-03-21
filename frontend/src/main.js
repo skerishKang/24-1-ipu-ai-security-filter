@@ -1,4 +1,4 @@
-import { createAppShell } from "./components/AppShell.js";
+﻿import { createAppShell } from "./components/AppShell.js";
 import { createCopyPromptPanel } from "./components/CopyPromptPanel.js";
 import { createInputPanel } from "./components/InputPanel.js";
 import { createReportPanel } from "./components/ReportPanel.js";
@@ -28,7 +28,7 @@ const SUPPORTED_UPLOAD_EXTENSIONS = [".txt", ".md", ".csv", ".pdf", ".docx", ".h
 const KNOWN_BUT_UNSUPPORTED_UPLOAD_EXTENSIONS = [".hwp"];
 const SUPPORTED_AUDIO_EXTENSIONS = [".wav", ".mp3", ".m4a", ".mp4", ".webm"];
 const defaultText =
-  "A customer inquiry is under review. Contact details are contact@ipu.co.kr and 010-1234-5678, and the contract amount is KRW 12,500,000.";
+  "A customer inquiry has been received. Contact details are contact@ipu.co.kr and 010-1234-5678, and the contract amount is 12,500,000 KRW.";
 const POLICY_PRESETS = {
   default: {
     title: "default | readable baseline",
@@ -42,7 +42,7 @@ const POLICY_PRESETS = {
     description:
       "Detects a wider range including organization and amount, then replaces them with explicit strict tokens.",
     examples:
-      "e.g. security at ipu dot co kr, deliver to Park, KRW 120,000,000, Mirae Electronics",
+      "e.g. security at ipu dot co kr, deliver to Park, 120,000,000 KRW, Mirae Electronics",
   },
   local_rewrite: {
     title: "local_rewrite | local-model rewrite",
@@ -74,6 +74,13 @@ const state = {
   aiRestoreStatus: "Paste an AI response to restore original terms.",
   aiRestoredText: "",
   isAiRestoring: false,
+  comparison: {
+    loading: false,
+    error: "",
+    sourceText: "",
+    strictToken: null,
+    localRewrite: null,
+  },
 };
 
 function getPolicySummary(policy) {
@@ -97,6 +104,7 @@ async function updatePreview(nextText, policy = state.policy, taskType = state.t
   state.aiResponseText = "";
   state.aiRestoreStatus = "Paste an AI response to restore original terms.";
   state.aiRestoredText = "";
+  resetComparison();
   state.isLoading = true;
   state.status = createStatus(STATUS_TYPES.BACKEND_REQUEST_LOADING, { policy });
   render();
@@ -157,6 +165,7 @@ async function updateFilePreview(file, policy = state.policy) {
   state.restoredText = "";
   state.restoreStatus = "Restore test has not been run yet.";
   state.isDragActive = false;
+  resetComparison();
   state.status = createStatus(STATUS_TYPES.FILE_REQUEST_LOADING, { policy });
   render();
 
@@ -210,6 +219,7 @@ async function updateAudioPreview(file, policy = state.policy) {
   state.restoredText = "";
   state.restoreStatus = "Restore test has not been run yet.";
   state.isDragActive = false;
+  resetComparison();
   state.status = createStatus(STATUS_TYPES.AUDIO_REQUEST_LOADING, { policy });
   render();
 
@@ -260,7 +270,7 @@ async function setSelectedFile(file) {
     state.status = createStatus(
       state.inputMode === "audio" ? STATUS_TYPES.AUDIO_SELECTED : STATUS_TYPES.FILE_SELECTED,
       {
-      detail: `${file.name} ???뵬???醫뤾문?癒?뮸??덈뼄. 沃섎챶?곮퉪?용┛????밴쉐??雅뚯눘苑??`,
+        detail: `${file.name} 파일이 선택되었습니다. 내용을 확인한 뒤 검사 실행을 눌러 진행하세요.`, 
       },
     );
   }
@@ -280,6 +290,77 @@ function handleFileDrop(file) {
 
 function setUiMode(mode) {
   state.uiMode = mode;
+  render();
+}
+
+function resetComparison() {
+  state.comparison = {
+    loading: false,
+    error: "",
+    sourceText: "",
+    strictToken: null,
+    localRewrite: null,
+  };
+}
+
+async function fetchPolicyPreview(text, policy, taskType = state.taskType) {
+  try {
+    return await fetchManualPreview(text, policy, taskType);
+  } catch (error) {
+    return runManualPreviewMock(text, policy);
+  }
+}
+
+async function loadComparison() {
+  const sourceText = state.preview?.original_text || state.originalText;
+  if (!sourceText) {
+    return;
+  }
+
+  if (
+    state.comparison.sourceText === sourceText &&
+    state.comparison.strictToken &&
+    state.comparison.localRewrite
+  ) {
+    return;
+  }
+
+  state.comparison = {
+    loading: true,
+    error: "",
+    sourceText,
+    strictToken: null,
+    localRewrite: null,
+  };
+  render();
+
+  try {
+    const [strictToken, localRewrite] = await Promise.all([
+      fetchPolicyPreview(sourceText, "strict_token", state.taskType),
+      fetchPolicyPreview(sourceText, "local_rewrite", state.taskType),
+    ]);
+    state.comparison = {
+      loading: false,
+      error: "",
+      sourceText,
+      strictToken,
+      localRewrite,
+    };
+  } catch (error) {
+    state.comparison = {
+      loading: false,
+      error: error?.message || "Failed to load comparison previews.",
+      sourceText,
+      strictToken: null,
+      localRewrite: null,
+    };
+  } finally {
+    render();
+  }
+}
+
+function clearComparison() {
+  resetComparison();
   render();
 }
 
@@ -510,6 +591,10 @@ function render() {
       detections: state.preview.detections,
       report: state.preview.report,
       selectedPolicy: state.policy,
+      comparison: state.comparison,
+      onLoadComparison: loadComparison,
+      onClearComparison: clearComparison,
+      policyLookup: getPolicySummary,
     });
 
     const reportPanel = createReportPanel({
