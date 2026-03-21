@@ -1,4 +1,4 @@
-﻿import { createAppShell } from "./components/AppShell.js";
+import { createAppShell } from "./components/AppShell.js";
 import { createCopyPromptPanel } from "./components/CopyPromptPanel.js";
 import { createInputPanel } from "./components/InputPanel.js";
 import { createReportPanel } from "./components/ReportPanel.js";
@@ -509,6 +509,7 @@ function render() {
       detections: state.preview.detections,
       report: state.preview.report,
       policySummary: getPolicySummary(state.policy),
+      selectedPolicy: state.policy,
     });
 
     const copyPanel = createCopyPromptPanel({

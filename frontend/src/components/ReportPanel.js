@@ -1,12 +1,18 @@
-﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { createPanelFrame } from "../ui/createPanelFrame.js";
 
-export function createReportPanel({ detections, report, policySummary }) {
+export function createReportPanel({ detections, report, policySummary, selectedPolicy }) {
   const panel = createPanelFrame({
     title: "3. 정책 판정",
     description: "탐지 건수, 적용 정책, 검토 상태를 확인합니다.",
     badge: report.risk_level,
     badgeVariant: "warning",
   });
+
+  const displayStrategy = selectedPolicy || report.strategy || "alias";
+  const displayDetections = detections.map((item) => ({
+    ...item,
+    note: buildDetectionNote(item, selectedPolicy),
+  }));
 
   const summary = document.createElement("div");
   summary.className = "report-summary";
@@ -20,13 +26,13 @@ export function createReportPanel({ detections, report, policySummary }) {
     </div>
     <div class="metric">
       <span class="metric__label">치환 전략</span>
-      <strong class="metric__value">${report.strategy}</strong>
+      <strong class="metric__value">${displayStrategy}</strong>
     </div>
     <div class="metric">
       <span class="metric__label">검토 상태</span>
       <strong class="metric__value">${report.review_status}</strong>
     </div>
-    <p style="font-size: 13px; font-weight: 600; color: ${report.review_status === 'clean' ? '#0f766e' : '#92400e'}; margin-top: 12px;">
+    <p style="font-size: 13px; font-weight: 600; color: ${report.review_status === "clean" ? "#0f766e" : "#92400e"}; margin-top: 12px;">
       ${nextStepText}
     </p>
   `;
@@ -34,14 +40,14 @@ export function createReportPanel({ detections, report, policySummary }) {
   const policyBox = document.createElement("div");
   policyBox.className = "report-policy-box";
   policyBox.innerHTML = `
-    <strong class="report-policy-box__title">${escapeHtml(policySummary?.title || report.strategy)}</strong>
+    <strong class="report-policy-box__title">${escapeHtml(policySummary?.title || displayStrategy)}</strong>
     <p class="report-policy-box__body">${escapeHtml(policySummary?.description || "")}</p>
     <p class="report-policy-box__meta">${escapeHtml(policySummary?.examples || "")}</p>
   `;
 
   const list = document.createElement("div");
   list.className = "detection-list";
-  list.innerHTML = detections
+  list.innerHTML = displayDetections
     .map(
       (item) => `
         <article class="list-item">
@@ -57,6 +63,14 @@ export function createReportPanel({ detections, report, policySummary }) {
 
   panel.body.append(summary, policyBox, list);
   return panel.element;
+}
+
+function buildDetectionNote(item, selectedPolicy) {
+  const base = String(item.note || "");
+  if (selectedPolicy === "local_rewrite") {
+    return `${base.split(" · ")[0]} · detection=local_rewrite review`; 
+  }
+  return base;
 }
 
 function escapeHtml(value) {
