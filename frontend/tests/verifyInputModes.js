@@ -11,7 +11,7 @@ async function main() {
   await page.goto(FRONTEND_URL);
   await page.waitForLoadState("networkidle");
   
-  // 브라우저 캐시 방지를 위해硬的 새로고침
+  // 브라우저 캐시 방지를 위해 강제 새로고침
   await page.evaluate(() => location.reload());
   await page.waitForLoadState("networkidle");
   

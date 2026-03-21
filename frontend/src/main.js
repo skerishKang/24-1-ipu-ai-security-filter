@@ -84,7 +84,7 @@ function getSessionBadge() {
   if (!state.preview?.session_id) {
     return "";
   }
-  return `${state.preview.session_id} 쨌 ${state.source}`;
+  return `${state.preview.session_id} · ${state.source}`;
 }
 
 async function updatePreview(nextText, policy = state.policy, taskType = state.taskType) {
@@ -153,7 +153,7 @@ async function updateFilePreview(file, policy = state.policy) {
   state.policy = policy;
   state.selectedFile = targetFile;
   state.selectedFileName = targetFile.name;
-  state.lastPreviewLabel = `${targetFile.name} 寃곌낵`;
+  state.lastPreviewLabel = `${targetFile.name} 결과`;
   state.restoredText = "";
   state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
   state.isDragActive = false;
@@ -206,7 +206,7 @@ async function updateAudioPreview(file, policy = state.policy) {
   state.policy = policy;
   state.selectedFile = targetFile;
   state.selectedFileName = targetFile.name;
-  state.lastPreviewLabel = `${targetFile.name} ?뚯꽦 寃곌낵`;
+  state.lastPreviewLabel = `${targetFile.name} 음성 결과`;
   state.restoredText = "";
   state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
   state.isDragActive = false;
@@ -260,7 +260,7 @@ async function setSelectedFile(file) {
     state.status = createStatus(
       state.inputMode === "audio" ? STATUS_TYPES.AUDIO_SELECTED : STATUS_TYPES.FILE_SELECTED,
       {
-      detail: `${file.name} ?뚯씪???좏깮?덉뒿?덈떎. 誘몃━蹂닿린瑜??앹꽦??二쇱꽭??`,
+      detail: `${file.name} 파일이 선택됐습니다. 미리보기를 생성해 주세요.`,
       },
     );
   }
@@ -301,10 +301,10 @@ async function restoreCurrentPreview() {
     );
     state.restoredText = restored.restored_text;
     state.restoreStatus = restored.restored
-      ? "蹂듭썝 ?뚯뒪?멸? ?깃났?덉뒿?덈떎."
-      : "蹂듭썝???몄뀡 留ㅽ븨???놁뼱 移섑솚蹂몄쓣 洹몃?濡??좎??덉뒿?덈떎.";
+      ? "복원 테스트가 성공했습니다."
+      : "복원용 세션 매핑이 없어 치환본을 그대로 유지했습니다.";
   } catch (error) {
-    state.restoreStatus = error?.message || "蹂듭썝 ?뚯뒪???붿껌???ㅽ뙣?덉뒿?덈떎.";
+    state.restoreStatus = error?.message || "복원 테스트 요청이 실패했습니다.";
   } finally {
     state.isRestoring = false;
     render();
@@ -329,10 +329,10 @@ async function restoreAiResponse() {
     );
     state.aiRestoredText = restored.restored_text;
     state.aiRestoreStatus = restored.restored
-      ? "AI ?묐떟 蹂듭썝???꾨즺?섏뿀?듬땲??"
-      : "蹂듭썝???좏겙???놁뼱 洹몃?濡?諛섑솚?섏뿀?듬땲??";
+      ? "AI 응답 복원이 완료됐습니다."
+      : "복원용 토큰이 없어 원문 없이 그대로 반환했습니다.";
   } catch (error) {
-    state.aiRestoreStatus = error?.message || "AI ?묐떟 蹂듭썝???ㅽ뙣?덉뒿?덈떎.";
+    state.aiRestoreStatus = error?.message || "AI 응답 복원이 실패했습니다.";
   } finally {
     state.isAiRestoring = false;
     render();

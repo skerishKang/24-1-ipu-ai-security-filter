@@ -52,7 +52,7 @@
 - 파일:
   - `..._seg0002.wav`
 - 결과:
-  - `with those guys and wife LOUPA promise I've guessed that must've been the heart變 food`
+  - `with those guys and wife LOUPA promise I've guessed that must've been the heartbeat food`
 - 판정:
   - `observe-only`
 

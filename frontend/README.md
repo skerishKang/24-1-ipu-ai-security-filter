@@ -90,7 +90,7 @@ node tests/runSmokeTests.js
 cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall\backend
 .venv-win\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8241
 
-# Windows - frontend 서버 실행 (別の 터미널)
+# Windows - frontend 서버 실행 (다른 터미널)
 cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall\frontend
 python -m http.server 4241
 
