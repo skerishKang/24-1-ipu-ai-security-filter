@@ -6,6 +6,7 @@
 
 - `detect(content, content_type="text", policy="default")`
 - `replace(content, detections, session_id, strategy="strict_token")`
+- `replace_with_local_rewrite(content, detections, session_id)` (Ollama 기반)
 - `restore(content, session_id)`
 - `build_report(detections, replacements, strategy="strict_token")`
 - TTL이 적용된 세션 매핑 저장소
@@ -88,12 +89,12 @@ python3 engine/scripts/run_quality_harness.py
 ## 현재 한계
 
 - 고품질 NER가 아니라 정규식 기반 placeholder 탐지다.
-- 품질 harness는 “현재 어디까지 탐지되는지”를 반복 점검하는 기준선이며, 실제 정답 데이터셋 기반 평가까지는 아직 아니다.
+- 품질 harness는 "현재 어디까지 탐지되는지"를 반복 점검하는 기준선이며, 실제 정답 데이터셋 기반 평가까지는 아직 아니다.
 - false positive / false negative 샘플은 현재 한계를 숨기지 않고 드러내기 위한 관찰용 기준선이다.
 - 기본 세션 저장소는 메모리 기반이라 재시작 시 사라진다.
 - SQLite 저장소를 쓰면 TTL 범위 내에서 프로세스 재시작 후에도 restore 를 이어갈 수 있다.
 - 기본 TTL은 900초이며 backend 의 `IPU_SESSION_TTL_SECONDS` 설정으로 바꿀 수 있다.
-- 정책별 분기는 아직 최소 수준이며, 현재는 `default` 와 `strict_token` 만 다룬다.
+- `local_rewrite`는 모델 품질에 따라 결과가 달라질 수 있어 universal default로 확정하기엔 아직 평가가 필요하다.
 - 중복 표현, 문맥 기반 별칭, 문서/음성 처리 로직은 아직 비어 있다.
 
 ## TTL 동작
@@ -113,11 +114,11 @@ python3 engine/scripts/run_quality_harness.py
 
 ## policy 동작
 
-- 현재 공식 preset은 `default`, `strict_token` 두 가지뿐이다.
+- 현재 공식 preset은 `default`, `strict_token`, `local_rewrite` 세 가지다.
 - `default`: 완화된 기본 정책이다. 현재는 `EMAIL`, `PHONE`, `PERSON` 만 탐지하고, 치환 토큰도 `[EMAIL_ALIAS_01]` 같은 alias 형태로 만든다.
 - `strict_token`: 더 넓게 탐지하는 정책이다. 현재는 `EMAIL`, `PHONE`, `PERSON`, `ORG`, `AMOUNT` 를 모두 탐지하고, `[EMAIL_01]` 같은 타입 노출형 토큰으로 치환한다.
-- 두 정책 모두 응답 스키마는 같고, 차이는 `detections`, `replaced_text`, `replacements`, `report.total_detections`, `report.risk_level`, `report.strategy` 에 반영된다.
-- 이 분기는 "정말 차이가 존재한다"는 최소 기준선에 가깝다. 아직 고급 문맥 정책이나 운영 정책 엔진이라고 보기는 어렵다.
+- `local_rewrite`: strict_token 수준의 탐지 범위를 사용하고, Ollama 로컬 모델이 생성한 문맥 기반 일반화 표현으로 치환한다. 모델 실패 시 deterministic generalized fallback을 사용한다.
+- 세 정책 모두 응답 스키마는 같고, 차이는 `detections`, `replaced_text`, `replacements`, `report.total_detections`, `report.risk_level`, `report.strategy` 에 반영된다.
 - preset 기준 문서는 `docs/development/17-security-policy-presets.md` 를 따른다.
 
 현재 의도:

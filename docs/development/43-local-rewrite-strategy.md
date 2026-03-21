@@ -7,7 +7,9 @@
 
 ## Current State
 - `ManualPreviewEngine` uses `RegexDetector` + `TokenReplacer`
-- current public policies are `default` and `strict_token`
+- current public policies are `default`, `strict_token`, and `local_rewrite`
+- `local_rewrite` is now implemented and connected to API/UI
+- `local_rewrite` is NOT the universal default yet
 - current replacement output is safe for PoC, but not natural enough for real business prompting
 
 ## Next Step
@@ -32,10 +34,12 @@
 - `engine/tests/test_local_rewriter.py`
 
 ## Suggested Future Policies
-- `local_rewrite`
-- `local_rewrite_strict`
 
-These are not wired into the public API yet. They should stay experimental until quality review is complete.
+These policies are now implemented:
+- `local_rewrite` (connected to API/UI, but not the universal default)
+- `local_rewrite_strict` (future variant, still experimental)
+
+`local_rewrite_strict` is still experimental. Keep it experimental until quality review is complete.
 
 ## Rollout Criteria
 - baseline sample set should pass with no raw sensitive leakage

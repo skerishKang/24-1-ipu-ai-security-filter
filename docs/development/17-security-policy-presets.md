@@ -7,10 +7,11 @@
 
 ## 현재 공식 preset
 
-현재 지원하는 preset은 아래 2개뿐이다.
+현재 지원하는 preset은 아래 3개다.
 
 - `default`
 - `strict_token`
+- `local_rewrite`
 
 새 preset을 추가할 때는 먼저 이 문서를 갱신한 뒤 API schema, engine, frontend를 함께 수정한다.
 
@@ -61,6 +62,24 @@
   - 외부 모델 전송 전 보수적 전처리
   - 전문가 모드 검토
 
+### `local_rewrite`
+
+- 위치: 로컬 모델 보조 치환
+- 목적: strict_token 수준의 탐지 범위를 유지하면서 더 자연스러운 치환 결과 생성
+- 현재 탐지 범위:
+  - `EMAIL`, `PHONE`, `PERSON`, `ORG`, `AMOUNT` (strict_token 기준)
+- 현재 치환 전략:
+  - Ollama 로컬 모델 기반 자연어 치환
+  - 모델 실패 시 deterministic generalized fallback
+- 일반화 표현 예시:
+  - 모델이 문맥을 분석하여 생성하는 일반화 표현
+- 권장 사용:
+  - 가독성이 중요한 외부 AI 전송 시
+  - strict_token 결과의 부자연스러움이 문제될 때
+- 주의:
+  - 아직 universal default가 아님
+  - 모델 품질에 따라 결과가 달라질 수 있음
+
 ## 제품 원칙
 
 - 기본 추천 정책은 `default`가 아니라 용도에 따라 다르다.
@@ -69,11 +88,11 @@
 
 ## API 계약
 
-- request `policy`는 `default | strict_token`만 허용한다.
-- response `report.strategy`는 `alias | strict_token`으로 고정한다.
+- request `policy`는 `default | strict_token | local_rewrite`를 허용한다.
+- response `report.strategy`는 `alias | strict_token | local_rewrite`로 확장한다.
 - unsupported policy는 backend schema 단계에서 거절한다.
 
 ## 현재 결론
 
 현재 단계에서 policy preset은 실험용 토글이 아니라 제품 계약이다.  
-따라서 설명 문구, 테스트, 품질 리뷰는 모두 이 두 preset을 기준으로 유지한다.
+따라서 설명 문구, 테스트, 품질 리뷰는 모두 이 세 preset을 기준으로 유지한다.

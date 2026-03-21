@@ -210,11 +210,11 @@ segment / timestamp 기준은 [`docs/development/26-audio-segment-and-timestamp-
 ## policy 동작
 
 - frontend 가 보내는 `policy` 값은 backend 를 거쳐 engine 으로 전달된다.
-- 현재 공식 preset은 `default`, `strict_token` 두 가지뿐이다.
+- 현재 공식 preset은 `default`, `strict_token`, `local_rewrite` 세 가지다.
 - `default` 는 현재 직접 표기된 `EMAIL`, `PHONE`, `PERSON` 만 탐지하고 `[EMAIL_ALIAS_01]` 같은 alias 토큰으로 치환한다.
 - `strict_token` 은 `ORG`, `AMOUNT` 까지 포함해 더 넓게 탐지하고, `security at ipu dot co kr` 같은 변형 이메일과 직함 없는 실명 전달 문맥도 추가로 잡아 `[EMAIL_01]` 같은 strict token 으로 치환한다.
+- `local_rewrite` 는 strict_token 수준의 탐지 범위를 사용하고, Ollama 로컬 모델이 생성한 문맥 기반 일반화 표현으로 치환한다. 모델 실패 시 deterministic fallback을 사용한다.
 - 응답 스키마는 동일하며, policy 차이는 `detections`, `replacements`, `replaced_text`, `report` 값에 반영된다.
-- 다만 둘 다 아직 정규식 기반 placeholder 정책이므로 운영 등급의 정밀 정책 엔진은 아니다.
 - preset 기준 문서는 [`docs/development/17-security-policy-presets.md`](../docs/development/17-security-policy-presets.md) 를 따른다.
 
 ## 최소 운영 로그 범위

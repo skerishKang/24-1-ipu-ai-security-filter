@@ -180,10 +180,13 @@ window.IPU_RUNTIME_CONFIG = {
 
 ## policy 선택 사용 방법
 
-- 입력 패널에서 `Policy` 를 `default` 또는 `strict_token` 중에서 선택할 수 있다.
-- 현재 policy 선택은 준비 단계이며, backend request 의 `policy` 필드에 그대로 전달하는 수준이다.
+- 입력 패널에서 `Policy` 를 `default`, `strict_token`, `local_rewrite` 중에서 선택할 수 있다.
+- 각 policy의 의미:
+  - `default`: 읽기 쉬운 기본 보호
+  - `strict_token`: 보수적 비식별화
+  - `local_rewrite`: 로컬 모델 보조 치환 (Ollama 기반)
 - 텍스트 입력과 파일 업로드 요청 모두 같은 선택 값을 사용한다.
-- 현재 backend 동작 차이는 크지 않을 수 있지만, 이후 정책 분기 연결을 위한 UI 자리와 요청 경로는 확보돼 있다.
+- `default`와 `strict_token`은 정규식 기반, `local_rewrite`는 Ollama 로컬 모델 기반 치환을 수행한다.
 
 ## 연동 동작 설명
 
