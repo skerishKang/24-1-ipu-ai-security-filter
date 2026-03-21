@@ -28,28 +28,28 @@ const SUPPORTED_UPLOAD_EXTENSIONS = [".txt", ".md", ".csv", ".pdf", ".docx", ".h
 const KNOWN_BUT_UNSUPPORTED_UPLOAD_EXTENSIONS = [".hwp"];
 const SUPPORTED_AUDIO_EXTENSIONS = [".wav", ".mp3", ".m4a", ".mp4", ".webm"];
 const defaultText =
-  "아이피유 담당자 홍길동은 고객사 문의를 검토 중입니다. 연락처는 contact@ipu.co.kr, 010-1234-5678이며 계약 금액은 12,500,000원입니다.";
+  "A customer inquiry is under review. Contact details are contact@ipu.co.kr and 010-1234-5678, and the contract amount is KRW 12,500,000.";
 const POLICY_PRESETS = {
   default: {
-    title: "default · 읽기 쉬운 기본 보호",
+    title: "default | readable baseline",
     description:
-      "이메일, 전화번호, 인명 등 자주 쓰는 항목을 읽기 쉬운 alias 형태로 치환합니다.",
+      "Masks common items such as email, phone number, and person names with readable alias tokens.",
     examples:
-      "예: contact@ipu.co.kr, 010-1234-5678, 홍길동 이사",
+      "e.g. contact@ipu.co.kr, 010-1234-5678, Hong Gil-dong director",
   },
   strict_token: {
-    title: "strict_token · 보수적 비식별화",
+    title: "strict_token | conservative masking",
     description:
-      "조직명, 금액, 변형 이메일, 전달 문맥까지 더 넓게 탐지하고 타입 토큰으로 치환합니다.",
+      "Detects a wider range including organization and amount, then replaces them with explicit strict tokens.",
     examples:
-      "예: security at ipu dot co kr, 박팀장에게 전달, 120,000,000원, 미래전자",
+      "e.g. security at ipu dot co kr, deliver to Park, KRW 120,000,000, Mirae Electronics",
   },
   local_rewrite: {
-    title: "local_rewrite · 로컬 모델 보조 치환",
+    title: "local_rewrite | local-model rewrite",
     description:
-      "strict_token 수준으로 탐지한 뒤, 로컬 모델 또는 fallback 규칙으로 더 읽기 쉬운 일반화 문구를 생성합니다.",
+      "Uses strict_token-level detection and rewrites the result into more readable generalized business text.",
     examples:
-      "예: 담당자 1, A사, 연락처, 비공개 금액",
+      "e.g. Contact 1, Company A 1, Email 1, Private amount 1",
   },
 };
 const state = {
@@ -65,13 +65,13 @@ const state = {
   selectedFileContent: "",
   isDragActive: false,
   uiMode: "general",
-  lastPreviewLabel: "기본 예시 텍스트",
+  lastPreviewLabel: "Default sample result",
   status: createStatus(STATUS_TYPES.INITIAL_MOCK),
   restoredText: "",
-  restoreStatus: "복원 테스트를 아직 실행하지 않았습니다.",
+  restoreStatus: "Restore test has not been run yet.",
   isRestoring: false,
   aiResponseText: "",
-  aiRestoreStatus: "외부 응답을 붙여넣은 뒤 복원할 수 있습니다.",
+  aiRestoreStatus: "Paste an AI response to restore original terms.",
   aiRestoredText: "",
   isAiRestoring: false,
 };
@@ -84,18 +84,18 @@ function getSessionBadge() {
   if (!state.preview?.session_id) {
     return "";
   }
-  return `${state.preview.session_id} · ${state.source}`;
+  return `${state.preview.session_id} | ${state.source}`;
 }
 
 async function updatePreview(nextText, policy = state.policy, taskType = state.taskType) {
   state.originalText = nextText;
   state.policy = policy;
   state.taskType = taskType;
-  state.lastPreviewLabel = "텍스트 입력 결과";
+  state.lastPreviewLabel = "Text preview result";
   state.restoredText = "";
-  state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
+  state.restoreStatus = "Restore test has not been run yet.";
   state.aiResponseText = "";
-  state.aiRestoreStatus = "외부 응답을 붙여넣은 뒤 복원할 수 있습니다.";
+  state.aiRestoreStatus = "Paste an AI response to restore original terms.";
   state.aiRestoredText = "";
   state.isLoading = true;
   state.status = createStatus(STATUS_TYPES.BACKEND_REQUEST_LOADING, { policy });
@@ -153,9 +153,9 @@ async function updateFilePreview(file, policy = state.policy) {
   state.policy = policy;
   state.selectedFile = targetFile;
   state.selectedFileName = targetFile.name;
-  state.lastPreviewLabel = `${targetFile.name} 결과`;
+  state.lastPreviewLabel = `${targetFile.name} result`;
   state.restoredText = "";
-  state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
+  state.restoreStatus = "Restore test has not been run yet.";
   state.isDragActive = false;
   state.status = createStatus(STATUS_TYPES.FILE_REQUEST_LOADING, { policy });
   render();
@@ -206,9 +206,9 @@ async function updateAudioPreview(file, policy = state.policy) {
   state.policy = policy;
   state.selectedFile = targetFile;
   state.selectedFileName = targetFile.name;
-  state.lastPreviewLabel = `${targetFile.name} 음성 결과`;
+  state.lastPreviewLabel = `${targetFile.name} audio result`;
   state.restoredText = "";
-  state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
+  state.restoreStatus = "Restore test has not been run yet.";
   state.isDragActive = false;
   state.status = createStatus(STATUS_TYPES.AUDIO_REQUEST_LOADING, { policy });
   render();
@@ -260,7 +260,7 @@ async function setSelectedFile(file) {
     state.status = createStatus(
       state.inputMode === "audio" ? STATUS_TYPES.AUDIO_SELECTED : STATUS_TYPES.FILE_SELECTED,
       {
-      detail: `${file.name} 파일이 선택됐습니다. 미리보기를 생성해 주세요.`,
+      detail: `${file.name} ???뵬???醫뤾문?癒?뮸??덈뼄. 沃섎챶?곮퉪?용┛????밴쉐??雅뚯눘苑??`,
       },
     );
   }
@@ -285,13 +285,13 @@ function setUiMode(mode) {
 
 async function restoreCurrentPreview() {
   if (!state.preview?.session_id || !state.preview?.replaced_text) {
-    state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
+    state.restoreStatus = "Restore test has not been run yet.";
     render();
     return;
   }
 
   state.isRestoring = true;
-  state.restoreStatus = "복원 테스트를 아직 실행하지 않았습니다.";
+  state.restoreStatus = "Restore request in progress.";
   render();
 
   try {
@@ -301,10 +301,10 @@ async function restoreCurrentPreview() {
     );
     state.restoredText = restored.restored_text;
     state.restoreStatus = restored.restored
-      ? "복원 테스트가 성공했습니다."
-      : "복원용 세션 매핑이 없어 치환본을 그대로 유지했습니다.";
+      ? "Restore test completed successfully."
+      : "No restorable session mapping was found, so the sanitized text was kept as-is.";
   } catch (error) {
-    state.restoreStatus = error?.message || "복원 테스트 요청이 실패했습니다.";
+    state.restoreStatus = error?.message || "Restore request failed.";
   } finally {
     state.isRestoring = false;
     render();
@@ -313,13 +313,13 @@ async function restoreCurrentPreview() {
 
 async function restoreAiResponse() {
   if (!state.preview?.session_id || !state.aiResponseText) {
-    state.aiRestoreStatus = "외부 응답을 붙여넣은 뒤 복원할 수 있습니다.";
+    state.aiRestoreStatus = "Paste an AI response to restore original terms.";
     render();
     return;
   }
 
   state.isAiRestoring = true;
-  state.aiRestoreStatus = "외부 응답을 붙여넣은 뒤 복원할 수 있습니다.";
+  state.aiRestoreStatus = "AI response restore in progress.";
   render();
 
   try {
@@ -329,10 +329,10 @@ async function restoreAiResponse() {
     );
     state.aiRestoredText = restored.restored_text;
     state.aiRestoreStatus = restored.restored
-      ? "AI 응답 복원이 완료됐습니다."
-      : "복원용 토큰이 없어 원문 없이 그대로 반환했습니다.";
+      ? "AI response restore completed."
+      : "No restore token was found, so the response was returned unchanged.";
   } catch (error) {
-    state.aiRestoreStatus = error?.message || "AI 응답 복원이 실패했습니다.";
+    state.aiRestoreStatus = error?.message || "AI response restore failed.";
   } finally {
     state.isAiRestoring = false;
     render();
@@ -347,37 +347,37 @@ function getHeroCopy() {
   if (state.uiMode === "general") {
     return {
       eyebrow: "IPU Firewall",
-      title: "문서 검사",
+      title: "Document screening",
       description:
-        "민감정보가 포함된 텍스트나 문서를 업로드하고, 비식별 결과를 빠르게 확인합니다.",
+        "Upload text or a document to quickly review the sanitized result before external sharing.",
     };
   }
 
   return {
     eyebrow: "IPU Firewall Console",
-    title: "문서 검사 콘솔",
+    title: "Document review console",
     description:
-      "입력, 정책 판정, 비식별 결과, 외부 전달 보조 기능을 한 화면에서 검토합니다.",
+      "Inspect input, policy status, sanitized output, and external transfer guidance in one place.",
   };
 }
 
 function getInputPanelCopy() {
   if (state.uiMode === "general") {
     return {
-      title: "입력",
+      title: "Input",
       description:
-        "검사할 텍스트를 붙여넣거나 문서·음성 파일을 업로드하면 민감정보를 자동으로 가립니다.",
+        "Paste text or upload a document or audio file to apply masking before external AI use.",
       showPolicy: false,
-      metaText: "지원 형식: .txt, .md, .csv, .pdf, .docx, .hwpx, .wav, .mp3, .m4a, .mp4, .webm",
+      metaText: "Supported: .txt, .md, .csv, .pdf, .docx, .hwpx, .wav, .mp3, .m4a, .mp4, .webm",
     };
   }
 
   return {
-    title: "1. 문서 입력",
+    title: "1. Document input",
     description:
-      "검사할 텍스트를 붙여넣거나 문서·음성 파일을 업로드합니다.",
+      "Paste text or upload a document or audio file for review.",
     showPolicy: true,
-    metaText: "텍스트는 즉시 검사할 수 있고, 파일 업로드는 백엔드 처리 결과를 사용합니다.",
+    metaText: "Text runs immediately. File and audio uploads use backend processing.",
   };
 }
 
@@ -388,46 +388,46 @@ function getVisibleStatusMessage() {
 
   switch (state.status.type) {
     case STATUS_TYPES.INITIAL_MOCK:
-      return "예시 결과를 먼저 표시하고 있습니다.";
+      return "Showing a default sample result.";
     case STATUS_TYPES.BACKEND_REQUEST_LOADING:
     case STATUS_TYPES.FILE_REQUEST_LOADING:
-      return "검사 결과를 생성하는 중입니다.";
+      return "Generating the screening result.";
     case STATUS_TYPES.BACKEND_SUCCESS:
-      return "검사가 완료됐습니다.";
+      return "Screening is complete.";
     case STATUS_TYPES.FILE_SUCCESS:
-      return "문서 처리 결과를 표시합니다.";
+      return "Showing the processed document result.";
     case STATUS_TYPES.AUDIO_REQUEST_LOADING:
-      return "음성 파일을 전사하고 검사하는 중입니다.";
+      return "Transcribing and screening the audio file.";
     case STATUS_TYPES.AUDIO_SUCCESS:
-      return "음성 기반 검사 결과를 표시합니다.";
+      return "Showing the audio-based screening result.";
     case STATUS_TYPES.MOCK_FALLBACK:
-      return "연결 문제로 예시 결과를 표시하고 있습니다.";
+      return "Backend is unavailable, so a mock result is shown.";
     case STATUS_TYPES.FILE_UNSUPPORTED:
-      return "현재는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일만 지원합니다.";
+      return "Supported file types are .txt, .md, .csv, .pdf, .docx, and .hwpx.";
     case STATUS_TYPES.FILE_HWP_UNSUPPORTED:
-      return "바이너리 .hwp는 직접 지원하지 않습니다. 가능하면 .hwpx, .pdf, .docx, .txt로 변환하세요.";
+      return "Binary .hwp is not supported directly. Convert it to .hwpx, .pdf, .docx, or .txt first.";
     case STATUS_TYPES.FILE_OCR_TOOL_MISSING:
-      return "스캔 PDF OCR 도구가 없습니다. tesseract 또는 pdftoppm 설치 후 다시 시도하세요.";
+      return "OCR tools are missing for scanned PDF handling.";
     case STATUS_TYPES.FILE_EMPTY_SELECTION:
-      return "먼저 파일을 선택하세요.";
+      return "Select a file first.";
     case STATUS_TYPES.FILE_SELECTED:
       return state.status.message;
     case STATUS_TYPES.FILE_EMPTY:
-      return "내용이 있는 파일을 선택하세요.";
+      return "Select a file that contains readable content.";
     case STATUS_TYPES.FILE_TOO_LARGE:
-      return "100MB 이하 파일만 업로드할 수 있습니다.";
+      return "Only files up to 100MB are supported.";
     case STATUS_TYPES.FILE_REQUEST_FAILED:
-      return "파일 처리에 실패했습니다. 다시 시도하세요.";
+      return "File processing failed. Try again.";
     case STATUS_TYPES.AUDIO_SELECTED:
       return state.status.message;
     case STATUS_TYPES.AUDIO_UNSUPPORTED:
-      return "현재는 .wav, .mp3, .m4a, .mp4, .webm 음성 파일만 지원합니다.";
+      return "Supported audio types are .wav, .mp3, .m4a, .mp4, and .webm.";
     case STATUS_TYPES.AUDIO_TOO_LARGE:
-      return "100MB 이하 음성 파일만 업로드할 수 있습니다.";
+      return "Only audio files up to 100MB are supported.";
     case STATUS_TYPES.AUDIO_NOT_READY:
-      return "로컬 STT가 아직 준비되지 않았습니다.";
+      return "Local STT is not ready yet.";
     case STATUS_TYPES.AUDIO_REQUEST_FAILED:
-      return "음성 처리에 실패했습니다. 다시 시도하세요.";
+      return "Audio processing failed. Try again.";
     default:
       return state.status.message;
   }
@@ -496,6 +496,10 @@ function render() {
       protectedCount: state.preview.report.total_detections,
       previewLabel: state.lastPreviewLabel,
       policySummary: getPolicySummary(state.policy),
+      replacements: state.preview.replacements,
+      detections: state.preview.detections,
+      report: state.preview.report,
+      selectedPolicy: state.policy,
     });
     shell.querySelector("[data-slot='result']").append(simpleResultPanel);
   } else {
@@ -503,6 +507,9 @@ function render() {
       originalText: state.preview.original_text,
       replacedText: state.preview.replaced_text,
       replacements: state.preview.replacements,
+      detections: state.preview.detections,
+      report: state.preview.report,
+      selectedPolicy: state.policy,
     });
 
     const reportPanel = createReportPanel({
@@ -551,6 +558,7 @@ function isKnownButUnsupportedUploadFile(filename) {
   const lowered = filename.toLowerCase();
   return KNOWN_BUT_UNSUPPORTED_UPLOAD_EXTENSIONS.some((extension) => lowered.endsWith(extension));
 }
+
 
 
 

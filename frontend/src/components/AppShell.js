@@ -1,4 +1,4 @@
-﻿export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSession = true }) {
+export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSession = true }) {
   const shell = document.createElement("main");
   shell.className = "app-shell";
   shell.innerHTML = `

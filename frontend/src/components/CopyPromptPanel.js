@@ -1,4 +1,4 @@
-﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createCopyPromptPanel({
   copyReadyPrompt,
@@ -31,7 +31,7 @@ export function createCopyPromptPanel({
     const statusColor = isReady ? "#0f766e" : "#92400e";
     const statusText = isReady ? "전달 가능" : "검토 필요";
     const nextActionText = isReady
-      ? "필요하면 아래 텍스트를 복사해 외부 도구에 전달하세요."
+      ? "필요하면 아래 텍스트를 복사해 외부 AI에 전달하세요."
       : "탐지 결과를 먼저 확인한 뒤 외부 전달 여부를 결정하세요.";
     readinessSection.innerHTML = `
       <div class="copy-panel__readiness-badge" style="background: ${statusColor}; color: white; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 8px;">
@@ -49,7 +49,7 @@ export function createCopyPromptPanel({
   const isReadyToCopy = !readiness || readiness.ready_to_send !== false;
   const copyButtonLabel = isReadyToCopy ? "전달 텍스트 복사" : "검토 후 진행";
   const statusText = isReadyToCopy
-    ? "필요할 때만 복사해서 외부 도구에 전달하세요."
+    ? "필요할 때만 복사해서 외부 AI에 전달하세요."
     : "현재 상태에서는 바로 전달하지 않는 것이 좋습니다.";
 
   const actions = document.createElement("div");
@@ -139,7 +139,7 @@ export function createCopyPromptPanel({
 }
 
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");

@@ -1,4 +1,4 @@
-﻿import { createSessionId } from "../utils/createSessionId.js";
+import { createSessionId } from "../utils/createSessionId.js";
 
 const PATTERNS = [
   {
@@ -15,7 +15,7 @@ const PATTERNS = [
   },
   {
     type: "AMOUNT",
-    regex: /\b\d{1,3}(?:,\d{3})*(?:만원|원)\b/g,
+    regex: /(?:KRW\s*\d{1,3}(?:,\d{3})+)|(?:\d{1,3}(?:,\d{3})+(?:만원|원))|(?:\d+(?:만원|원))/g,
     token: "AMOUNT",
     reason: "금액 및 재무 정보 보호",
   },

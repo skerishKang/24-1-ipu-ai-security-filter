@@ -1,4 +1,4 @@
-﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { createPanelFrame } from "../ui/createPanelFrame.js";
 
 export function createSimpleResultPanel({
   originalText,
@@ -6,12 +6,29 @@ export function createSimpleResultPanel({
   protectedCount,
   previewLabel = "최근 처리 결과",
   policySummary,
+  replacements = [],
+  detections = [],
+  report = { review_status: "clean", risk_level: "low-risk", strategy: "alias" },
+  selectedPolicy,
 }) {
   const panel = createPanelFrame({
     title: "2. 처리 결과",
     description: "비식별 결과를 빠르게 확인합니다.",
     badge: `${protectedCount} protected`,
   });
+
+  panel.element.classList.add("panel--review-surface");
+  if (report.review_status === "review-required") {
+    panel.element.classList.add("panel--review-required");
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "result-summary";
+  meta.append(
+    createModeBadge(selectedPolicy, report.strategy),
+    createStatusBadge(report),
+    ...buildDetectionChips(detections),
+  );
 
   const summary = document.createElement("div");
   summary.className = "simple-result__summary";
@@ -32,7 +49,7 @@ export function createSimpleResultPanel({
   safeCard.className = "text-card";
   safeCard.innerHTML = `
     <p class="text-card__label">처리 결과</p>
-    <p class="text-card__content" data-testid="simple-replaced-text">${escapeHtml(replacedText)}</p>
+    <p class="text-card__content" data-testid="simple-replaced-text">${highlightText(replacedText, replacements.map((item) => item.replaced), "text-replaced")}</p>
   `;
 
   const originalDetails = document.createElement("details");
@@ -40,7 +57,7 @@ export function createSimpleResultPanel({
   originalDetails.innerHTML = `
     <summary>원문 보기</summary>
     <div class="text-card">
-      <p class="text-card__content">${escapeHtml(originalText)}</p>
+      <p class="text-card__content">${highlightText(originalText, replacements.map((item) => item.original), "text-original-hit")}</p>
     </div>
   `;
 
@@ -61,12 +78,63 @@ export function createSimpleResultPanel({
     }
   });
 
-  panel.body.append(summary, safeCard, actions, originalDetails);
+  panel.body.append(meta, summary, safeCard, actions, originalDetails);
   return panel.element;
 }
 
+function buildDetectionChips(detections) {
+  const counts = detections.reduce((acc, item) => {
+    acc[item.type] = (acc[item.type] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(counts).map(([type, count]) => {
+    const chip = document.createElement("span");
+    chip.className = "summary-chip";
+    chip.textContent = `${type} ${count}`;
+    return chip;
+  });
+}
+
+function createModeBadge(selectedPolicy, strategy) {
+  const badge = document.createElement("span");
+  const mode = selectedPolicy || strategy || "default";
+  const variant = mode === "local_rewrite" ? "rewrite" : mode === "strict_token" ? "strict" : "default";
+  badge.className = `policy-badge policy-badge--${variant}`;
+  badge.textContent = `policy ${mode}`;
+  return badge;
+}
+
+function createStatusBadge(report) {
+  const badge = document.createElement("span");
+  const variant = report.review_status === "review-required" ? "warning" : "clean";
+  badge.className = `review-badge review-badge--${variant}`;
+  badge.textContent = `${report.review_status} · ${report.risk_level}`;
+  return badge;
+}
+
+function highlightText(text, values, className) {
+  let html = escapeHtml(text);
+  const uniqueValues = [...new Set(values.filter(Boolean))].sort((left, right) => right.length - left.length);
+
+  uniqueValues.forEach((value, index) => {
+    const escapedValue = escapeHtml(value);
+    const startToken = `__HL_START_${index}__`;
+    const endToken = `__HL_END_${index}__`;
+    html = html.split(escapedValue).join(`${startToken}${escapedValue}${endToken}`);
+  });
+
+  uniqueValues.forEach((_, index) => {
+    html = html
+      .replaceAll(`__HL_START_${index}__`, `<mark class="${className}">`)
+      .replaceAll(`__HL_END_${index}__`, "</mark>");
+  });
+
+  return html;
+}
+
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");

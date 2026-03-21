@@ -8,6 +8,11 @@ export function createReportPanel({ detections, report, policySummary, selectedP
     badgeVariant: "warning",
   });
 
+  panel.element.classList.add("panel--review-surface");
+  if (report.review_status === "review-required") {
+    panel.element.classList.add("panel--review-required");
+  }
+
   const displayStrategy = selectedPolicy || report.strategy || "alias";
   const displayDetections = detections.map((item) => ({
     ...item,
@@ -17,8 +22,8 @@ export function createReportPanel({ detections, report, policySummary, selectedP
   const summary = document.createElement("div");
   summary.className = "report-summary";
   const nextStepText = report.review_status === "clean"
-    ? "검토가 끝났습니다. 필요하면 오른쪽 패널에서 외부 전달용 텍스트를 복사하세요."
-    : "탐지 항목이 있습니다. 치환 결과와 전달 가능 여부를 먼저 검토하세요.";
+    ? "검토 상태가 clean입니다. 필요하면 오른쪽 패널에서 외부 전달용 텍스트를 복사하세요."
+    : "검토 필요 항목이 있습니다. 치환 결과와 전송 가능 여부를 먼저 확인하세요.";
   summary.innerHTML = `
     <div class="metric">
       <span class="metric__label">탐지 건수</span>
@@ -32,9 +37,16 @@ export function createReportPanel({ detections, report, policySummary, selectedP
       <span class="metric__label">검토 상태</span>
       <strong class="metric__value">${report.review_status}</strong>
     </div>
-    <p style="font-size: 13px; font-weight: 600; color: ${report.review_status === "clean" ? "#0f766e" : "#92400e"}; margin-top: 12px;">
+    <p class="report-summary__hint" style="color: ${report.review_status === "clean" ? "#0f766e" : "#92400e"};">
       ${nextStepText}
     </p>
+  `;
+
+  const reviewBox = document.createElement("div");
+  reviewBox.className = `report-review-box ${report.review_status === "review-required" ? "report-review-box--warning" : "report-review-box--clean"}`;
+  reviewBox.innerHTML = `
+    <strong class="report-review-box__title">${report.review_status === "review-required" ? "검토 필요" : "전송 준비 가능"}</strong>
+    <p class="report-review-box__body">위험도는 <strong>${report.risk_level}</strong>이며 현재 전략은 <strong>${displayStrategy}</strong> 입니다.</p>
   `;
 
   const policyBox = document.createElement("div");
@@ -50,31 +62,39 @@ export function createReportPanel({ detections, report, policySummary, selectedP
   list.innerHTML = displayDetections
     .map(
       (item) => `
-        <article class="list-item">
+        <article class="list-item ${isReviewCritical(item, report) ? "list-item--critical" : ""}">
           <div class="list-item__row">
-            <span class="list-item__key">${item.label}</span>
-            <span class="list-item__value">${item.type}</span>
+            <span class="list-item__key">${escapeHtml(item.label)}</span>
+            <span class="list-item__value">${escapeHtml(item.type)}</span>
           </div>
-          <div class="list-item__meta">위치 ${item.start}-${item.end} · score ${item.score} · ${item.note}</div>
+          <div class="list-item__meta">위치 ${item.start}-${item.end} · score ${item.score} · ${escapeHtml(item.note)}</div>
         </article>
       `,
     )
     .join("");
 
-  panel.body.append(summary, policyBox, list);
+  panel.body.append(summary, reviewBox, policyBox, list);
   return panel.element;
 }
 
 function buildDetectionNote(item, selectedPolicy) {
   const base = String(item.note || "");
   if (selectedPolicy === "local_rewrite") {
-    return `${base.split(" · ")[0]} · detection=local_rewrite review`; 
+    return `${base.split(" · ")[0]} · detection=local_rewrite review`;
   }
   return base;
 }
 
+function isReviewCritical(item, report) {
+  if (report.review_status === "review-required" && report.risk_level === "high-risk") {
+    return true;
+  }
+
+  return item.type === "AMOUNT" || item.type === "ORG";
+}
+
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
