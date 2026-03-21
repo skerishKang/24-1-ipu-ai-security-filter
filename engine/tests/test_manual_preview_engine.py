@@ -38,7 +38,7 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertIn(preview["report"]["review_status"], {"clean", "review-required"})
         self.assertTrue(preview["detections"])
         self.assertTrue(preview["replacements"])
-        self.assertIn("[Redacted Input]", preview["copy_ready_prompt"])
+        self.assertIn("[Sanitized Text]", preview["copy_ready_prompt"])
 
     def test_restore_uses_session_mapping(self) -> None:
         content = "문의는 010-1234-5678 또는 contact@ipu.co.kr 로 주세요."

@@ -6,6 +6,7 @@ from pathlib import Path
 from threading import RLock
 from time import time
 from typing import Callable, Protocol
+from contextlib import contextmanager
 
 from engine.src.contracts import SessionMapping
 
@@ -234,10 +235,14 @@ class SQLiteSessionStore:
             )
             conn.commit()
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self):
         conn = sqlite3.connect(self._db_path)
         conn.row_factory = sqlite3.Row
-        return conn
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     def _cleanup_expired_sessions_locked(self, conn: sqlite3.Connection) -> None:
         now = self._clock()

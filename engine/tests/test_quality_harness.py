@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import unittest
 
@@ -30,7 +30,7 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
                 self.assertEqual(preview["report"]["total_detections"], len(preview["detections"]))
                 self.assertEqual(preview["report"]["strategy"], "strict_token")
                 self.assertTrue(preview["replaced_text"])
-                self.assertIn("[Redacted Input]", preview["copy_ready_prompt"])
+                self.assertIn("[Sanitized Text]", preview["copy_ready_prompt"])
 
     def test_replaced_text_contains_expected_tokens_for_quality_samples(self) -> None:
         for sample in QUALITY_SAMPLES:
@@ -97,7 +97,7 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
                 self.assertEqual(preview["report"]["total_detections"], len(preview["detections"]))
                 self.assertIsInstance(preview["detections"], list)
                 self.assertIsInstance(preview["replacements"], list)
-                self.assertIn("[Redacted Input]", preview["copy_ready_prompt"])
+                self.assertIn("[Sanitized Text]", preview["copy_ready_prompt"])
 
     def test_combined_sample_restore_round_trip_is_lossless_before_expiration(self) -> None:
         sample = next(item for item in QUALITY_SAMPLES if item.sample_id == "combined_business_note")
@@ -114,3 +114,4 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
