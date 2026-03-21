@@ -43,7 +43,7 @@ backend/
 ## 실행 방법
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/backend
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall/backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -74,7 +74,7 @@ export IPU_WHISPER_USE_GPU=true
 자동화 smoke test 실행:
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter/backend
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall/backend
 source .venv/bin/activate
 python3 -m unittest tests.test_manual_preview_api
 ```
@@ -82,7 +82,7 @@ python3 -m unittest tests.test_manual_preview_api
 WSL에서 `/mnt/...` 아래 가상환경이 지나치게 느리면 빠른 임시 가상환경으로 우회하는 편이 안정적이다.
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall
 FAST_BACKEND_PY="$(./scripts/ensure_fast_backend_venv.sh)"
 
 cd backend
