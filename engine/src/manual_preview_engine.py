@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from engine.src.contracts import (
     Detection,
     Replacement,
@@ -8,7 +10,7 @@ from engine.src.contracts import (
     report_to_dict,
 )
 from engine.src.detector import RegexDetector
-from engine.src.local_rewriter import OllamaLocalRewriter
+from engine.src.local_rewriter import OllamaLocalRewriter, PlaceholderLocalRewriter
 from engine.src.report_builder import ReportBuilder
 from engine.src.replacer import TokenReplacer
 from engine.src.restorer import SessionRestorer
@@ -32,14 +34,14 @@ class ManualPreviewEngine:
     def __init__(
         self,
         session_store: SessionStore | None = None,
-        local_rewriter: OllamaLocalRewriter | None = None,
+        local_rewriter: Any | None = None,
     ) -> None:
         self.session_store = session_store or InMemorySessionStore()
         self.detector = RegexDetector()
         self.replacer = TokenReplacer(self.session_store)
         self.restorer = SessionRestorer(self.session_store)
         self.report_builder = ReportBuilder()
-        self.local_rewriter = local_rewriter or OllamaLocalRewriter()
+        self.local_rewriter = local_rewriter or PlaceholderLocalRewriter()
 
     def detect(
         self,

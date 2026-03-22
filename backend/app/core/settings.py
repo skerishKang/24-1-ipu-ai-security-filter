@@ -16,6 +16,9 @@ class BackendSettings:
     whisper_language: str | None
     whisper_task: str
     whisper_use_gpu: bool
+    ollama_enabled: bool
+    ollama_base_url: str
+    ollama_model: str
 
 
 def get_settings() -> BackendSettings:
@@ -37,6 +40,9 @@ def get_settings() -> BackendSettings:
         whisper_language = None
     whisper_task = os.getenv("IPU_WHISPER_TASK", "transcribe").strip().lower() or "transcribe"
     whisper_use_gpu = os.getenv("IPU_WHISPER_USE_GPU", "true").strip().lower() not in {"0", "false", "no"}
+    ollama_enabled = os.getenv("IPU_OLLAMA_ENABLED", "true").strip().lower() not in {"0", "false", "no"}
+    ollama_base_url = os.getenv("IPU_OLLAMA_BASE_URL", "http://127.0.0.1:11434").strip()
+    ollama_model = os.getenv("IPU_OLLAMA_MODEL", "qwen2.5:7b-instruct").strip() or "qwen2.5:7b-instruct"
 
     return BackendSettings(
         session_store_kind=session_store_kind,
@@ -48,4 +54,7 @@ def get_settings() -> BackendSettings:
         whisper_language=whisper_language,
         whisper_task=whisper_task,
         whisper_use_gpu=whisper_use_gpu,
+        ollama_enabled=ollama_enabled,
+        ollama_base_url=ollama_base_url,
+        ollama_model=ollama_model,
     )

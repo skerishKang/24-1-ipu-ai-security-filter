@@ -181,3 +181,46 @@ class OllamaLocalRewriter:
         if detection_type == "AMOUNT":
             return f"{replacement} {index}"
         return f"{replacement} {index}"
+
+
+class PlaceholderLocalRewriter:
+    """Fallback rewriter when Ollama is not available."""
+
+    def rewrite(self, content: str, detections: list[Detection]) -> LocalRewriteResult:
+        if not detections:
+            return LocalRewriteResult(replacements=[], used_fallback=True, raw_response="")
+
+        replacements = self._fallback_replacements(detections)
+        return LocalRewriteResult(
+            replacements=replacements,
+            used_fallback=True,
+            raw_response="",
+        )
+
+    def _fallback_replacements(self, detections: list[Detection]) -> list[Replacement]:
+        counters: dict[str, int] = {}
+        replacements: list[Replacement] = []
+        for detection in detections:
+            counters[detection.type] = counters.get(detection.type, 0) + 1
+            replacements.append(
+                Replacement(
+                    type=detection.type,
+                    original=detection.label,
+                    replaced=self._fallback_text(detection.type, counters[detection.type]),
+                    reason="placeholder_local_rewrite",
+                )
+            )
+        return replacements
+
+    def _fallback_text(self, detection_type: str, index: int) -> str:
+        if detection_type == "PERSON":
+            return f"담당자 {index}"
+        if detection_type == "ORG":
+            return f"A사 {index}"
+        if detection_type == "EMAIL":
+            return f"이메일 주소 {index}"
+        if detection_type == "PHONE":
+            return f"연락처 {index}"
+        if detection_type == "AMOUNT":
+            return f"비공개 금액 {index}"
+        return f"비식별 정보 {index}"

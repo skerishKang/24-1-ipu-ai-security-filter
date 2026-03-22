@@ -10,6 +10,7 @@ from fastapi import UploadFile
 
 from engine.src.manual_preview_engine import ManualPreviewEngine
 from engine.src.session_store import InMemorySessionStore, SessionStore, SQLiteSessionStore
+from engine.src.local_rewriter import OllamaLocalRewriter, PlaceholderLocalRewriter
 
 from app.api.schemas.manual_preview import (
     DetectionItem,
@@ -39,11 +40,16 @@ class ManualPreviewService:
         session_store: SessionStore | None = None,
         file_parser: FileParser | None = None,
         audio_transcriber: AudioTranscriber | None = None,
+        local_rewriter=None,
     ) -> None:
         self.session_store = session_store or self._build_session_store()
         self.file_parser = file_parser or DefaultFileParser()
         self.audio_transcriber = audio_transcriber or self._build_audio_transcriber()
-        self.engine = ManualPreviewEngine(session_store=self.session_store)
+        self.local_rewriter = local_rewriter or self._build_local_rewriter()
+        self.engine = ManualPreviewEngine(
+            session_store=self.session_store,
+            local_rewriter=self.local_rewriter,
+        )
 
     def build_preview(self, payload: ManualPreviewRequest) -> ManualPreviewResponse:
         session_id = self._create_session_id()
@@ -308,6 +314,20 @@ class ManualPreviewService:
             task=settings.whisper_task,
             use_gpu=settings.whisper_use_gpu,
         )
+
+    def _build_local_rewriter(self):
+        settings = get_settings()
+        if not settings.ollama_enabled:
+            logger.info("Ollama disabled, using placeholder local rewriter")
+            return PlaceholderLocalRewriter()
+        try:
+            return OllamaLocalRewriter(
+                base_url=settings.ollama_base_url,
+                model=settings.ollama_model,
+            )
+        except Exception:
+            logger.warning("Failed to initialize OllamaLocalRewriter, using placeholder")
+            return PlaceholderLocalRewriter()
 
     def _build_response(self, engine_result: dict) -> ManualPreviewResponse:
         return ManualPreviewResponse(
