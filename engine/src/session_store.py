@@ -231,6 +231,9 @@ class SQLiteSessionStore:
                 "CREATE INDEX IF NOT EXISTS idx_session_mappings_session_id ON session_mappings(session_id)"
             )
             conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_session_mappings_expires_at ON session_mappings(expires_at)"
+            )
+            conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_session_expirations_expires_at ON session_expirations(expires_at)"
             )
             conn.commit()

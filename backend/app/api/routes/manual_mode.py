@@ -14,6 +14,7 @@ from app.core.exceptions import (
     EmptyFileError,
     FileTooLargeError,
     InvalidEncodingError,
+    SessionExpiredError,
     UnsupportedFileTypeError,
 )
 from app.services.manual_preview_service import ManualPreviewService
@@ -66,6 +67,8 @@ async def manual_preview_audio(
         raise HTTPException(status_code=501, detail=str(error))
     except FileTooLargeError as error:
         raise HTTPException(status_code=413, detail=str(error))
+    except EmptyFileError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     except UnsupportedFileTypeError as error:
         raise HTTPException(status_code=415, detail=str(error))
     except ValueError as error:
