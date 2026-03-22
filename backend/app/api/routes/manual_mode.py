@@ -10,6 +10,12 @@ from app.api.schemas.manual_preview import (
     ManualPreviewResponse,
     PolicyName,
 )
+from app.core.exceptions import (
+    EmptyFileError,
+    FileTooLargeError,
+    InvalidEncodingError,
+    UnsupportedFileTypeError,
+)
 from app.services.manual_preview_service import ManualPreviewService
 
 router = APIRouter(prefix="/mode", tags=["manual-mode"])
@@ -36,15 +42,16 @@ async def manual_preview_file(
 ) -> ManualPreviewResponse:
     try:
         return await manual_preview_service.build_file_preview(file=file, policy=policy)
+    except FileTooLargeError as error:
+        raise HTTPException(status_code=413, detail=str(error))
+    except EmptyFileError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    except InvalidEncodingError as error:
+        raise HTTPException(status_code=415, detail=str(error))
+    except UnsupportedFileTypeError as error:
+        raise HTTPException(status_code=415, detail=str(error))
     except ValueError as error:
-        message = str(error)
-        if "100MB" in message or "100 MB" in message:
-            raise HTTPException(status_code=413, detail=message)
-        if "비어 있는" in message:
-            raise HTTPException(status_code=400, detail=message)
-        if "UTF-8" in message:
-            raise HTTPException(status_code=415, detail=message)
-        raise HTTPException(status_code=415, detail=message)
+        raise HTTPException(status_code=415, detail=str(error))
 
 
 @router.post("/manual-preview/audio", response_model=ManualPreviewResponse)
@@ -57,11 +64,12 @@ async def manual_preview_audio(
         return await manual_preview_service.build_audio_preview(file=file, policy=policy)
     except NotImplementedError as error:
         raise HTTPException(status_code=501, detail=str(error))
+    except FileTooLargeError as error:
+        raise HTTPException(status_code=413, detail=str(error))
+    except UnsupportedFileTypeError as error:
+        raise HTTPException(status_code=415, detail=str(error))
     except ValueError as error:
-        message = str(error)
-        if "100MB" in message or "100 MB" in message:
-            raise HTTPException(status_code=413, detail=message)
-        raise HTTPException(status_code=415, detail=message)
+        raise HTTPException(status_code=415, detail=str(error))
 
 
 @router.post("/manual-preview/restore", response_model=ManualRestoreResponse)

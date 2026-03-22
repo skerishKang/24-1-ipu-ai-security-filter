@@ -14,6 +14,13 @@ from zipfile import BadZipFile, ZipFile
 from fastapi import UploadFile
 from pypdf import PdfReader
 
+from app.core.exceptions import (
+    EmptyFileError,
+    FileTooLargeError,
+    InvalidEncodingError,
+    UnsupportedFileTypeError,
+)
+
 MAX_UPLOAD_FILE_BYTES = 104_857_600
 SUPPORTED_TEXT_FILE_EXTENSIONS = {".txt", ".md", ".csv"}
 SUPPORTED_TEXT_CONTENT_TYPES = {
@@ -59,25 +66,25 @@ class TextFileParser:
         lowered_filename = filename.lower()
 
         if not any(lowered_filename.endswith(extension) for extension in SUPPORTED_TEXT_FILE_EXTENSIONS):
-            raise ValueError("현재 manual-preview 파일 업로드는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일만 지원합니다.")
+            raise UnsupportedFileTypeError(".txt, .md, .csv, .pdf, .docx, .hwpx")
 
         if content_type not in SUPPORTED_TEXT_CONTENT_TYPES:
-            raise ValueError("현재 manual-preview 파일 업로드는 text/plain, text/markdown, text/csv 만 지원합니다.")
+            raise UnsupportedFileTypeError("text/plain, text/markdown, text/csv")
 
         if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         raw = await file.read()
         if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         try:
             text = raw.decode("utf-8")
         except UnicodeDecodeError as error:
-            raise ValueError("UTF-8 텍스트 파일만 지원합니다.") from error
+            raise InvalidEncodingError() from error
 
         if not text.strip():
-            raise ValueError("비어 있는 텍스트 파일은 처리할 수 없습니다.")
+            raise EmptyFileError()
 
         return ParsedFileContent(
             content=text,
@@ -101,17 +108,17 @@ class PdfFileParser:
         lowered_filename = filename.lower()
 
         if not any(lowered_filename.endswith(extension) for extension in SUPPORTED_PDF_FILE_EXTENSIONS):
-            raise ValueError("현재 manual-preview 파일 업로드는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일만 지원합니다.")
+            raise UnsupportedFileTypeError(".txt, .md, .csv, .pdf, .docx, .hwpx")
 
         if content_type not in SUPPORTED_PDF_CONTENT_TYPES:
-            raise ValueError("현재 manual-preview PDF 업로드는 application/pdf 만 지원합니다.")
+            raise UnsupportedFileTypeError("application/pdf")
 
         if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         raw = await file.read()
         if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         try:
             reader = PdfReader(io.BytesIO(raw))
@@ -227,7 +234,7 @@ class DefaultFileParser:
     async def parse(self, file: UploadFile) -> ParsedFileContent:
         filename = (file.filename or "").lower()
         if any(filename.endswith(extension) for extension in UNSUPPORTED_HWP_FILE_EXTENSIONS):
-            raise ValueError("바이너리 .hwp 파일은 현재 직접 지원하지 않습니다. .hwpx, .pdf, .docx, .txt 중 하나로 변환해 다시 업로드해 주세요.")
+            raise UnsupportedFileTypeError(".hwpx, .pdf, .docx, .txt (바이너리 .hwp 미지원)")
         if filename.endswith(".pdf"):
             return await self._pdf_parser.parse(file)
         if filename.endswith(".docx"):
@@ -245,17 +252,17 @@ class DocxFileParser:
         lowered_filename = filename.lower()
 
         if not any(lowered_filename.endswith(extension) for extension in SUPPORTED_DOCX_FILE_EXTENSIONS):
-            raise ValueError("현재 manual-preview 파일 업로드는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일만 지원합니다.")
+            raise UnsupportedFileTypeError(".txt, .md, .csv, .pdf, .docx, .hwpx")
 
         if content_type not in SUPPORTED_DOCX_CONTENT_TYPES:
-            raise ValueError("현재 manual-preview DOCX 업로드는 .docx 파일만 지원합니다.")
+            raise UnsupportedFileTypeError(".docx")
 
         if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         raw = await file.read()
         if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         content = self._extract_docx_text(raw)
         if not content:
@@ -302,17 +309,17 @@ class HwpxFileParser:
         lowered_filename = filename.lower()
 
         if not any(lowered_filename.endswith(extension) for extension in SUPPORTED_HWPX_FILE_EXTENSIONS):
-            raise ValueError("현재 manual-preview 파일 업로드는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일만 지원합니다.")
+            raise UnsupportedFileTypeError(".txt, .md, .csv, .pdf, .docx, .hwpx")
 
         if content_type not in SUPPORTED_HWPX_CONTENT_TYPES:
-            raise ValueError("현재 manual-preview HWPX 업로드는 .hwpx 파일만 지원합니다.")
+            raise UnsupportedFileTypeError(".hwpx")
 
         if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         raw = await file.read()
         if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise ValueError("현재 manual-preview 파일 업로드는 100MB 이하의 텍스트/PDF 파일만 지원합니다.")
+            raise FileTooLargeError()
 
         content = self._extract_hwpx_text(raw)
         if not content:

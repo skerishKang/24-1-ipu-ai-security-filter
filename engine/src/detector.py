@@ -392,26 +392,44 @@ class RegexDetector:
         if not label:
             return False
         label_lower = label.lower().strip()
-        
+
         # Reject generic words
         for generic in self._ENGLISH_GENERIC_WORDS:
             if label_lower == generic or label_lower.startswith("the " + generic):
                 return False
-        
+
         # Check if it has an org suffix
         org_suffixes_lower = {s.lower() for s in self._ENGLISH_ORG_SUFFIXES}
         for part in label.split():
             if part.rstrip(".").lower() in org_suffixes_lower:
                 return True
-        
-        # If no suffix, must be 2+ words (e.g., "Samsung Electronics")
+
+        # If no suffix, reject common document/email phrases
         parts = label.split()
         if len(parts) >= 2:
-            # Avoid single common words like "announced", "meeting", etc.
-            common_verbs = {"announced", "meeting", "report", "summary", "update", "following", "regarding", "attached", "please", "kindly", "regards", "thanks", "dear", "hello", "hi"}
-            if label_lower not in common_verbs:
-                return True
-        
+            # Avoid document titles, email subjects, common phrases
+            common_phrases = {
+                "project report", "meeting notes", "meeting summary", "weekly update",
+                "quarterly report", "annual report", "sales report", "financial report",
+                "status update", "progress report", "action items", "todo list",
+                "project plan", "project proposal", "project schedule", "timeline",
+                "email subject", "re email", "fw email", "fwd email",
+                "dear sir", "dear madam", "dear team", "dear all",
+                "kind regards", "best regards", "warm regards",
+                "thank you", "thanks for", "thanks regarding",
+                "please find", "please review", "please see",
+                "attached is", "attached please", "attachment",
+                "follow up", "following up", "followup",
+                "as discussed", "as agreed", "as requested",
+                "let know", "feel free", "dont hesitate",
+            }
+            if label_lower in common_phrases:
+                return False
+            # Also reject if starts with common words
+            for phrase in common_phrases:
+                if label_lower.startswith(phrase + " ") or label_lower.startswith("re: " + phrase):
+                    return False
+
         return False
 
     def _find_strict_person_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
