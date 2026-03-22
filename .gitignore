@@ -39,8 +39,10 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Python project config
+pyproject.toml
+
 # Local scripts
 auto.bat
-run_demo_stack.bat
 nul
 다음재부팅때볼파일/
