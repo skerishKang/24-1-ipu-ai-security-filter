@@ -1,7 +1,6 @@
-from functools import lru_cache
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Request
 
 from app.api.schemas.manual_preview import (
     ManualRestoreRequest,
@@ -22,9 +21,8 @@ from app.services.manual_preview_service import ManualPreviewService
 router = APIRouter(prefix="/mode", tags=["manual-mode"])
 
 
-@lru_cache(maxsize=1)
-def get_manual_preview_service() -> ManualPreviewService:
-    return ManualPreviewService()
+def get_manual_preview_service(request: Request) -> ManualPreviewService:
+    return request.app.state.manual_preview_service
 
 
 @router.post("/manual-preview", response_model=ManualPreviewResponse)
