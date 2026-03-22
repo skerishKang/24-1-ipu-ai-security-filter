@@ -1,6 +1,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.api.schemas.manual_preview import (
     ManualRestoreRequest,
@@ -19,6 +21,8 @@ from app.core.exceptions import (
 from app.services.manual_preview_service import ManualPreviewService
 
 router = APIRouter(prefix="/mode", tags=["manual-mode"])
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 def get_limiter(request: Request):
