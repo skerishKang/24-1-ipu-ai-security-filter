@@ -1,4 +1,4 @@
-﻿import json
+import json
 import unittest
 
 from engine.src.contracts import Detection

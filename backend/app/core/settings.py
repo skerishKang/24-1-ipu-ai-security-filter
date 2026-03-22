@@ -22,10 +22,7 @@ def get_settings() -> BackendSettings:
     root_dir = Path(__file__).resolve().parents[3]
     default_store_path = root_dir / "data" / "runtime" / "manual_preview_sessions.sqlite3"
     default_whisper_model_dir = Path(
-        os.getenv(
-            "IPU_WHISPER_MODEL_DIR",
-            "G:/Ddrive/BatangD/task/workdiary/48. 2024_성장지원/New_dev/models/whisper",
-        )
+        os.getenv("IPU_WHISPER_MODEL_DIR", "~/.ipu/whisper-models")
     ).expanduser()
     session_store_kind = os.getenv("IPU_SESSION_STORE_KIND", "sqlite").strip().lower() or "sqlite"
     session_store_path = Path(
