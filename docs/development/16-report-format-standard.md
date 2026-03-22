@@ -48,9 +48,11 @@
 - 허용값:
   - `alias`
   - `strict_token`
+  - `local_rewrite`
 - 의미:
   - `alias`: `default` policy 의 실제 치환 전략
   - `strict_token`: `strict_token` policy 의 실제 치환 전략
+  - `local_rewrite`: `local_rewrite` policy 의 실제 치환 전략 (Ollama 로컬 모델 기반)
 
 ### `review_status`
 

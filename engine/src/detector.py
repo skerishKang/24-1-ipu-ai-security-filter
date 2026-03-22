@@ -471,7 +471,7 @@ class RegexDetector:
         return left.start < right.end and right.start < left.end
 
     def _is_enabled_for_policy(self, detection_type: str, policy: str) -> bool:
-        if policy == "strict_token":
+        if policy == "strict_token" or policy == "local_rewrite":
             return True
         return detection_type in {"EMAIL", "PHONE", "PERSON", "ORG"}
 

@@ -98,7 +98,9 @@
 - LLM은 문맥형 민감정보 보조 탐지에 한정
 - strict_token을 PoC 기준 정책으로 유지
 - default는 preview 친화 정책으로 위치를 분명히 유지
-- 현재 제품 preset은 `default`, `strict_token` 두 가지로 고정하고, 새 preset 추가는 상용화 Phase 3 이후 검토
+- 현재 제품 preset은 `default`, `strict_token`, `local_rewrite` 세 가지다
+- `local_rewrite`는 구현되어 있고 API/UI에 노출되어 있으나, 아직 universal default는 아니다
+- 새 preset 추가는 상용화 Phase 3 이후 검토
 
 ### 2. 템플릿
 

@@ -77,6 +77,18 @@ class OllamaLocalRewriter:
                 used_fallback=False,
                 raw_response=raw_response,
             )
+        except TimeoutError:
+            return LocalRewriteResult(
+                replacements=self._fallback_replacements(detections),
+                used_fallback=True,
+                raw_response=raw_response,
+            )
+        except json.JSONDecodeError:
+            return LocalRewriteResult(
+                replacements=self._fallback_replacements(detections),
+                used_fallback=True,
+                raw_response=raw_response,
+            )
         except Exception:
             return LocalRewriteResult(
                 replacements=self._fallback_replacements(detections),

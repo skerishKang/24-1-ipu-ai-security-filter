@@ -96,6 +96,20 @@
   - sample-002 1차 shortlist 메모
 - [40-reentry-intent-and-next-plan.md](./40-reentry-intent-and-next-plan.md)
   - 재부팅 후 바로 읽는 의도/우선순위/다음 계획 문서
+- [41-session-history-api.md](./41-session-history-api.md)
+  - 세션 히스토리 조회 API 계약과 운영 기준
+- [42-demo-scenario-text-flow.md](./42-demo-scenario-text-flow.md)
+  - 데모 시나리오 텍스트 흐름 가이드
+- [43-local-rewrite-strategy.md](./43-local-rewrite-strategy.md)
+  - local_rewrite 전략 설계 (정규식 탐지 + Ollama 치환)
+- [44-ollama-local-rewrite-prompt.md](./44-ollama-local-rewrite-prompt.md)
+  - Ollama local_rewrite 프롬프트 설계
+- [45-local-rewrite-evaluation-plan.md](./45-local-rewrite-evaluation-plan.md)
+  - local_rewrite 평가 계획과 승격 기준
+- [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
+  - 실제 문서 말뭉치에 대한 strict_token vs local_rewrite 비교
+- [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
+  - local_rewrite 현재 위치와 UX 배치 정책
 
 ## 추천 읽기 순서
 
@@ -138,6 +152,13 @@
 35. [38-sample-003-source-investigation-note.md](./38-sample-003-source-investigation-note.md)
 36. [39-sample-002-shortlist-note.md](./39-sample-002-shortlist-note.md)
 37. [40-reentry-intent-and-next-plan.md](./40-reentry-intent-and-next-plan.md)
+38. [41-session-history-api.md](./41-session-history-api.md)
+39. [42-demo-scenario-text-flow.md](./42-demo-scenario-text-flow.md)
+40. [43-local-rewrite-strategy.md](./43-local-rewrite-strategy.md)
+41. [44-ollama-local-rewrite-prompt.md](./44-ollama-local-rewrite-prompt.md)
+42. [45-local-rewrite-evaluation-plan.md](./45-local-rewrite-evaluation-plan.md)
+43. [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
+44. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
 
 ### 구현 작업 직전
 
@@ -177,6 +198,13 @@
 34. [38-sample-003-source-investigation-note.md](./38-sample-003-source-investigation-note.md)
 35. [39-sample-002-shortlist-note.md](./39-sample-002-shortlist-note.md)
 36. [40-reentry-intent-and-next-plan.md](./40-reentry-intent-and-next-plan.md)
+37. [41-session-history-api.md](./41-session-history-api.md)
+38. [42-demo-scenario-text-flow.md](./42-demo-scenario-text-flow.md)
+39. [43-local-rewrite-strategy.md](./43-local-rewrite-strategy.md)
+40. [44-ollama-local-rewrite-prompt.md](./44-ollama-local-rewrite-prompt.md)
+41. [45-local-rewrite-evaluation-plan.md](./45-local-rewrite-evaluation-plan.md)
+42. [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
+43. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
 
 ## 현재 개발 상태 요약
 
@@ -185,6 +213,7 @@
   - `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, `.hwpx` 파일 업로드 manual-preview
   - 일반인/전문가 공통 음성 업로드
   - backend 연결 및 text mock fallback 흐름
+  - policy 선택: default, strict_token, local_rewrite
 - 백엔드:
   - `/health`
   - `/api/v1/mode/manual-preview`
@@ -194,8 +223,10 @@
   - backend API smoke / real audio opt-in smoke
 - 엔진:
   - detect / replace / restore / build_report
+  - replace_with_local_rewrite (Ollama 기반)
   - SQLite 세션 저장소
   - PDF OCR fallback / Whisper audio path
+  - policy: default, strict_token, local_rewrite
 
 ## 다음 기술 문서로 확장하기 좋은 영역
 
