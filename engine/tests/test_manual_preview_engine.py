@@ -252,6 +252,17 @@ class ManualPreviewEngineTest(unittest.TestCase):
 
             self.assertEqual(engine.restore(preview["replaced_text"], "ipu-sqlite-ttl"), preview["replaced_text"])
 
+    def test_strict_policy_replaces_api_key_and_ip(self) -> None:
+        result = self.engine.manual_preview(
+            content="api_key: abcdef1234567890abcdef1234567890 서버 IP 10.0.0.5",
+            session_id="test-session",
+            content_type="text",
+            policy="strict_token",
+            strategy="strict_token",
+        )
+        self.assertIn("[API_KEY_", result["replaced_text"])
+        self.assertIn("[IP_ADDRESS_", result["replaced_text"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -186,6 +186,12 @@ class OllamaLocalRewriter:
             return f"연락처 {index}"
         if detection_type == "AMOUNT":
             return f"비공개 금액 {index}"
+        if detection_type == "API_KEY":
+            return f"API 키 {index}"
+        if detection_type == "IP_ADDRESS":
+            return f"IP 주소 {index}"
+        if detection_type == "BUSINESS_REGISTRATION_NUMBER":
+            return f"사업자등록번호 {index}"
         return f"비식별 정보 {index}"
 
     def _ensure_stable_replacement_text(self, replacement: str, detection_type: str, index: int) -> str:
@@ -244,4 +250,10 @@ class PlaceholderLocalRewriter:
             return f"연락처 {index}"
         if detection_type == "AMOUNT":
             return f"비공개 금액 {index}"
+        if detection_type == "API_KEY":
+            return f"API 키 {index}"
+        if detection_type == "IP_ADDRESS":
+            return f"IP 주소 {index}"
+        if detection_type == "BUSINESS_REGISTRATION_NUMBER":
+            return f"사업자등록번호 {index}"
         return f"비식별 정보 {index}"
