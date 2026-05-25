@@ -198,6 +198,10 @@ class OllamaLocalRewriter:
             return f"외국인등록번호 {index}"
         if detection_type == "CARD_NUMBER":
             return f"카드번호 {index}"
+        if detection_type == "ACCOUNT_NUMBER":
+            return f"계좌번호 {index}"
+        if detection_type == "VEHICLE_REGISTRATION_NUMBER":
+            return f"차량번호 {index}"
         return f"비식별 정보 {index}"
 
     def _ensure_stable_replacement_text(self, replacement: str, detection_type: str, index: int) -> str:
@@ -268,4 +272,8 @@ class PlaceholderLocalRewriter:
             return f"외국인등록번호 {index}"
         if detection_type == "CARD_NUMBER":
             return f"카드번호 {index}"
+        if detection_type == "ACCOUNT_NUMBER":
+            return f"계좌번호 {index}"
+        if detection_type == "VEHICLE_REGISTRATION_NUMBER":
+            return f"차량번호 {index}"
         return f"비식별 정보 {index}"

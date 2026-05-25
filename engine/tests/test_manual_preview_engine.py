@@ -279,6 +279,17 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertIn("[FOREIGN_REGISTRATION_NUMBER_", result["replaced_text"])
         self.assertIn("[CARD_NUMBER_", result["replaced_text"])
 
+    def test_strict_policy_replaces_account_and_vehicle_number(self) -> None:
+        result = self.engine.manual_preview(
+            content="입금 계좌 123-456-789012, 차량 번호 123가4567",
+            session_id="test-account-vehicle-session",
+            content_type="text",
+            policy="strict_token",
+            strategy="strict_token",
+        )
+        self.assertIn("[ACCOUNT_NUMBER_", result["replaced_text"])
+        self.assertIn("[VEHICLE_REGISTRATION_NUMBER_", result["replaced_text"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -371,6 +371,32 @@ class RegexDetector:
                 ),
                 reason="카드번호 직접 노출 방지",
             ),
+            DetectionPattern(
+                type="ACCOUNT_NUMBER",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:계좌\s*번호|입금\s*계좌|bank\s*account|account\s*number)\s*[:：]?\s*
+                    )
+                    [0-9]{2,6}(?:[-\s]?[0-9]{2,6}){2,5}
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="계좌번호 직접 노출 방지",
+            ),
+            DetectionPattern(
+                type="VEHICLE_REGISTRATION_NUMBER",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:차량\s*번호|자동차\s*번호|번호판|license\s*plate|vehicle\s*(?:registration\s*)?number)\s*[:：]?\s*
+                    )
+                    (?:\d{2,3}[가-힣]\s?\d{4})
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="차량번호 직접 노출 방지",
+            ),
         ]
 
     def _find_candidates(self, content: str, policy: str) -> list[DetectionCandidate]:

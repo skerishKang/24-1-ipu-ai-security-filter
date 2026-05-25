@@ -121,6 +121,41 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         self.assertNotIn("FOREIGN_REGISTRATION_NUMBER", types)
         self.assertNotIn("CARD_NUMBER", types)
 
+    def test_strict_detects_account_number(self) -> None:
+        detections = self.detector.detect(
+            "입금 계좌 123-456-789012 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertIn("ACCOUNT_NUMBER", [item.type for item in detections])
+
+        no_prefix = self.detector.detect(
+            "123-456-789012 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertNotIn("ACCOUNT_NUMBER", [item.type for item in no_prefix])
+
+    def test_strict_detects_vehicle_registration_number(self) -> None:
+        detections = self.detector.detect(
+            "차량 번호 123가4567 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertIn("VEHICLE_REGISTRATION_NUMBER", [item.type for item in detections])
+
+        no_prefix = self.detector.detect(
+            "123가4567 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertNotIn("VEHICLE_REGISTRATION_NUMBER", [item.type for item in no_prefix])
+
+    def test_default_does_not_detect_account_or_vehicle_types(self) -> None:
+        detections = self.detector.detect(
+            "입금 계좌 123-456-789012 / 차량 번호 123가4567",
+            policy="default",
+        )
+        types = {item.type for item in detections}
+        self.assertNotIn("ACCOUNT_NUMBER", types)
+        self.assertNotIn("VEHICLE_REGISTRATION_NUMBER", types)
+
 
 if __name__ == "__main__":
     unittest.main()
