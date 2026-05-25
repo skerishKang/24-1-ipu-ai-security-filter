@@ -174,7 +174,7 @@ restore 응답 필드:
 
 - 현재는 `.txt`, `.md`, `.csv`, `.pdf`, `.docx`, `.hwpx` 업로드를 지원한다.
 - 음성 업로드는 별도 `/audio` route 를 통해 처리한다.
-- 음성 업로드는 기본적으로 로컬 Whisper transcriber 를 시도하며, 테스트/비활성화 시에는 `IPU_AUDIO_TRANSCRIBER=placeholder` 로 placeholder 경로를 강제할 수 있다.
+- 음성 업로드는 기본적으로 placeholder transcriber 를 사용하며, 기본 설치에서는 STT 미연결 안내를 반환한다. 로컬 Whisper를 사용하려면 `IPU_AUDIO_TRANSCRIBER=whisper`를 명시적으로 설정한다.
 - `multipart/form-data` 로 파일을 받는다.
 - `.txt`, `.md`, `.csv` 는 UTF-8 텍스트로 해석하고, `.pdf` 는 텍스트 추출 가능한 PDF만, `.docx` 는 본문 텍스트가 있는 Word 문서만, `.hwpx` 는 section XML에서 본문 텍스트를 추출 가능한 문서만 지원한다.
 - `.pdf` 는 페이지별 텍스트를 추출한 뒤 공백을 정리해 합친다.
@@ -200,7 +200,7 @@ restore 응답 필드:
 - 백엔드 `manual_preview_service.py` 는 요청을 엔진에 전달하고 결과를 API schema로 감싸는 얇은 orchestration 계층이다.
 - 파일 입력은 `services/file_parser.py` 의 parser 계층이 먼저 확장자/인코딩/크기를 검증하고, 텍스트/PDF/DOCX/HWPX 본문을 추출한다.
 - 음성 입력은 `services/audio_transcriber.py` 의 transcriber 계층을 통해 로컬 Whisper 또는 placeholder 경로를 분기한다.
-- 현재 기본 로컬 STT 후보는 `whisper` 이며, `49-1-padiem-rnd/modules/stt_whisper/run.py` 에서 이미 쓰던 model 계열과 경로를 그대로 재사용한다.
+- 현재 기본 음성 경로는 `placeholder` 이며, 로컬 STT 후보인 `whisper` 는 opt-in 경로로 유지한다.
 - 실제 Whisper 경로 확인은 `python3 scripts/run_real_whisper_smoke.py` 로 짧은 샘플 기준 수동 검증을 수행한다.
 - API 전체 경로 기준 실측은 `python3 scripts/run_real_whisper_api_smoke.py` 로 별도 opt-in smoke를 수행한다.
 - 현재는 segment / timestamp 를 API 응답 계약에 올리지 않고 plain text 전사만 사용한다.
@@ -214,8 +214,8 @@ segment / timestamp 기준은 [`docs/development/26-audio-segment-and-timestamp-
 
 - frontend 가 보내는 `policy` 값은 backend 를 거쳐 engine 으로 전달된다.
 - 현재 공식 preset은 `default`, `strict_token`, `local_rewrite` 세 가지다.
-- `default` 는 현재 직접 표기된 `EMAIL`, `PHONE`, `PERSON` 만 탐지하고 `[EMAIL_ALIAS_01]` 같은 alias 토큰으로 치환한다.
-- `strict_token` 은 `ORG`, `AMOUNT` 까지 포함해 더 넓게 탐지하고, `security at ipu dot co kr` 같은 변형 이메일과 직함 없는 실명 전달 문맥도 추가로 잡아 `[EMAIL_01]` 같은 strict token 으로 치환한다.
+- `default` 는 `EMAIL`, `PHONE`, `PERSON`, `ORG` 중심의 기본 탐지 범위를 사용한다.
+- `strict_token` 은 `AMOUNT`, `API_KEY`, `IP_ADDRESS`, `BUSINESS_REGISTRATION_NUMBER`, `RESIDENT_REGISTRATION_NUMBER`, `FOREIGN_REGISTRATION_NUMBER`, `CARD_NUMBER`, `ACCOUNT_NUMBER`, `VEHICLE_REGISTRATION_NUMBER` 등 더 넓은 민감정보 타입을 포함한다.
 - `local_rewrite` 는 strict_token 수준의 탐지 범위를 사용하고, Ollama 로컬 모델이 생성한 문맥 기반 일반화 표현으로 치환한다. 모델 실패 시 deterministic fallback을 사용한다.
 - 응답 스키마는 동일하며, policy 차이는 `detections`, `replacements`, `replaced_text`, `report` 값에 반영된다.
 - preset 기준 문서는 [`docs/development/17-security-policy-presets.md`](../docs/development/17-security-policy-presets.md) 를 따른다.

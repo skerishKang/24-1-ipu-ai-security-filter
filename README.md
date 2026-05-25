@@ -36,12 +36,12 @@ IPU AI Firewall은 민감정보를 내부에서 탐지, 치환, 복원한 뒤 �
 | `IPU_SESSION_STORE_KIND` | `sqlite` | 세션 저장소 종류. 세션 히스토리 API는 `sqlite` 모드에서만 지원한다. |
 | `IPU_SESSION_STORE_PATH` | `data/runtime/manual_preview_sessions.sqlite3` | SQLite 세션 DB 경로 |
 | `IPU_SESSION_TTL_SECONDS` | `900` | 세션 TTL(초) |
-| `IPU_AUDIO_TRANSCRIBER` | `whisper` | 음성 전사기 종류 (`whisper`, `placeholder`) |
-| `IPU_WHISPER_MODEL_NAME` | `small` | Whisper 모델 이름 |
-| `IPU_WHISPER_MODEL_DIR` | 환경별 기본 경로 | Whisper 모델 디렉터리 override |
-| `IPU_WHISPER_LANGUAGE` | `auto` | Whisper 언어 설정. `auto`면 자동 감지 |
-| `IPU_WHISPER_TASK` | `transcribe` | Whisper 작업 종류 |
-| `IPU_WHISPER_USE_GPU` | `true` | GPU 사용 여부 |
+| `IPU_AUDIO_TRANSCRIBER` | `placeholder` | 음성 전사기 종류 (`placeholder`, `whisper`). 기본 설치에서는 placeholder를 사용하고, 로컬 Whisper는 opt-in으로 켠다. |
+| `IPU_WHISPER_MODEL_NAME` | `small` | Whisper 사용 시 모델 이름 |
+| `IPU_WHISPER_MODEL_DIR` | 환경별 기본 경로 | Whisper 사용 시 모델 디렉터리 override |
+| `IPU_WHISPER_LANGUAGE` | `auto` | Whisper 사용 시 언어 설정. `auto`면 자동 감지 |
+| `IPU_WHISPER_TASK` | `transcribe` | Whisper 사용 시 작업 종류 |
+| `IPU_WHISPER_USE_GPU` | `true` | Whisper 사용 시 GPU 사용 여부 |
 
 세션 히스토리 API와 관련된 운영 기준은 [`docs/development/41-session-history-api.md`](./docs/development/41-session-history-api.md)를 따른다.
 

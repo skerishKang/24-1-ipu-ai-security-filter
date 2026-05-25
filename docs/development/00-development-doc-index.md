@@ -110,6 +110,8 @@
   - 실제 문서 말뭉치에 대한 strict_token vs local_rewrite 비교
 - [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
   - local_rewrite 현재 위치와 UX 배치 정책
+- [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
+  - restore API의 dev/demo/ops 보안 기준, 세션 소유권, 감사 로그, CORS/CSRF, TTL/cleanup 정책
 
 ## 추천 읽기 순서
 
@@ -159,6 +161,7 @@
 42. [45-local-rewrite-evaluation-plan.md](./45-local-rewrite-evaluation-plan.md)
 43. [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
 44. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
+45. [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
 
 ### 구현 작업 직전
 
@@ -205,6 +208,7 @@
 41. [45-local-rewrite-evaluation-plan.md](./45-local-rewrite-evaluation-plan.md)
 42. [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
 43. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
+44. [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
 
 ## 현재 개발 상태 요약
 
