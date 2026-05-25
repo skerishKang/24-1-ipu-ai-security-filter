@@ -56,18 +56,21 @@ uvicorn app.main:app --reload --port 8241
 export IPU_SESSION_STORE_KIND=sqlite
 export IPU_SESSION_STORE_PATH=/tmp/ipu_manual_preview_sessions.sqlite3
 export IPU_SESSION_TTL_SECONDS=900
-export IPU_AUDIO_TRANSCRIBER=whisper
-export IPU_WHISPER_MODEL_NAME=small
-export IPU_WHISPER_MODEL_DIR="~/.ipu/whisper-models"
-export IPU_WHISPER_LANGUAGE=auto
-export IPU_WHISPER_TASK=transcribe
-export IPU_WHISPER_USE_GPU=true
+export IPU_AUDIO_TRANSCRIBER=placeholder
 ```
 
 - `IPU_SESSION_STORE_KIND=memory` 로 두면 기존 메모리 저장소로 되돌릴 수 있다
 - SQLite 저장소를 쓰면 백엔드 프로세스 재시작 후에도 TTL 범위 내에서는 restore 매핑을 유지할 수 있다
-- `IPU_AUDIO_TRANSCRIBER=whisper` 가 기본값이며, 테스트나 비활성화 목적이면 `placeholder` 로 둘 수 있다
-- 기본 Whisper 모델 경로는 `49-1-padiem-rnd`에서 이미 쓰던 자산 위치(`48.../models/whisper`)를 재사용한다
+- `IPU_AUDIO_TRANSCRIBER=placeholder` 가 기본값이며, 기본 설치에서는 무거운 음성 의존성 없이 실행됩니다. 음성 파일 업로드 시 STT 미연결 안내를 반환합니다.
+- 로컬 Whisper를 사용하려면 `backend/requirements-audio.txt`를 추가로 설치하고, `IPU_AUDIO_TRANSCRIBER=whisper`를 명시적으로 설정합니다.
+
+```bash
+# Optional local audio transcription setup
+pip install -r requirements-audio.txt
+export IPU_AUDIO_TRANSCRIBER=whisper
+export IPU_WHISPER_MODEL_NAME=small
+export IPU_WHISPER_MODEL_DIR="~/.ipu/whisper-models"
+```
 - 세션 저장소 상태 확인: `python3 scripts/manage_manual_preview_sessions.py stats`
 - 만료 세션 정리: `python3 scripts/manage_manual_preview_sessions.py cleanup`
 

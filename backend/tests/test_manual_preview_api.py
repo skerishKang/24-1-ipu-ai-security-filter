@@ -415,6 +415,16 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restore_body["restored_text"], "[EMAIL_01] 에 연락해 주세요.")
         self.assertEqual(restore_body["restored"], False)
 
+    def test_default_transcriber_is_placeholder(self) -> None:
+        from app.core.settings import get_settings
+        old_val = os.environ.pop("IPU_AUDIO_TRANSCRIBER", None)
+        try:
+            settings = get_settings()
+            self.assertEqual(settings.audio_transcriber_kind, "placeholder")
+        finally:
+            if old_val is not None:
+                os.environ["IPU_AUDIO_TRANSCRIBER"] = old_val
+
 
 if __name__ == "__main__":
     unittest.main()
