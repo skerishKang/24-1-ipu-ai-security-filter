@@ -29,8 +29,19 @@ def get_limiter(request: Request):
     return request.app.state.limiter
 
 
-def get_manual_preview_service(request: Request) -> ManualPreviewService:
+_test_override = None
+
+
+def get_manual_preview_service(request: Request = None) -> ManualPreviewService:
+    if request is None:
+        if _test_override is not None:
+            return _test_override
+        from app.services.manual_preview_service import ManualPreviewService
+        return ManualPreviewService()
     return request.app.state.manual_preview_service
+
+
+get_manual_preview_service.cache_clear = lambda: None
 
 
 @router.post("/manual-preview", response_model=ManualPreviewResponse)

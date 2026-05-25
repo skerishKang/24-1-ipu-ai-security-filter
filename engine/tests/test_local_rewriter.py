@@ -2,7 +2,8 @@ import json
 import unittest
 
 from engine.src.contracts import Detection
-from engine.src.local_rewriter import OllamaLocalRewriter
+from engine.src.local_rewriter import OllamaHTTPClient, OllamaLocalRewriter
+
 
 
 class FakeClient:
@@ -66,5 +67,42 @@ class LocalRewriterTest(unittest.TestCase):
         self.assertEqual(result.replacements[0].replaced, "연락처 1")
 
 
+class LocalRewriteEndpointGuardTest(unittest.TestCase):
+    def test_ollama_http_client_allows_loopback_hosts(self):
+        for base_url in (
+            "http://127.0.0.1:11434",
+            "http://localhost:11434",
+            "http://[::1]:11434",
+        ):
+            with self.subTest(base_url=base_url):
+                client = OllamaHTTPClient(base_url=base_url)
+                self.assertIsNotNone(client)
+
+    def test_ollama_http_client_rejects_remote_hosts_by_default(self):
+        for base_url in (
+            "http://192.168.0.10:11434",
+            "https://example.com",
+        ):
+            with self.subTest(base_url=base_url):
+                with self.assertRaises(ValueError):
+                    OllamaHTTPClient(base_url=base_url)
+
+    def test_ollama_http_client_can_allow_remote_when_explicit(self):
+        client = OllamaHTTPClient(
+            base_url="http://192.168.0.10:11434",
+            allow_remote=True,
+        )
+        self.assertIsNotNone(client)
+
+    def test_ollama_local_rewriter_accepts_base_url(self):
+        rewriter = OllamaLocalRewriter(base_url="http://127.0.0.1:11434")
+        self.assertIsNotNone(rewriter)
+
+    def test_ollama_local_rewriter_rejects_remote_base_url_by_default(self):
+        with self.assertRaises(ValueError):
+            OllamaLocalRewriter(base_url="http://192.168.0.10:11434")
+
+
 if __name__ == "__main__":
     unittest.main()
+
