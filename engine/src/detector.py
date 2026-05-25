@@ -297,6 +297,41 @@ class RegexDetector:
                 ),
                 reason="조직명 보호",
             ),
+            DetectionPattern(
+                type="BUSINESS_REGISTRATION_NUMBER",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:사업자\s*(?:등록)?\s*번호|사업자등록번호|biz\s*reg\s*no\.?)\s*[:：]?\s*
+                    )
+                    (?:\d{3}-\d{2}-\d{5}|\d{10})
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="사업자등록번호 직접 노출 방지",
+            ),
+            DetectionPattern(
+                type="IP_ADDRESS",
+                regex=re.compile(
+                    r"\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b"
+                ),
+                reason="내부 IP 및 네트워크 정보 보호",
+            ),
+            DetectionPattern(
+                type="API_KEY",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:api[_-]?key|secret[_-]?key|access[_-]?token|auth[_-]?token|bearer)\s*[:=]\s*
+                        |
+                        Authorization\s*:\s*Bearer\s+
+                    )
+                    [A-Za-z0-9_\-\.]{16,}
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="API key 및 접근 토큰 보호",
+            ),
         ]
 
     def _find_candidates(self, content: str, policy: str) -> list[DetectionCandidate]:
