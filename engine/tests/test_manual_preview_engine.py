@@ -263,6 +263,22 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertIn("[API_KEY_", result["replaced_text"])
         self.assertIn("[IP_ADDRESS_", result["replaced_text"])
 
+    def test_strict_policy_replaces_id_numbers_and_card_number(self) -> None:
+        result = self.engine.manual_preview(
+            content=(
+                "주민등록번호 990101-1234567, "
+                "외국인등록번호 990101-5234567, "
+                "카드 번호 4111-1111-1111-1111"
+            ),
+            session_id="test-id-number-session",
+            content_type="text",
+            policy="strict_token",
+            strategy="strict_token",
+        )
+        self.assertIn("[RESIDENT_REGISTRATION_NUMBER_", result["replaced_text"])
+        self.assertIn("[FOREIGN_REGISTRATION_NUMBER_", result["replaced_text"])
+        self.assertIn("[CARD_NUMBER_", result["replaced_text"])
+
 
 if __name__ == "__main__":
     unittest.main()
