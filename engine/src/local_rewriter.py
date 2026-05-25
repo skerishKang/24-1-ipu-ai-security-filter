@@ -4,8 +4,11 @@ import json
 from dataclasses import dataclass
 from typing import Protocol
 from urllib import request
+from urllib.parse import urlparse
 
 from engine.src.contracts import Detection, Replacement
+
+_LOCAL_REWRITE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
 class OllamaClient(Protocol):
@@ -13,7 +16,13 @@ class OllamaClient(Protocol):
 
 
 class OllamaHTTPClient:
-    def __init__(self, base_url: str = "http://127.0.0.1:11434") -> None:
+    def __init__(
+        self,
+        base_url: str = "http://127.0.0.1:11434",
+        *,
+        allow_remote: bool = False,
+    ) -> None:
+        self._validate_base_url(base_url, allow_remote=allow_remote)
         self._endpoint = f"{base_url.rstrip('/')}/api/generate"
 
     def generate(self, *, model: str, system: str, prompt: str) -> str:
@@ -36,6 +45,16 @@ class OllamaHTTPClient:
             body = json.loads(response.read().decode("utf-8"))
         return str(body.get("response", ""))
 
+    def _validate_base_url(self, base_url: str, *, allow_remote: bool) -> None:
+        parsed = urlparse(base_url)
+        hostname = (parsed.hostname or "").lower()
+        if not parsed.scheme or not hostname:
+            raise ValueError("invalid_ollama_base_url")
+        if allow_remote:
+            return
+        if hostname not in _LOCAL_REWRITE_HOSTS:
+            raise ValueError("remote_ollama_base_url_not_allowed")
+
 
 @dataclass(frozen=True)
 class LocalRewriteResult:
@@ -55,8 +74,10 @@ class OllamaLocalRewriter:
         self,
         client: OllamaClient | None = None,
         model: str = "qwen2.5:7b-instruct",
+        base_url: str = "http://127.0.0.1:11434",
+        allow_remote: bool = False,
     ) -> None:
-        self._client = client or OllamaHTTPClient()
+        self._client = client or OllamaHTTPClient(base_url=base_url, allow_remote=allow_remote)
         self._model = model
 
     def rewrite(self, content: str, detections: list[Detection]) -> LocalRewriteResult:
