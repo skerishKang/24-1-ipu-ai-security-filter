@@ -192,6 +192,12 @@ class OllamaLocalRewriter:
             return f"IP 주소 {index}"
         if detection_type == "BUSINESS_REGISTRATION_NUMBER":
             return f"사업자등록번호 {index}"
+        if detection_type == "RESIDENT_REGISTRATION_NUMBER":
+            return f"주민등록번호 {index}"
+        if detection_type == "FOREIGN_REGISTRATION_NUMBER":
+            return f"외국인등록번호 {index}"
+        if detection_type == "CARD_NUMBER":
+            return f"카드번호 {index}"
         return f"비식별 정보 {index}"
 
     def _ensure_stable_replacement_text(self, replacement: str, detection_type: str, index: int) -> str:
@@ -256,4 +262,10 @@ class PlaceholderLocalRewriter:
             return f"IP 주소 {index}"
         if detection_type == "BUSINESS_REGISTRATION_NUMBER":
             return f"사업자등록번호 {index}"
+        if detection_type == "RESIDENT_REGISTRATION_NUMBER":
+            return f"주민등록번호 {index}"
+        if detection_type == "FOREIGN_REGISTRATION_NUMBER":
+            return f"외국인등록번호 {index}"
+        if detection_type == "CARD_NUMBER":
+            return f"카드번호 {index}"
         return f"비식별 정보 {index}"

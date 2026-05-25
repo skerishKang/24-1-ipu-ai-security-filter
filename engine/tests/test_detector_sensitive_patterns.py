@@ -72,6 +72,55 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         self.assertNotIn("IP_ADDRESS", types)
         self.assertNotIn("BUSINESS_REGISTRATION_NUMBER", types)
 
+    def test_strict_detects_resident_registration_number(self) -> None:
+        detections = self.detector.detect(
+            "주민등록번호 990101-1234567 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertIn("RESIDENT_REGISTRATION_NUMBER", [item.type for item in detections])
+
+        no_prefix = self.detector.detect(
+            "990101-1234567 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertNotIn("RESIDENT_REGISTRATION_NUMBER", [item.type for item in no_prefix])
+
+    def test_strict_detects_foreign_registration_number(self) -> None:
+        detections = self.detector.detect(
+            "외국인등록번호 990101-5234567 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertIn("FOREIGN_REGISTRATION_NUMBER", [item.type for item in detections])
+
+        no_prefix = self.detector.detect(
+            "990101-5234567 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertNotIn("FOREIGN_REGISTRATION_NUMBER", [item.type for item in no_prefix])
+
+    def test_strict_detects_card_number(self) -> None:
+        detections = self.detector.detect(
+            "카드 번호 4111-1111-1111-1111 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertIn("CARD_NUMBER", [item.type for item in detections])
+
+        no_prefix = self.detector.detect(
+            "4111-1111-1111-1111 은 테스트용 가짜 값입니다.",
+            policy="strict_token",
+        )
+        self.assertNotIn("CARD_NUMBER", [item.type for item in no_prefix])
+
+    def test_default_does_not_detect_id_number_or_card_types(self) -> None:
+        detections = self.detector.detect(
+            "주민등록번호 990101-1234567 / 외국인등록번호 990101-5234567 / 카드 번호 4111-1111-1111-1111",
+            policy="default",
+        )
+        types = {item.type for item in detections}
+        self.assertNotIn("RESIDENT_REGISTRATION_NUMBER", types)
+        self.assertNotIn("FOREIGN_REGISTRATION_NUMBER", types)
+        self.assertNotIn("CARD_NUMBER", types)
+
 
 if __name__ == "__main__":
     unittest.main()

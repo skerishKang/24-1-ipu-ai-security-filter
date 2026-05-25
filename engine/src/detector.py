@@ -332,6 +332,45 @@ class RegexDetector:
                 ),
                 reason="API key 및 접근 토큰 보호",
             ),
+            DetectionPattern(
+                type="RESIDENT_REGISTRATION_NUMBER",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:주민\s*(?:등록)?\s*번호|주민등록번호|rrn)\s*[:：]?\s*
+                    )
+                    \d{6}[-\s]?\d{7}
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="주민등록번호 직접 노출 방지",
+            ),
+            DetectionPattern(
+                type="FOREIGN_REGISTRATION_NUMBER",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:외국인\s*(?:등록)?\s*번호|외국인등록번호|alien\s*registration\s*(?:number|no\.?)|arc)\s*[:：]?\s*
+                    )
+                    \d{6}[-\s]?\d{7}
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="외국인등록번호 직접 노출 방지",
+            ),
+            DetectionPattern(
+                type="CARD_NUMBER",
+                regex=re.compile(
+                    r"""
+                    (?:
+                        (?:카드\s*번호|신용카드\s*번호|credit\s*card|card\s*number)\s*[:：]?\s*
+                    )
+                    (?:\d{4}[-\s]?){3}\d{4}
+                    """,
+                    re.IGNORECASE | re.VERBOSE,
+                ),
+                reason="카드번호 직접 노출 방지",
+            ),
         ]
 
     def _find_candidates(self, content: str, policy: str) -> list[DetectionCandidate]:
