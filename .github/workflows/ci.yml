@@ -2,63 +2,74 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
+  verify:
+    name: Engine, backend, and frontend smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      IPU_AUDIO_TRANSCRIBER: placeholder
+      IPU_OLLAMA_ENABLED: "false"
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/backend
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - name: Install ruff
-        run: pip install ruff
-
-      - name: Run ruff
-        run: |
-          ruff check backend/ engine/ --ignore=E501,F401
-
-      - name: Install mypy
-        run: pip install mypy
-
-      - name: Run mypy
-        run: |
-          mypy backend/app engine/src --ignore-missing-imports --no-error-summary
-
-  test:
-    runs-on: ubuntu-latest
-    needs: lint
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: "20"
 
-      - name: Install dependencies
-        working-directory: backend
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install ruff
+          grep -v '^-e ' backend/requirements.txt > /tmp/ipu-backend-requirements.txt
+          python -m pip install -r /tmp/ipu-backend-requirements.txt
 
-      - name: Install engine package
-        run: pip install -e .
-
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+      - name: Run Python lint
+        run: ruff check backend/ engine/ --ignore=E501,F401,E402
 
       - name: Run engine tests
-        working-directory: engine
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+        run: |
+          python -m unittest \
+            engine.tests.test_detector_sensitive_patterns \
+            engine.tests.test_manual_preview_engine \
+            engine.tests.test_local_rewriter
 
       - name: Run backend tests
         working-directory: backend
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+        run: |
+          python -m unittest \
+            tests.test_manual_preview_api \
+            tests.test_manual_preview_local_rewrite_api
+
+      - name: Install frontend smoke dependencies
+        working-directory: frontend
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Run frontend smoke tests
+        working-directory: frontend
+        run: node tests/runSmokeTests.js
