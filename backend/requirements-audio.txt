@@ -1,0 +1,14 @@
+# Optional local audio transcription dependencies.
+#
+# The default backend install intentionally does not require this file.
+# Install it only when enabling the local Whisper transcriber with:
+#
+#   IPU_AUDIO_TRANSCRIBER=whisper
+#
+# Example:
+#   pip install -r requirements.txt
+#   pip install -r requirements-audio.txt
+
+openai-whisper
+# Install the torch build that matches your OS/CUDA environment.
+# See https://pytorch.org/get-started/locally/ for the correct command.

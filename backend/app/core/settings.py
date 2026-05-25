@@ -32,7 +32,7 @@ def get_settings() -> BackendSettings:
         os.getenv("IPU_SESSION_STORE_PATH", str(default_store_path))
     ).expanduser()
     session_ttl_seconds = int(os.getenv("IPU_SESSION_TTL_SECONDS", "900"))
-    audio_transcriber_kind = os.getenv("IPU_AUDIO_TRANSCRIBER", "whisper").strip().lower() or "whisper"
+    audio_transcriber_kind = os.getenv("IPU_AUDIO_TRANSCRIBER", "placeholder").strip().lower() or "placeholder"
     whisper_model_name = os.getenv("IPU_WHISPER_MODEL_NAME", "small").strip() or "small"
     whisper_model_dir = default_whisper_model_dir if default_whisper_model_dir.exists() else None
     whisper_language = os.getenv("IPU_WHISPER_LANGUAGE", "auto").strip().lower() or "auto"
