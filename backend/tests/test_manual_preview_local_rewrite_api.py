@@ -23,7 +23,6 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
         db_path = Path(self.temp_dir.name) / "manual_preview_sessions.sqlite3"
         os.environ["IPU_SESSION_STORE_PATH"] = str(db_path)
         os.environ["IPU_SESSION_STORE_KIND"] = "sqlite"
-        get_manual_preview_service.cache_clear()
         self.app = create_app()
         self.app.state.manual_preview_service = ManualPreviewService()
         transport = httpx.ASGITransport(app=self.app)
@@ -31,7 +30,6 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None:
         await self.client.aclose()
-        get_manual_preview_service.cache_clear()
         os.environ.pop("IPU_SESSION_STORE_PATH", None)
         os.environ.pop("IPU_SESSION_STORE_KIND", None)
         self.temp_dir.cleanup()
