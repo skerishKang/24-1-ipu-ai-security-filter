@@ -46,7 +46,7 @@ engine/
 ## 테스트 실행
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall
+cd 24-1-ipu-ai-security-filter
 python3 -m unittest engine.tests.test_manual_preview_engine
 python3 -m unittest engine.tests.test_quality_harness
 ```
@@ -56,7 +56,7 @@ python3 -m unittest engine.tests.test_quality_harness
 정규식 기반 placeholder 엔진이 현재 어떤 업무 문맥까지 잡는지 빠르게 확인하려면 아래 스크립트를 실행하면 된다.
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall
+cd 24-1-ipu-ai-security-filter
 python3 engine/scripts/run_quality_harness.py
 ```
 
