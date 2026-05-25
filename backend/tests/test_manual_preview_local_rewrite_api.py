@@ -13,6 +13,8 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.main import create_app
+from app.services.manual_preview_service import ManualPreviewService
+from engine.src.local_rewriter import PlaceholderLocalRewriter
 
 
 class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
@@ -21,14 +23,13 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
         db_path = Path(self.temp_dir.name) / "manual_preview_sessions.sqlite3"
         os.environ["IPU_SESSION_STORE_PATH"] = str(db_path)
         os.environ["IPU_SESSION_STORE_KIND"] = "sqlite"
-        get_manual_preview_service.cache_clear()
         self.app = create_app()
+        self.app.state.manual_preview_service = ManualPreviewService()
         transport = httpx.ASGITransport(app=self.app)
         self.client = httpx.AsyncClient(transport=transport, base_url="http://testserver")
 
     async def asyncTearDown(self) -> None:
         await self.client.aclose()
-        get_manual_preview_service.cache_clear()
         os.environ.pop("IPU_SESSION_STORE_PATH", None)
         os.environ.pop("IPU_SESSION_STORE_KIND", None)
         self.temp_dir.cleanup()
@@ -62,6 +63,25 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restore_body["restored_text"], payload["content"])
         self.assertTrue(restore_body["restored"])
 
+    def test_ollama_disabled_falls_back_to_placeholder(self) -> None:
+        os.environ["IPU_OLLAMA_ENABLED"] = "false"
+        try:
+            service = ManualPreviewService()
+            self.assertIsInstance(service.local_rewriter, PlaceholderLocalRewriter)
+        finally:
+            os.environ.pop("IPU_OLLAMA_ENABLED", None)
+
+    def test_remote_ollama_base_url_falls_back_to_placeholder(self) -> None:
+        os.environ["IPU_OLLAMA_ENABLED"] = "true"
+        os.environ["IPU_OLLAMA_BASE_URL"] = "http://192.168.0.10:11434"
+        try:
+            service = ManualPreviewService()
+            self.assertIsInstance(service.local_rewriter, PlaceholderLocalRewriter)
+        finally:
+            os.environ.pop("IPU_OLLAMA_ENABLED", None)
+            os.environ.pop("IPU_OLLAMA_BASE_URL", None)
+
 
 if __name__ == "__main__":
     unittest.main()
+

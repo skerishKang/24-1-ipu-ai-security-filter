@@ -33,6 +33,7 @@ def get_manual_preview_service(request: Request) -> ManualPreviewService:
     return request.app.state.manual_preview_service
 
 
+
 @router.post("/manual-preview", response_model=ManualPreviewResponse)
 @limiter.limit("30/minute")
 async def manual_preview(
