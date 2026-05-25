@@ -24,6 +24,7 @@ jobs:
     env:
       IPU_AUDIO_TRANSCRIBER: placeholder
       IPU_OLLAMA_ENABLED: "false"
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/backend
 
     steps:
       - name: Checkout
@@ -40,7 +41,10 @@ jobs:
           node-version: "20"
 
       - name: Install backend dependencies
-        run: python -m pip install --upgrade pip && python -m pip install -r backend/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          grep -v '^-e ' backend/requirements.txt > /tmp/ipu-backend-requirements.txt
+          python -m pip install -r /tmp/ipu-backend-requirements.txt
 
       - name: Run engine tests
         run: |
