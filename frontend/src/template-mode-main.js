@@ -211,7 +211,7 @@ async function loadSelectedTemplate() {
     state.status = "error";
     state.errorMessage =
       `현재 템플릿 모드는 프로젝트 루트에서 정적 서버를 띄워야 합니다. ` +
-      `예: /24-1-ipu-ai-firewall 에서 python3 -m http.server 4241 실행 후 ` +
+      `예: /24-1-ipu-ai-security-filter 에서 python3 -m http.server 4241 실행 후 ` +
       `/frontend/template-mode.html 로 접속하세요. 상세 오류: ${error.message}`;
     render();
   }

@@ -4,7 +4,7 @@ const { spawn } = require("node:child_process");
 const path = require("node:path");
 const { chromium } = require("playwright");
 
-const FRONTEND_DIR = "G:\\Ddrive\\BatangD\\task\\workdiary\\24-1-ipu-ai-firewall\\frontend";
+const FRONTEND_DIR = path.resolve(__dirname, "..");
 const BASE_URL = "http://127.0.0.1:4241";
 const SERVER_START_TIMEOUT_MS = 10000;
 
@@ -75,11 +75,11 @@ async function main() {
       await page.goto(BASE_URL);
       await switchToExpertMode(page);
 
-      await expectVisible(page.getByRole("heading", { name: "보안 치환 워크벤치" }));
-      await expectVisible(page.getByRole("heading", { name: "1. 원문 입력" }));
-      await expectVisible(page.getByRole("heading", { name: "2. 치환 결과" }));
-      await expectVisible(page.getByRole("heading", { name: "3. 탐지 리포트" }));
-      await expectVisible(page.getByRole("heading", { name: "4. 외부 AI용 복사 프롬프트" }));
+      await expectVisible(page.getByRole("heading", { name: "문서 검토 콘솔" }));
+      await expectVisible(page.getByRole("heading", { name: "1. 문서 입력" }));
+      await expectVisible(page.getByRole("heading", { name: "2. 비식별 결과" }));
+      await expectVisible(page.getByRole("heading", { name: "3. 정책 판정" }));
+      await expectVisible(page.getByRole("heading", { name: "4. 외부 전달 보조" }));
       await expectTextIncludes(page.getByTestId("status-message"), "mock fallback");
       await expectTextIncludes(page.getByTestId("session-source"), "mock-fallback");
     });
@@ -116,7 +116,7 @@ async function main() {
       });
       await page.getByTestId("submit-preview").click();
 
-      await expectTextIncludes(page.getByTestId("status-message"), "내용이 있는 .txt, .md, .csv, .pdf, .docx, .hwpx 파일");
+      await expectTextIncludes(page.getByTestId("status-message"), "읽을 수 있는 내용이 있는 파일을 선택하세요.");
     });
 
     await runTest(browser, "txt 파일 업로드 성공 시 결과 패널과 상태 메시지를 갱신한다", async (page) => {
@@ -169,7 +169,7 @@ async function main() {
       await page.getByTestId("submit-preview").click();
       await page.getByTestId("restore-preview").click();
 
-      await expectTextIncludes(page.getByTestId("restore-status"), "복원 테스트가 성공");
+      await expectTextIncludes(page.getByTestId("restore-status"), "복원 테스트가 완료되었습니다.");
       await expectTextIncludes(page.getByTestId("restored-text"), "contact@ipu.co.kr");
     });
 
@@ -194,8 +194,7 @@ async function main() {
       });
       await page.getByTestId("submit-preview").click();
 
-      await expectTextIncludes(page.getByTestId("status-message"), "tesseract");
-      await expectTextIncludes(page.getByTestId("status-message"), "pdftoppm");
+      await expectTextIncludes(page.getByTestId("status-message"), "스캔 PDF 처리를 위한 OCR 도구가 준비되지 않았습니다.");
     });
 
     await runTest(browser, "전문가 모드에서 음성 업로드 성공 시 backend-audio 상태를 보여준다", async (page) => {
@@ -247,7 +246,7 @@ async function main() {
       });
       await page.getByTestId("submit-preview").click();
 
-      await expectTextIncludes(page.getByTestId("status-message"), "음성 전사 결과");
+      await expectTextIncludes(page.getByTestId("status-message"), "음성 기반 점검 결과를 보여주고 있습니다.");
       await expectTextIncludes(page.getByTestId("simple-replaced-text"), "[EMAIL_ALIAS_01]");
     });
 
@@ -298,7 +297,8 @@ async function startStaticServer() {
     return null;
   }
 
-  const server = spawn("python", ["-m", "http.server", "4241", "--directory", FRONTEND_DIR], {
+  const pythonCmd = process.platform === "win32" ? "python" : "python3";
+  const server = spawn(pythonCmd, ["-m", "http.server", "4241", "--directory", FRONTEND_DIR], {
     cwd: FRONTEND_DIR,
     stdio: "ignore",
   });

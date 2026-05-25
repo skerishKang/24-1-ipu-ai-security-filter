@@ -62,7 +62,7 @@ python3 -m http.server 4241
 
 ```bash
 # Windows
-cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall\frontend
+cd 24-1-ipu-ai-security-filter\frontend
 node tests\runSmokeTests.js
 
 # Linux/WSL
@@ -87,15 +87,15 @@ node tests/runSmokeTests.js
 
 ```bash
 # Windows - backend 먼저 실행 필요
-cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall\backend
+cd 24-1-ipu-ai-security-filter\backend
 .venv-win\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8241
 
 # Windows - frontend 서버 실행 (다른 터미널)
-cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall\frontend
+cd 24-1-ipu-ai-security-filter\frontend
 python -m http.server 4241
 
 # Windows - live integration test 실행
-cd G:\Ddrive\BatangD\task\workdiary\24-1-ipu-ai-firewall\frontend
+cd 24-1-ipu-ai-security-filter\frontend
 node tests\runLiveIntegrationTests.js
 ```
 

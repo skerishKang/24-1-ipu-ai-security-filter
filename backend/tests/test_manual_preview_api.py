@@ -8,18 +8,10 @@ import httpx
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app.api.routes.manual_mode import get_manual_preview_service as original_get_manual_preview_service
+from app.api.routes.manual_mode import get_manual_preview_service
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
 
-_test_service = None
-
-
-def get_manual_preview_service(request=None):
-    return _test_service
-
-
-get_manual_preview_service.cache_clear = lambda: None
 
 
 
@@ -45,14 +37,11 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         os.environ["IPU_SESSION_STORE_PATH"] = str(db_path)
         os.environ["IPU_SESSION_STORE_KIND"] = "sqlite"
         os.environ["IPU_AUDIO_TRANSCRIBER"] = "placeholder"
-        get_manual_preview_service.cache_clear()
         self.app = create_app()
         service = ManualPreviewService()
         self.app.state.manual_preview_service = service
-        
-        global _test_service
-        _test_service = service
-        self.app.dependency_overrides[original_get_manual_preview_service] = lambda request=None: service
+        self.app.dependency_overrides[get_manual_preview_service] = lambda request=None: service
+        self.manual_preview_service = service
 
         transport = httpx.ASGITransport(app=self.app)
         self.client = httpx.AsyncClient(
@@ -62,11 +51,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None:
         await self.client.aclose()
-        get_manual_preview_service.cache_clear()
-        
-        global _test_service
-        _test_service = None
-
+        self.app.dependency_overrides.clear()
         os.environ.pop("IPU_SESSION_STORE_PATH", None)
         os.environ.pop("IPU_SESSION_STORE_KIND", None)
         os.environ.pop("IPU_AUDIO_TRANSCRIBER", None)
@@ -272,7 +257,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("STT", response.json()["detail"])
 
     async def test_manual_preview_audio_endpoint_uses_transcriber_output(self) -> None:
-        service = get_manual_preview_service()
+        service = self.manual_preview_service
         original_transcriber = service.audio_transcriber
         service.audio_transcriber = FakeAudioTranscriber()
         try:
@@ -325,7 +310,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn(".hwpx", response.json()["detail"])
 
     async def test_manual_preview_file_returns_ocr_tool_guidance_for_scan_pdf_without_toolchain(self) -> None:
-        original_service = get_manual_preview_service()
+        original_service = self.manual_preview_service
         original_parser = original_service.file_parser._pdf_parser
         original_service.file_parser._pdf_parser = MissingOcrToolPdfFileParser()
         try:
@@ -354,7 +339,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         )
         oversized.size = 104_857_601
 
-        service = get_manual_preview_service()
+        service = self.manual_preview_service
 
         with self.assertRaisesRegex(ValueError, "100MB"):
             await service.build_file_preview(file=oversized, policy="default")

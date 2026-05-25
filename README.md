@@ -96,7 +96,7 @@ IPU AI Firewall은 민감정보를 내부에서 탐지, 치환, 복원한 뒤 �
 ## 디렉터리 구조
 
 ```text
-24-1-ipu-ai-firewall/
+24-1-ipu-ai-security-filter/
 ├── AGENTS.md
 ├── README.md
 ├── docs/
