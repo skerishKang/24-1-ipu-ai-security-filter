@@ -234,12 +234,12 @@ function normalizeReviewStatus(value) {
 function normalizeReadiness(readiness) {
   if (!readiness) {
     return {
-      ready_to_send: true,
-      review_status: "pass",
-      reason: "Readiness 정보 없음 (안전으로 간주)",
-      remaining_risks: [],
+      ready_to_send: false,
+      review_status: "review-required",
+      reason: "Readiness 정보를 확인할 수 없어 전달 전 검토가 필요합니다.",
+      remaining_risks: ["readiness_missing"],
       detection_count: 0,
-      risk_level: "low-risk",
+      risk_level: "moderate-risk",
     };
   }
 
