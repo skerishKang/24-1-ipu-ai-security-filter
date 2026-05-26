@@ -120,6 +120,8 @@
   - MP3/M4A/MP4/WEBM duration probing 평가, ffprobe opt-in 판단, 기본 경로 보류 기준
 - [52-compressed-package-inspection-evaluation.md](./52-compressed-package-inspection-evaluation.md)
   - DOCX/HWPX broader compressed package inspection 평가, zip/package-level 검사 보류 기준
+- [53-address-detection-sample-design.md](./53-address-detection-sample-design.md)
+  - 주소 탐지 sample-driven 설계, fake sample corpus, policy boundary, 구현 전 테스트 기준
 
 ## 추천 읽기 순서
 
@@ -174,6 +176,7 @@
 47. [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
 48. [51-non-wav-audio-duration-probing.md](./51-non-wav-audio-duration-probing.md)
 49. [52-compressed-package-inspection-evaluation.md](./52-compressed-package-inspection-evaluation.md)
+50. [53-address-detection-sample-design.md](./53-address-detection-sample-design.md)
 
 ### 구현 작업 직전
 
@@ -225,6 +228,7 @@
 46. [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
 47. [51-non-wav-audio-duration-probing.md](./51-non-wav-audio-duration-probing.md)
 48. [52-compressed-package-inspection-evaluation.md](./52-compressed-package-inspection-evaluation.md)
+49. [53-address-detection-sample-design.md](./53-address-detection-sample-design.md)
 
 ## 현재 개발 상태 요약
 
