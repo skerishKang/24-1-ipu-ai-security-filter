@@ -398,24 +398,24 @@ class HwpxFileParser:
                         f"exceeds the processing limit of {MAX_OFFICE_XML_TOTAL_BYTES} bytes."
                     )
 
-                sections = [archive.read(name) for name in section_names]
+                paragraphs = []
+                namespace = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
+                for name in section_names:
+                    section_xml = archive.read(name)
+                    try:
+                        root = ElementTree.fromstring(section_xml)
+                    except ElementTree.ParseError as error:
+                        raise ValueError("HWPX XML을 해석할 수 없습니다.") from error
+
+                    for paragraph in root.findall(".//hp:p", namespace):
+                        texts = [
+                            (text_node.text or "").strip()
+                            for text_node in paragraph.findall(".//hp:t", namespace)
+                            if (text_node.text or "").strip()
+                        ]
+                        if texts:
+                            paragraphs.append(" ".join(texts))
         except BadZipFile as error:
             raise ValueError("HWPX 파일을 해석할 수 없습니다.") from error
 
-        paragraphs = []
-        namespace = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
-        for section_xml in sections:
-            try:
-                root = ElementTree.fromstring(section_xml)
-            except ElementTree.ParseError as error:
-                raise ValueError("HWPX XML을 해석할 수 없습니다.") from error
-
-            for paragraph in root.findall(".//hp:p", namespace):
-                texts = [
-                    (text_node.text or "").strip()
-                    for text_node in paragraph.findall(".//hp:t", namespace)
-                    if (text_node.text or "").strip()
-                ]
-                if texts:
-                    paragraphs.append(" ".join(texts))
         return "\n".join(paragraphs).strip()
