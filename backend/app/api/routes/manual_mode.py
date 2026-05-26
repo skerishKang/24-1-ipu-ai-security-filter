@@ -81,6 +81,8 @@ async def manual_preview_audio(
         return await manual_preview_service.build_audio_preview(file=file, policy=policy)
     except NotImplementedError as error:
         raise HTTPException(status_code=501, detail=str(error))
+    except ProcessingLimitExceededError as error:
+        raise HTTPException(status_code=413, detail=str(error))
     except FileTooLargeError as error:
         raise HTTPException(status_code=413, detail=str(error))
     except EmptyFileError as error:
