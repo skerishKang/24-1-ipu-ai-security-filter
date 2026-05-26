@@ -16,14 +16,58 @@ from app.services.manual_preview_service import ManualPreviewService
 logger = logging.getLogger("uvicorn.error")
 
 
+def _split_env_list(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    configured = os.getenv(name)
+    if configured is None:
+        return default
+    return configured.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _deployment_stage() -> str:
+    return (
+        os.getenv("IPU_DEPLOYMENT_ENV")
+        or os.getenv("IPU_ENV")
+        or os.getenv("APP_ENV")
+        or "dev-local"
+    ).strip().lower()
+
+
+def _is_ops_stage() -> bool:
+    return _deployment_stage() in {"ops-target", "production", "prod", "ops"}
+
+
 def _allowed_origins() -> list[str]:
     configured = os.getenv("IPU_ALLOWED_ORIGINS", "").strip()
     if configured:
-        return [origin.strip() for origin in configured.split(",") if origin.strip()]
+        return _split_env_list(configured)
+    if _is_ops_stage():
+        raise RuntimeError("IPU_ALLOWED_ORIGINS must be set for ops-target deployments")
     return [
         "http://localhost:4241",
         "http://127.0.0.1:4241",
     ]
+
+
+def _cors_allow_credentials() -> bool:
+    return _env_flag("IPU_CORS_ALLOW_CREDENTIALS", default=False)
+
+
+def _cors_methods() -> list[str]:
+    configured = os.getenv("IPU_CORS_ALLOW_METHODS", "").strip()
+    if configured:
+        return _split_env_list(configured)
+    return ["GET", "POST"]
+
+
+def _cors_headers() -> list[str]:
+    configured = os.getenv("IPU_CORS_ALLOW_HEADERS", "").strip()
+    if configured:
+        return _split_env_list(configured)
+    return ["Content-Type"]
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -73,9 +117,9 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_allowed_origins(),
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_credentials=_cors_allow_credentials(),
+        allow_methods=_cors_methods(),
+        allow_headers=_cors_headers(),
     )
 
     @app.get("/")
