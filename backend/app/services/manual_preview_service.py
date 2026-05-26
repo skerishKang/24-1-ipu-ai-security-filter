@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import logging
+import secrets
 from datetime import datetime, timezone
 from random import choices
 from string import ascii_lowercase, digits
@@ -23,6 +25,7 @@ from app.api.schemas.manual_preview import (
     PolicyName,
     ReplacementItem,
 )
+from app.core.exceptions import RestoreTokenError
 from app.core.settings import get_settings
 from app.services.audio_transcriber import (
     AudioTranscriber,
@@ -53,6 +56,7 @@ class ManualPreviewService:
 
     def build_preview(self, payload: ManualPreviewRequest) -> ManualPreviewResponse:
         session_id = self._create_session_id()
+        restore_token = self._create_restore_token(session_id)
         strategy = self._resolve_strategy(payload.policy)
         started_at = monotonic()
         self._log_request_started(
@@ -93,9 +97,14 @@ class ManualPreviewService:
             processing_ms=self._processing_ms(started_at),
         )
 
-        return self._build_response(engine_result)
+        return self._build_response(engine_result, restore_token=restore_token)
 
     def restore_preview(self, payload: ManualRestoreRequest) -> ManualRestoreResponse:
+        token_hash = self._hash_restore_token(payload.restore_token)
+        if not self.session_store.verify_restore_token_hash(payload.session_id, token_hash):
+            logger.warning("manual_preview_restore_denied session_id=%s", payload.session_id)
+            raise RestoreTokenError()
+
         restored_text = self.engine.restore(
             content=payload.replaced_text,
             session_id=payload.session_id,
@@ -111,12 +120,24 @@ class ManualPreviewService:
         suffix = "".join(choices(ascii_lowercase + digits, k=6))
         return f"ipu-{timestamp}-{suffix}"
 
+    def _create_restore_token(self, session_id: str) -> str:
+        restore_token = secrets.token_urlsafe(32)
+        self.session_store.save_restore_token_hash(
+            session_id,
+            self._hash_restore_token(restore_token),
+        )
+        return restore_token
+
+    def _hash_restore_token(self, restore_token: str) -> str:
+        return hashlib.sha256(restore_token.encode("utf-8")).hexdigest()
+
     async def build_file_preview(
         self,
         file: UploadFile,
         policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
         session_id = self._create_session_id()
+        restore_token = self._create_restore_token(session_id)
         content_type = file.content_type or "text/plain"
         started_at = monotonic()
         self._log_request_started(
@@ -158,7 +179,7 @@ class ManualPreviewService:
             processing_ms=self._processing_ms(started_at),
         )
 
-        return self._build_response(engine_result)
+        return self._build_response(engine_result, restore_token=restore_token)
 
     async def build_audio_preview(
         self,
@@ -166,6 +187,7 @@ class ManualPreviewService:
         policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
         session_id = self._create_session_id()
+        restore_token = self._create_restore_token(session_id)
         content_type = file.content_type or "application/octet-stream"
         started_at = monotonic()
         self._log_request_started(
@@ -207,7 +229,7 @@ class ManualPreviewService:
             processing_ms=self._processing_ms(started_at),
         )
 
-        return self._build_response(engine_result)
+        return self._build_response(engine_result, restore_token=restore_token)
 
     def _resolve_strategy(self, policy: PolicyName) -> str:
         if policy == "local_rewrite":
@@ -329,9 +351,10 @@ class ManualPreviewService:
             logger.warning("Failed to initialize OllamaLocalRewriter, using placeholder")
             return PlaceholderLocalRewriter()
 
-    def _build_response(self, engine_result: dict) -> ManualPreviewResponse:
+    def _build_response(self, engine_result: dict, restore_token: str) -> ManualPreviewResponse:
         return ManualPreviewResponse(
             session_id=str(engine_result["session_id"]),
+            restore_token=restore_token,
             original_text=str(engine_result["original_text"]),
             replaced_text=str(engine_result["replaced_text"]),
             detections=[
