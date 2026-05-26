@@ -49,11 +49,13 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("[EMAIL", body["replaced_text"])
         self.assertNotIn("[PHONE", body["replaced_text"])
         self.assertTrue(body["replacements"])
+        self.assertTrue(body["restore_token"])
 
         restore_response = await self.client.post(
             "/api/v1/mode/manual-preview/restore",
             json={
                 "session_id": body["session_id"],
+                "restore_token": body["restore_token"],
                 "replaced_text": body["replaced_text"],
             },
         )
@@ -62,6 +64,30 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
         restore_body = restore_response.json()
         self.assertEqual(restore_body["restored_text"], payload["content"])
         self.assertTrue(restore_body["restored"])
+
+    async def test_restore_rejects_invalid_restore_token(self) -> None:
+        payload = {
+            "content": "홍길동 이사는 contact@ipu.co.kr 와 010-1234-5678 연락처를 포함한 계약 메모를 검토합니다.",
+            "content_type": "text",
+            "policy": "local_rewrite",
+        }
+
+        response = await self.client.post("/api/v1/mode/manual-preview", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["restore_token"])
+
+        restore_response = await self.client.post(
+            "/api/v1/mode/manual-preview/restore",
+            json={
+                "session_id": body["session_id"],
+                "restore_token": "invalid-restore-token",
+                "replaced_text": body["replaced_text"],
+            },
+        )
+
+        self.assertEqual(restore_response.status_code, 403)
 
     def test_ollama_disabled_falls_back_to_placeholder(self) -> None:
         os.environ["IPU_OLLAMA_ENABLED"] = "false"
@@ -84,4 +110,3 @@ class ManualPreviewLocalRewriteApiTest(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
