@@ -8,9 +8,23 @@
 ## Current State
 - `ManualPreviewEngine` uses `RegexDetector` + `TokenReplacer`
 - current public policies are `default`, `strict_token`, and `local_rewrite`
-- `local_rewrite` is now implemented and connected to API/UI
-- `local_rewrite` is NOT the universal default yet
+- `local_rewrite` is implemented and connected to API/UI
+- `local_rewrite` is NOT the universal default policy
+- Ollama-backed rewriting is disabled by default and must be enabled explicitly with `IPU_OLLAMA_ENABLED=true`
+- when Ollama is disabled or unavailable, the system uses deterministic placeholder rewriting
 - current replacement output is safe for PoC, but not natural enough for real business prompting
+
+## Local Model Trust Boundary
+
+`local_rewrite` may pass original content and detected sensitive labels to the local model process when Ollama is explicitly enabled.
+
+That local model process is still a separate trust boundary even when it runs on loopback. Operators should treat it as a component that can observe the input text it receives.
+
+Operational rules:
+- keep Ollama disabled unless the deployment intentionally opts in
+- keep remote Ollama hosts blocked by default
+- do not log original content, detected labels, or raw model responses
+- use deterministic fallback output when the model is unavailable or returns malformed data
 
 ## Next Step
 - do not replace detection first
@@ -19,7 +33,7 @@
 
 ## Proposed Flow
 1. detect sensitive spans with existing regex policy
-2. generate safe rewrite suggestions with local model via Ollama
+2. generate safe rewrite suggestions with local model via Ollama only when explicitly enabled
 3. validate that rewrite output does not reveal original values
 4. save mapping for restore and audit
 
