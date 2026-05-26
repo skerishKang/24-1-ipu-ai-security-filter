@@ -9,6 +9,7 @@ from fastapi import UploadFile
 from starlette.datastructures import Headers
 
 from app.api.routes.manual_mode import get_manual_preview_service
+from app.core.exceptions import ProcessingLimitExceededError
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
 
@@ -343,6 +344,31 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(ValueError, "100MB"):
             await service.build_file_preview(file=oversized, policy="default")
+
+    async def test_manual_preview_file_returns_413_for_processing_limit_exceeded(self) -> None:
+        """ProcessingLimitExceededError from the parser is mapped to 413."""
+        original_service = self.manual_preview_service
+        original_parser = original_service.file_parser
+
+        class LimitExceededParser:
+            async def parse(self, file):
+                raise ProcessingLimitExceededError("PDF page count 51 exceeds the processing limit of 50 pages.")
+
+        original_service.file_parser = LimitExceededParser()
+        try:
+            response = await self.client.post(
+                "/api/v1/mode/manual-preview/file",
+                files={
+                    "file": ("sample.pdf", b"fake-pdf", "application/pdf"),
+                },
+                data={"policy": "default"},
+            )
+        finally:
+            original_service.file_parser = original_parser
+
+        self.assertEqual(response.status_code, 413)
+        self.assertIn("PDF page count", response.json()["detail"])
+        self.assertIn("50", response.json()["detail"])
 
     async def test_manual_preview_policy_is_reflected_in_report(self) -> None:
         strict_payload = {
