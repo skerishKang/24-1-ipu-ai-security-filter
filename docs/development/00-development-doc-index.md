@@ -118,6 +118,8 @@
   - upload timeout/concurrency guardrail 설계, 운영 레이어, 보류 기준
 - [51-non-wav-audio-duration-probing.md](./51-non-wav-audio-duration-probing.md)
   - MP3/M4A/MP4/WEBM duration probing 평가, ffprobe opt-in 판단, 기본 경로 보류 기준
+- [52-compressed-package-inspection-evaluation.md](./52-compressed-package-inspection-evaluation.md)
+  - DOCX/HWPX broader compressed package inspection 평가, zip/package-level 검사 보류 기준
 
 ## 추천 읽기 순서
 
@@ -171,6 +173,7 @@
 46. [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
 47. [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
 48. [51-non-wav-audio-duration-probing.md](./51-non-wav-audio-duration-probing.md)
+49. [52-compressed-package-inspection-evaluation.md](./52-compressed-package-inspection-evaluation.md)
 
 ### 구현 작업 직전
 
@@ -221,6 +224,7 @@
 45. [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
 46. [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
 47. [51-non-wav-audio-duration-probing.md](./51-non-wav-audio-duration-probing.md)
+48. [52-compressed-package-inspection-evaluation.md](./52-compressed-package-inspection-evaluation.md)
 
 ## 현재 개발 상태 요약
 
