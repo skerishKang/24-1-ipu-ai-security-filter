@@ -1,5 +1,6 @@
 import os
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -11,6 +12,8 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.router import api_router
 from app.services.manual_preview_service import ManualPreviewService
+
+logger = logging.getLogger("uvicorn.error")
 
 
 def _allowed_origins() -> list[str]:
@@ -35,7 +38,7 @@ async def cleanup_expired_sessions(app: FastAPI):
             if hasattr(service.session_store, "cleanup_expired_sessions"):
                 service.session_store.cleanup_expired_sessions()
         except Exception:
-            pass
+            logger.warning("manual_preview_session_cleanup_failed", exc_info=True)
 
 
 @asynccontextmanager
