@@ -555,3 +555,160 @@ class PdfProcessingGuardrailTest(unittest.IsolatedAsyncioTestCase):
             parsed = await parser.parse(upload)
 
             self.assertIn("Simulated OCR text", parsed.content)
+
+
+class OfficeXmlProcessingGuardrailTest(unittest.IsolatedAsyncioTestCase):
+    """Tests for DOCX/HWPX internal XML size guardrails using monkeypatch only."""
+
+    # ─── DOCX ───────────────────────────────────────────────
+
+    async def test_docx_entry_size_exceeded_raises_error(self) -> None:
+        """DOCX word/document.xml entry size > MAX_OFFICE_XML_ENTRY_BYTES raises."""
+        parser = DocxFileParser()
+
+        with patch("app.services.file_parser.MAX_OFFICE_XML_ENTRY_BYTES", 1):
+            upload = UploadFile(
+                filename="sample.docx",
+                file=io.BytesIO(build_docx_bytes(["Some real content"])),
+                headers=Headers({"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            with self.assertRaises(ProcessingLimitExceededError) as ctx:
+                await parser.parse(upload)
+
+            self.assertIn("DOCX XML entry", str(ctx.exception))
+            self.assertIn("word/document.xml", str(ctx.exception))
+
+    async def test_docx_entry_size_within_limit_succeeds(self) -> None:
+        """DOCX entry size within limit parses successfully."""
+        parser = DocxFileParser()
+
+        with patch("app.services.file_parser.MAX_OFFICE_XML_ENTRY_BYTES", 5 * 1024 * 1024):
+            upload = UploadFile(
+                filename="sample.docx",
+                file=io.BytesIO(build_docx_bytes(["Hello", "contact@ipu.co.kr"])),
+                headers=Headers({"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            parsed = await parser.parse(upload)
+
+            self.assertIn("Hello", parsed.content)
+            self.assertIn("contact@ipu.co.kr", parsed.content)
+
+    # ─── HWPX: Entry Size ──────────────────────────────────
+
+    async def test_hwpx_entry_size_exceeded_raises_error(self) -> None:
+        """HWPX section XML entry size > MAX_OFFICE_XML_ENTRY_BYTES raises."""
+        parser = HwpxFileParser()
+
+        with patch("app.services.file_parser.MAX_OFFICE_XML_ENTRY_BYTES", 1):
+            upload = UploadFile(
+                filename="sample.hwpx",
+                file=io.BytesIO(build_hwpx_bytes([["First paragraph", "contact@ipu.co.kr"]])),
+                headers=Headers({"content-type": "application/haansofthwpx"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            with self.assertRaises(ProcessingLimitExceededError) as ctx:
+                await parser.parse(upload)
+
+            self.assertIn("HWPX XML entry", str(ctx.exception))
+
+    async def test_hwpx_entry_size_within_limit_succeeds(self) -> None:
+        """HWPX entry size within limit parses successfully."""
+        parser = HwpxFileParser()
+
+        with patch("app.services.file_parser.MAX_OFFICE_XML_ENTRY_BYTES", 5 * 1024 * 1024):
+            upload = UploadFile(
+                filename="sample.hwpx",
+                file=io.BytesIO(build_hwpx_bytes([["첫 문단", "contact@ipu.co.kr"]])),
+                headers=Headers({"content-type": "application/haansofthwpx"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            parsed = await parser.parse(upload)
+
+            self.assertIn("첫 문단", parsed.content)
+            self.assertIn("contact@ipu.co.kr", parsed.content)
+
+    # ─── HWPX: Total Size ──────────────────────────────────
+
+    async def test_hwpx_total_size_exceeded_raises_error(self) -> None:
+        """HWPX section XML total size > MAX_OFFICE_XML_TOTAL_BYTES raises."""
+        parser = HwpxFileParser()
+
+        with patch("app.services.file_parser.MAX_OFFICE_XML_TOTAL_BYTES", 1):
+            upload = UploadFile(
+                filename="sample.hwpx",
+                file=io.BytesIO(build_hwpx_bytes([["Some text"]])),
+                headers=Headers({"content-type": "application/haansofthwpx"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            with self.assertRaises(ProcessingLimitExceededError) as ctx:
+                await parser.parse(upload)
+
+            self.assertIn("total size", str(ctx.exception))
+            self.assertIn("1", str(ctx.exception))
+
+    async def test_hwpx_total_size_within_limit_succeeds(self) -> None:
+        """HWPX total size within limit parses successfully."""
+        parser = HwpxFileParser()
+
+        with patch("app.services.file_parser.MAX_OFFICE_XML_TOTAL_BYTES", 20 * 1024 * 1024):
+            upload = UploadFile(
+                filename="sample.hwpx",
+                file=io.BytesIO(build_hwpx_bytes([["둘째 문단"]])),
+                headers=Headers({"content-type": "application/haansofthwpx"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            parsed = await parser.parse(upload)
+
+            self.assertIn("둘째 문단", parsed.content)
+
+    # ─── HWPX: Section Count ───────────────────────────────
+
+    async def test_hwpx_section_count_exceeded_raises_error(self) -> None:
+        """HWPX section XML file count > MAX_HWPX_SECTION_XML_FILES raises."""
+        parser = HwpxFileParser()
+
+        with patch("app.services.file_parser.MAX_HWPX_SECTION_XML_FILES", 1):
+            upload = UploadFile(
+                filename="sample.hwpx",
+                file=io.BytesIO(build_hwpx_bytes([
+                    ["Section 1"],
+                    ["Section 2"],
+                ])),
+                headers=Headers({"content-type": "application/haansofthwpx"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            with self.assertRaises(ProcessingLimitExceededError) as ctx:
+                await parser.parse(upload)
+
+            self.assertIn("file count", str(ctx.exception))
+            self.assertIn("2", str(ctx.exception))
+            self.assertIn("1", str(ctx.exception))
+
+    async def test_hwpx_section_count_within_limit_succeeds(self) -> None:
+        """HWPX section count within limit parses successfully."""
+        parser = HwpxFileParser()
+
+        with patch("app.services.file_parser.MAX_HWPX_SECTION_XML_FILES", 10):
+            upload = UploadFile(
+                filename="sample.hwpx",
+                file=io.BytesIO(build_hwpx_bytes([
+                    ["Section A"],
+                    ["Section B"],
+                ])),
+                headers=Headers({"content-type": "application/haansofthwpx"}),
+            )
+            upload.size = len(upload.file.getvalue())
+
+            parsed = await parser.parse(upload)
+
+            self.assertIn("Section A", parsed.content)
+            self.assertIn("Section B", parsed.content)
