@@ -35,6 +35,7 @@
 - sqlite 세션 저장소 허용
 - 정적 frontend 서버 허용
 - 로컬 포트 고정 허용 (`8241`, `4241`)
+- `IPU_ALLOWED_ORIGINS` 미설정 시 localhost origin 기본값 허용
 
 필수 기준:
 
@@ -64,6 +65,7 @@
 - preview -> restore
 - strict_token / default 차이 설명 가능
 - live integration smoke 통과
+- 외부 demo URL을 쓰는 경우 `IPU_ALLOWED_ORIGINS`를 명시
 
 권장 기준:
 
@@ -72,6 +74,7 @@
 - `run_demo_stack.sh` 로 최소 기동 가능
 - `scripts/check_demo_stack_deps.py` 로 기동 전 의존성 상태 확인 가능
 - audio whisper smoke는 기본 검증선이 아니라 opt-in smoke 로 분리
+- credentialed CORS가 필요하지 않으면 `IPU_CORS_ALLOW_CREDENTIALS`를 켜지 않음
 
 ## 3. ops-target
 
@@ -92,12 +95,28 @@
 - 사용자 식별 또는 감사 로그 기준 확정
 - 세션 저장소 경로를 환경변수로 고정
 - mounted-drive 같은 개발 편의 우회 제거
+- `IPU_ALLOWED_ORIGINS`를 운영 origin 목록으로 명시
+- 필요한 경우에만 `IPU_CORS_ALLOW_CREDENTIALS=true`를 설정
+- `IPU_CORS_ALLOW_METHODS`와 `IPU_CORS_ALLOW_HEADERS`를 운영 API 표면에 맞게 명시
 
 운영 금지사항:
 
 - `/tmp` 기반 임시 venv 의존
 - 수동 생성된 로컬 경로 가정
 - 사용자 PC에만 있는 변환기 의존
+- 운영 환경에서 localhost CORS 기본값에 의존
+
+## CORS 환경 변수 기준
+
+Backend CORS는 아래 환경 변수를 기준으로 설정한다.
+
+- `IPU_ALLOWED_ORIGINS`: 쉼표로 구분한 허용 origin 목록
+- `IPU_CORS_ALLOW_CREDENTIALS`: 기본값 `false`, 명시적으로 켠 경우에만 credentialed 요청 허용
+- `IPU_CORS_ALLOW_METHODS`: 기본값 `GET,POST`
+- `IPU_CORS_ALLOW_HEADERS`: 기본값 `Content-Type`
+- `IPU_DEPLOYMENT_ENV` 또는 `IPU_ENV` 또는 `APP_ENV`: `ops-target`, `production`, `prod`, `ops` 값이면 운영 기준 적용
+
+운영 환경에서는 `IPU_ALLOWED_ORIGINS`가 비어 있으면 backend가 시작되지 않는다. dev-local/demo 기본값은 로컬 개발 편의용이며 운영 배포 기준이 아니다.
 
 ## 환경별 의존성 표
 
@@ -113,18 +132,21 @@
 - `/tmp/ipu_backend_test_venv`
 - WSL mounted drive
 - 로컬 OCR 툴 존재 여부 차이
+- localhost CORS 기본값
 
 ### demo-stack 권장
 
 - `tesseract`
 - `pdftoppm`
 - `pdftocairo`
+- 명시적 demo origin 설정
 
 ### ops-target 필수 후보
 
 - 고정 python runtime
 - OCR 툴 설치 명세
 - 세션/로그 저장 경로 표준화
+- 명시적 CORS origin 설정
 
 ## 현재 재시작 지점
 
