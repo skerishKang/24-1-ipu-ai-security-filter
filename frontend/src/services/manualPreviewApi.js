@@ -5,6 +5,8 @@ import {
   getManualPreviewUrl,
 } from "../config.js";
 
+const restoreTokensBySession = new Map();
+
 export async function fetchManualPreview(content, policy = "default", taskType = "") {
   const payload = buildManualPreviewPayload(content, policy, taskType);
   const manualPreviewUrl = getManualPreviewUrl();
@@ -139,6 +141,11 @@ export async function uploadManualPreviewAudio(file, policy = "default") {
 
 export async function restoreManualPreview(sessionId, replacedText) {
   const manualPreviewRestoreUrl = getManualPreviewRestoreUrl();
+  const restoreToken = restoreTokensBySession.get(sessionId);
+
+  if (!restoreToken) {
+    throw createApiError("restore-token-missing", "복원 권한 정보를 찾을 수 없습니다. 미리보기를 다시 생성해 주세요.");
+  }
 
   let response;
   try {
@@ -149,6 +156,7 @@ export async function restoreManualPreview(sessionId, replacedText) {
       },
       body: JSON.stringify({
         session_id: sessionId,
+        restore_token: restoreToken,
         replaced_text: replacedText,
       }),
     });
@@ -190,6 +198,8 @@ export function buildManualPreviewPayload(content, policy = "default", taskType 
 }
 
 function normalizeManualPreviewResponse(data) {
+  rememberRestoreToken(data.session_id, data.restore_token);
+
   return {
     session_id: data.session_id ?? "",
     original_text: data.original_text ?? "",
@@ -205,6 +215,13 @@ function normalizeManualPreviewResponse(data) {
     readiness: normalizeReadiness(data.readiness),
     copy_ready_prompt: data.copy_ready_prompt ?? "",
   };
+}
+
+function rememberRestoreToken(sessionId, restoreToken) {
+  if (!sessionId || !restoreToken) {
+    return;
+  }
+  restoreTokensBySession.set(sessionId, restoreToken);
 }
 
 function normalizeRiskLevel(value) {
