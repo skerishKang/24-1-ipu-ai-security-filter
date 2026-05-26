@@ -42,3 +42,10 @@ class SessionExpiredError(KeyError):
 
     def __init__(self) -> None:
         super().__init__("세션이 만료되었습니다.")
+
+
+class ProcessingLimitExceededError(ValueError):
+    """Raised when a processing limit is exceeded (pages, OCR, timeout)."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

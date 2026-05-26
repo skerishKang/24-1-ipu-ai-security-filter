@@ -18,10 +18,14 @@ from app.core.exceptions import (
     EmptyFileError,
     FileTooLargeError,
     InvalidEncodingError,
+    ProcessingLimitExceededError,
     UnsupportedFileTypeError,
 )
 
 MAX_UPLOAD_FILE_BYTES = 104_857_600
+MAX_PDF_PAGES = 50
+MAX_OCR_PAGES = 5
+OCR_TOOL_TIMEOUT_SECONDS = 15
 SUPPORTED_TEXT_FILE_EXTENSIONS = {".txt", ".md", ".csv"}
 SUPPORTED_TEXT_CONTENT_TYPES = {
     "text/plain",
@@ -128,6 +132,11 @@ class PdfFileParser:
         if reader.is_encrypted:
             raise ValueError("암호화된 PDF 파일은 아직 지원하지 않습니다.")
 
+        if len(reader.pages) > MAX_PDF_PAGES:
+            raise ProcessingLimitExceededError(
+                f"PDF page count {len(reader.pages)} exceeds the processing limit of {MAX_PDF_PAGES} pages."
+            )
+
         extracted_pages = []
         for page in reader.pages:
             text = self._extract_page_text(page)
@@ -185,13 +194,18 @@ class PdfFileParser:
                         "-png",
                         str(pdf_path),
                         str(image_prefix),
-                    ]
+                    ],
+                    timeout=OCR_TOOL_TIMEOUT_SECONDS,
                 )
 
                 image_paths = sorted(tmpdir_path.glob("page-*.png"))
+                if len(image_paths) > MAX_OCR_PAGES:
+                    raise ProcessingLimitExceededError(
+                        f"OCR page count {len(image_paths)} exceeds the processing limit of {MAX_OCR_PAGES} pages."
+                    )
                 extracted_pages = []
                 for image_path in image_paths:
-                    ocr_text = self._run_tesseract(image_path)
+                    ocr_text = self._run_tesseract(image_path, timeout=OCR_TOOL_TIMEOUT_SECONDS)
                     normalized = self._normalize_extracted_text(ocr_text)
                     if normalized:
                         extracted_pages.append(normalized)
@@ -202,25 +216,33 @@ class PdfFileParser:
     def _is_ocr_toolchain_available(self) -> bool:
         return shutil.which("pdftoppm") is not None and shutil.which("tesseract") is not None
 
-    def _run_tesseract(self, image_path: Path) -> str:
+    def _run_tesseract(self, image_path: Path, timeout: int = 15) -> str:
         try:
             return self._run_command(
                 ["tesseract", str(image_path), "stdout", "-l", "kor+eng"],
                 capture_output=True,
+                timeout=timeout,
             )
         except subprocess.CalledProcessError:
             return self._run_command(
                 ["tesseract", str(image_path), "stdout"],
                 capture_output=True,
+                timeout=timeout,
             )
 
-    def _run_command(self, command: list[str], *, capture_output: bool = False) -> str:
-        completed = subprocess.run(
-            command,
-            check=True,
-            capture_output=capture_output,
-            text=True,
-        )
+    def _run_command(self, command: list[str], *, capture_output: bool = False, timeout: int | None = None) -> str:
+        try:
+            completed = subprocess.run(
+                command,
+                check=True,
+                capture_output=capture_output,
+                text=True,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired as error:
+            raise ProcessingLimitExceededError(
+                f"OCR command exceeded the processing timeout of {timeout} seconds."
+            ) from error
         return completed.stdout if capture_output else ""
 
 

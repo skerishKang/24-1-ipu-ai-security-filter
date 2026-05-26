@@ -15,6 +15,7 @@ from app.core.exceptions import (
     EmptyFileError,
     FileTooLargeError,
     InvalidEncodingError,
+    ProcessingLimitExceededError,
     SessionExpiredError,
     UnsupportedFileTypeError,
 )
@@ -54,6 +55,8 @@ async def manual_preview_file(
 ) -> ManualPreviewResponse:
     try:
         return await manual_preview_service.build_file_preview(file=file, policy=policy)
+    except ProcessingLimitExceededError as error:
+        raise HTTPException(status_code=413, detail=str(error))
     except FileTooLargeError as error:
         raise HTTPException(status_code=413, detail=str(error))
     except EmptyFileError as error:
