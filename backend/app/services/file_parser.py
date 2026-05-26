@@ -26,6 +26,9 @@ MAX_UPLOAD_FILE_BYTES = 104_857_600
 MAX_PDF_PAGES = 50
 MAX_OCR_PAGES = 5
 OCR_TOOL_TIMEOUT_SECONDS = 15
+MAX_OFFICE_XML_ENTRY_BYTES = 5 * 1024 * 1024
+MAX_OFFICE_XML_TOTAL_BYTES = 20 * 1024 * 1024
+MAX_HWPX_SECTION_XML_FILES = 200
 SUPPORTED_TEXT_FILE_EXTENSIONS = {".txt", ".md", ".csv"}
 SUPPORTED_TEXT_CONTENT_TYPES = {
     "text/plain",
@@ -303,6 +306,11 @@ class DocxFileParser:
     def _extract_docx_text(self, raw: bytes) -> str:
         try:
             with ZipFile(io.BytesIO(raw)) as archive:
+                docx_entry = archive.getinfo("word/document.xml")
+                if docx_entry.file_size > MAX_OFFICE_XML_ENTRY_BYTES:
+                    raise ProcessingLimitExceededError(
+                        f"DOCX XML entry word/document.xml exceeds the processing limit of {MAX_OFFICE_XML_ENTRY_BYTES} bytes."
+                    )
                 xml = archive.read("word/document.xml")
         except KeyError as error:
             raise ValueError("DOCX 본문 문서를 찾을 수 없습니다.") from error
@@ -367,6 +375,29 @@ class HwpxFileParser:
                 )
                 if not section_names:
                     raise ValueError("HWPX 본문 section XML을 찾을 수 없습니다.")
+
+                if len(section_names) > MAX_HWPX_SECTION_XML_FILES:
+                    raise ProcessingLimitExceededError(
+                        f"HWPX section XML file count {len(section_names)} "
+                        f"exceeds the processing limit of {MAX_HWPX_SECTION_XML_FILES}."
+                    )
+
+                total_xml_size = 0
+                for name in section_names:
+                    info = archive.getinfo(name)
+                    if info.file_size > MAX_OFFICE_XML_ENTRY_BYTES:
+                        raise ProcessingLimitExceededError(
+                            f"HWPX XML entry {name} size {info.file_size} "
+                            f"exceeds the processing limit of {MAX_OFFICE_XML_ENTRY_BYTES} bytes."
+                        )
+                    total_xml_size += info.file_size
+
+                if total_xml_size > MAX_OFFICE_XML_TOTAL_BYTES:
+                    raise ProcessingLimitExceededError(
+                        f"HWPX section XML total size {total_xml_size} "
+                        f"exceeds the processing limit of {MAX_OFFICE_XML_TOTAL_BYTES} bytes."
+                    )
+
                 sections = [archive.read(name) for name in section_names]
         except BadZipFile as error:
             raise ValueError("HWPX 파일을 해석할 수 없습니다.") from error
