@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import os
 import sqlite3
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
 from time import time
 from typing import Callable, Protocol
-from contextlib import contextmanager
 
 from engine.src.contracts import SessionMapping
 
 DEFAULT_SESSION_TTL_SECONDS = 900
+SQLITE_SESSION_DIR_MODE = 0o700
+SQLITE_SESSION_FILE_MODE = 0o600
 
 
 @dataclass
@@ -102,9 +105,10 @@ class SQLiteSessionStore:
         self.ttl_seconds = ttl_seconds
         self._clock = clock or time
         self._db_path = Path(db_path)
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._prepare_storage_path()
         self._lock = RLock()
         self._initialize()
+        self._apply_file_permissions()
 
     def save_mapping(self, session_id: str, mapping: SessionMapping) -> None:
         expires_at = self._build_expiration()
@@ -127,6 +131,7 @@ class SQLiteSessionStore:
                 (session_id, expires_at),
             )
             conn.commit()
+            self._apply_file_permissions()
 
     def list_sessions(self, limit: int = 50) -> list[dict]:
         with self._lock, self._connect() as conn:
@@ -206,6 +211,10 @@ class SQLiteSessionStore:
             self._cleanup_expired_sessions_locked(conn)
             conn.commit()
 
+    def _prepare_storage_path(self) -> None:
+        self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._chmod_if_supported(self._db_path.parent, SQLITE_SESSION_DIR_MODE)
+
     def _initialize(self) -> None:
         with self._connect() as conn:
             conn.execute(
@@ -237,6 +246,17 @@ class SQLiteSessionStore:
                 "CREATE INDEX IF NOT EXISTS idx_session_expirations_expires_at ON session_expirations(expires_at)"
             )
             conn.commit()
+
+    def _apply_file_permissions(self) -> None:
+        self._chmod_if_supported(self._db_path, SQLITE_SESSION_FILE_MODE)
+
+    def _chmod_if_supported(self, path: Path, mode: int) -> None:
+        if os.name == "nt" or not path.exists():
+            return
+        try:
+            path.chmod(mode)
+        except OSError:
+            return
 
     @contextmanager
     def _connect(self):
