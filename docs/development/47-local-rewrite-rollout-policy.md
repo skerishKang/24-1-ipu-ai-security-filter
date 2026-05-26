@@ -8,11 +8,13 @@
 ## Current Status
 - `default`: implemented and stable
 - `strict_token`: implemented and stable (still the benchmark for conservative masking)
-- `local_rewrite`: implemented, exposed in API/UI, but NOT the universal default yet
+- `local_rewrite`: implemented and exposed in API/UI, but NOT the universal default yet
+- Ollama-backed rewriting is disabled by default and requires explicit `IPU_OLLAMA_ENABLED=true`
 
 The important distinction is:
 - `local_rewrite` is no longer a code-only experiment
 - it is connected to the public API and visible in the UI
+- deterministic fallback remains available when the local model is disabled or unavailable
 - but it is not the recommended default policy for all use cases
 
 ## Why `local_rewrite` Exists
@@ -24,6 +26,16 @@ The current regex + token flow is safe enough for a PoC, but often too rigid for
 3. preserve restore mapping and auditability
 
 This is safer than replacing the entire engine with an LLM-only masking flow.
+
+## Local Model Trust Boundary
+
+When Ollama is explicitly enabled, `local_rewrite` may send original content and detected sensitive labels to the local model process. Loopback execution avoids remote transfer by default, but the model server is still a separate component that can observe the input it receives.
+
+Operational rule:
+- keep `IPU_OLLAMA_ENABLED=false` unless a deployment intentionally opts in
+- keep remote Ollama hosts blocked by default
+- do not log original content, detected labels, or raw local-model responses
+- use deterministic fallback behavior when the model is disabled, unavailable, or malformed
 
 ## Policy Positioning
 
@@ -61,6 +73,7 @@ Use when:
 - readability matters and the user still wants conservative detection
 - the user wants a more natural sanitized text for external AI prompting
 - the team is explicitly comparing output quality against `strict_token`
+- the deployment has intentionally opted into local-model assistance, or deterministic fallback is acceptable
 
 Strengths:
 - keeps `strict_token`-level detection path
@@ -70,6 +83,7 @@ Strengths:
 Weaknesses:
 - output quality depends on local model behavior or fallback quality
 - rollout requires stronger evaluation discipline
+- local-model assistance expands the runtime trust boundary when explicitly enabled
 
 ## Promotion Rule
 `local_rewrite` should be treated as promoted preview only if all conditions below remain true:
@@ -93,11 +107,12 @@ Current recommendation:
 - keep all three presets visible
 - explain them by risk/readability tradeoff
 - do not silently make `local_rewrite` the default yet
+- explain that local-model assistance requires explicit backend opt-in
 
 Suggested UI wording:
 - `default`: readable baseline protection
 - `strict_token`: conservative masking
-- `local_rewrite`: readable rewrite with local-model assistance
+- `local_rewrite`: readable rewrite with local-model assistance when enabled
 
 ## What Must Be True Before Wider Promotion
 - document-type overlays exist for at least a few real document classes
