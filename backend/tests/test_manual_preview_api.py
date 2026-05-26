@@ -18,7 +18,6 @@ from app.services.manual_preview_service import ManualPreviewService
 
 
 
-
 class FakeAudioTranscriber:
     async def transcribe(self, file: UploadFile):
         return type(
@@ -85,6 +84,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         for field in (
             "session_id",
+            "restore_token",
             "original_text",
             "replaced_text",
             "detections",
@@ -96,6 +96,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(body["original_text"], payload["content"])
         self.assertNotEqual(body["replaced_text"], body["original_text"])
+        self.assertTrue(body["restore_token"])
         self.assertIsInstance(body["detections"], list)
         self.assertIsInstance(body["replacements"], list)
         self.assertGreaterEqual(len(body["detections"]), 1)
@@ -148,8 +149,10 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertIn("session_id", body)
+        self.assertIn("restore_token", body)
         self.assertIn("replaced_text", body)
         self.assertIn("report", body)
+        self.assertTrue(body["restore_token"])
         self.assertNotEqual(body["replaced_text"], body["original_text"])
         self.assertIsInstance(body["detections"], list)
         self.assertIsInstance(body["replacements"], list)
@@ -434,11 +437,13 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         preview_response = await self.client.post("/api/v1/mode/manual-preview", json=preview_payload)
         self.assertEqual(preview_response.status_code, 200)
         preview_body = preview_response.json()
+        self.assertTrue(preview_body["restore_token"])
 
         restore_response = await self.client.post(
             "/api/v1/mode/manual-preview/restore",
             json={
                 "session_id": preview_body["session_id"],
+                "restore_token": preview_body["restore_token"],
                 "replaced_text": preview_body["replaced_text"],
             },
         )
@@ -449,19 +454,17 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restore_body["restored_text"], preview_payload["content"])
         self.assertEqual(restore_body["restored"], True)
 
-    async def test_manual_preview_restore_endpoint_returns_original_text_when_session_missing(self) -> None:
+    async def test_manual_preview_restore_endpoint_rejects_missing_session(self) -> None:
         restore_response = await self.client.post(
             "/api/v1/mode/manual-preview/restore",
             json={
                 "session_id": "missing-session",
+                "restore_token": "missing-session-token",
                 "replaced_text": "[EMAIL_01] 에 연락해 주세요.",
             },
         )
 
-        self.assertEqual(restore_response.status_code, 200)
-        restore_body = restore_response.json()
-        self.assertEqual(restore_body["restored_text"], "[EMAIL_01] 에 연락해 주세요.")
-        self.assertEqual(restore_body["restored"], False)
+        self.assertEqual(restore_response.status_code, 403)
 
     def test_default_transcriber_is_placeholder(self) -> None:
         from app.core.settings import get_settings
@@ -518,123 +521,69 @@ def build_pdf_bytes(page_texts: list[str]) -> bytes:
         )
     )
 
-    header = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+    offset = 0
     body = b""
-    offsets = [0]
-    current = len(header)
+    offsets = []
     for obj in objects:
-        offsets.append(current)
+        offsets.append(offset)
         body += obj
-        current += len(obj)
+        offset += len(obj)
 
-    xref_offset = len(header) + len(body)
+    xref_offset = len(body)
     xref_entries = [b"0000000000 65535 f \n"]
-    for offset in offsets[1:]:
-        xref_entries.append(f"{offset:010d} 00000 n \n".encode("ascii"))
-
+    xref_entries.extend(
+        f"{item:010d} 00000 n \n".encode("ascii") for item in offsets
+    )
     trailer = (
         b"xref\n0 "
-        + str(len(offsets)).encode("ascii")
+        + str(len(objects) + 1).encode("ascii")
         + b"\n"
         + b"".join(xref_entries)
         + b"trailer\n<< /Size "
-        + str(len(offsets)).encode("ascii")
+        + str(len(objects) + 1).encode("ascii")
         + b" /Root 1 0 R >>\nstartxref\n"
         + str(xref_offset).encode("ascii")
         + b"\n%%EOF\n"
     )
-
-    return header + body + trailer
-
-
-def build_docx_bytes(paragraphs: list[str]) -> bytes:
-    from zipfile import ZipFile
-
-    content_types = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>
-"""
-    rels = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>
-"""
-    paragraph_xml = "".join(
-        f"<w:p><w:r><w:t>{escape_xml(paragraph)}</w:t></w:r></w:p>" for paragraph in paragraphs
-    )
-    document = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>{paragraph_xml}</w:body>
-</w:document>
-"""
-
-    buffer = io.BytesIO()
-    with ZipFile(buffer, "w") as archive:
-        archive.writestr("[Content_Types].xml", content_types)
-        archive.writestr("_rels/.rels", rels)
-        archive.writestr("word/document.xml", document)
-    return buffer.getvalue()
-
-
-def escape_xml(text: str) -> str:
-    return (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
-
-
-def build_hwpx_bytes(sections: list[list[str]]) -> bytes:
-    from zipfile import ZipFile
-
-    buffer = io.BytesIO()
-    with ZipFile(buffer, "w") as archive:
-        archive.writestr("mimetype", "application/hwp+zip")
-        archive.writestr("version.xml", "<?xml version='1.0' encoding='UTF-8'?><version app='manual-preview'/>")
-        archive.writestr(
-            "Contents/content.hpf",
-            "<?xml version='1.0' encoding='UTF-8'?><opf:package xmlns:opf='http://www.idpf.org/2007/opf'/>",
-        )
-        for index, paragraphs in enumerate(sections):
-            para_xml = "".join(
-                f"<hp:p id='{1000 + paragraph_index}'><hp:run charPrIDRef='0'><hp:t>{escape_xml(paragraph)}</hp:t></hp:run></hp:p>"
-                for paragraph_index, paragraph in enumerate(paragraphs)
-            )
-            section_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section"
-        xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">
-  {para_xml}
-</hs:sec>
-"""
-            archive.writestr(f"Contents/section{index}.xml", section_xml)
-    return buffer.getvalue()
+    return b"%PDF-1.4\n" + body + trailer
 
 
 def build_blank_pdf_bytes() -> bytes:
-    from pypdf import PdfWriter
+    return build_pdf_bytes([""])
 
+
+def build_docx_bytes(paragraphs: list[str]) -> bytes:
+    import zipfile
+
+    document_xml = "".join(
+        f"<w:p><w:r><w:t>{text}</w:t></w:r></w:p>" for text in paragraphs
+    )
     buffer = io.BytesIO()
-    writer = PdfWriter()
-    writer.add_blank_page(width=300, height=200)
-    writer.write(buffer)
+    with zipfile.ZipFile(buffer, "w") as zf:
+        zf.writestr("[Content_Types].xml", "<Types></Types>")
+        zf.writestr("word/document.xml", f"<w:document><w:body>{document_xml}</w:body></w:document>")
     return buffer.getvalue()
 
 
-def build_wav_bytes(duration_seconds: float = 0.1, sample_rate: int = 8000) -> bytes:
-    """Build a valid minimal WAV file with silence."""
+def build_hwpx_bytes(sections: list[list[str]]) -> bytes:
+    import zipfile
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zf:
+        zf.writestr("mimetype", "application/hwp+zip")
+        for index, paragraphs in enumerate(sections, start=1):
+            text = "".join(f"<hp:p><hp:t>{item}</hp:t></hp:p>" for item in paragraphs)
+            zf.writestr(f"Contents/section{index}.xml", text)
+    return buffer.getvalue()
+
+
+def build_wav_bytes(duration_seconds: float = 0.1) -> bytes:
+    sample_rate = 8000
+    frames = int(sample_rate * duration_seconds)
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav:
         wav.setnchannels(1)
         wav.setsampwidth(2)
         wav.setframerate(sample_rate)
-        num_frames = int(sample_rate * duration_seconds)
-        wav.writeframes(b"\x00\x00" * num_frames)
+        wav.writeframes(b"\x00\x00" * frames)
     return buffer.getvalue()
-
-
-class MissingOcrToolPdfFileParser:
-    async def parse(self, file):
-        raise ValueError("스캔형 PDF OCR을 위한 로컬 도구가 없습니다. tesseract 와 pdftoppm 설치 후 다시 시도해 주세요.")
