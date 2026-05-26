@@ -3,18 +3,24 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 import importlib
+import io
 import logging
 from pathlib import Path
 import tempfile
 from typing import Any, Protocol, TYPE_CHECKING
+import wave
 
 if TYPE_CHECKING:
     from fastapi import UploadFile
 else:
     UploadFile = Any
 
+from app.core.exceptions import ProcessingLimitExceededError
+
 MAX_AUDIO_UPLOAD_BYTES = 104_857_600
+MAX_AUDIO_DURATION_SECONDS = 60
 SUPPORTED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".m4a", ".mp4", ".webm"}
+SUPPORTED_WAV_CONTENT_TYPES = {"audio/wav", "audio/x-wav", "audio/wave"}
 LOGGER = logging.getLogger("uvicorn.error")
 
 
@@ -47,7 +53,26 @@ class BaseAudioTranscriber:
         if len(raw) > MAX_AUDIO_UPLOAD_BYTES:
             raise ValueError("현재 manual-preview 음성 업로드는 100MB 이하 파일만 고려합니다.")
 
+        if suffix == ".wav" or content_type in SUPPORTED_WAV_CONTENT_TYPES:
+            self._validate_wav_duration(raw)
+
         return filename, content_type, raw
+
+    def _validate_wav_duration(self, raw: bytes) -> None:
+        try:
+            with wave.open(io.BytesIO(raw), "rb") as wav:
+                frames = wav.getnframes()
+                rate = wav.getframerate()
+                if rate == 0:
+                    raise ValueError("WAV 파일을 해석할 수 없습니다.")
+                duration = frames / rate
+        except (wave.Error, EOFError, OSError) as error:
+            raise ValueError("WAV 파일을 해석할 수 없습니다.") from error
+
+        if duration > MAX_AUDIO_DURATION_SECONDS:
+            raise ProcessingLimitExceededError(
+                f"WAV audio duration {duration:.1f} seconds exceeds the processing limit of {MAX_AUDIO_DURATION_SECONDS} seconds."
+            )
 
 
 class PlaceholderAudioTranscriber(BaseAudioTranscriber):

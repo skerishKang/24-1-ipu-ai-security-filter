@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
+import wave
 
 import httpx
 from fastapi import UploadFile
@@ -247,7 +249,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
             files={
                 "file": (
                     "sample.wav",
-                    b"fake-audio",
+                    build_wav_bytes(duration_seconds=0.1),
                     "audio/wav",
                 )
             },
@@ -267,7 +269,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
                 files={
                     "file": (
                         "sample.wav",
-                        b"fake-audio",
+                        build_wav_bytes(duration_seconds=0.1),
                         "audio/wav",
                     )
                 },
@@ -280,6 +282,26 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         body = response.json()
         self.assertEqual(body["original_text"], "아이피유테크 홍길동 이사가 contact@ipu.co.kr 로 연락합니다.")
         self.assertIn("[EMAIL_ALIAS_", body["replaced_text"])
+
+    async def test_manual_preview_audio_rejects_over_duration_wav(self) -> None:
+        """WAV duration > MAX_AUDIO_DURATION_SECONDS returns 413."""
+        # Build a WAV with 0.5s duration but monkeypatch limit to 0.001
+        with patch("app.services.audio_transcriber.MAX_AUDIO_DURATION_SECONDS", 0.001):
+            response = await self.client.post(
+                "/api/v1/mode/manual-preview/audio",
+                files={
+                    "file": (
+                        "sample.wav",
+                        build_wav_bytes(duration_seconds=0.1),
+                        "audio/wav",
+                    )
+                },
+                data={"policy": "default"},
+            )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertIn("duration", response.json()["detail"].lower())
+        self.assertIn("0.001", response.json()["detail"])
 
     async def test_manual_preview_file_rejects_unsupported_extension(self) -> None:
         files = {
@@ -598,6 +620,18 @@ def build_blank_pdf_bytes() -> bytes:
     writer = PdfWriter()
     writer.add_blank_page(width=300, height=200)
     writer.write(buffer)
+    return buffer.getvalue()
+
+
+def build_wav_bytes(duration_seconds: float = 0.1, sample_rate: int = 8000) -> bytes:
+    """Build a valid minimal WAV file with silence."""
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        num_frames = int(sample_rate * duration_seconds)
+        wav.writeframes(b"\x00\x00" * num_frames)
     return buffer.getvalue()
 
 
