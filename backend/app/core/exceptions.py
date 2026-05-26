@@ -44,6 +44,13 @@ class SessionExpiredError(KeyError):
         super().__init__("세션이 만료되었습니다.")
 
 
+class RestoreTokenError(PermissionError):
+    """Raised when restore token validation fails."""
+
+    def __init__(self) -> None:
+        super().__init__("복원 권한을 확인할 수 없습니다.")
+
+
 class ProcessingLimitExceededError(ValueError):
     """Raised when a processing limit is exceeded (pages, OCR, timeout)."""
 
