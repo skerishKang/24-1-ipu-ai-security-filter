@@ -114,6 +114,8 @@
   - restore API의 dev/demo/ops 보안 기준, 세션 소유권, 감사 로그, CORS/CSRF, TTL/cleanup 정책
 - [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
   - upload processing guardrail 구현 현황, 완료 slice, 남은 보류 항목, 외부 배포 전 기준
+- [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
+  - upload timeout/concurrency guardrail 설계, 운영 레이어, 보류 기준
 
 ## 추천 읽기 순서
 
@@ -165,6 +167,7 @@
 44. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
 45. [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
 46. [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
+47. [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
 
 ### 구현 작업 직전
 
@@ -213,6 +216,7 @@
 43. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
 44. [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
 45. [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
+46. [50-upload-timeout-concurrency-design.md](./50-upload-timeout-concurrency-design.md)
 
 ## 현재 개발 상태 요약
 
