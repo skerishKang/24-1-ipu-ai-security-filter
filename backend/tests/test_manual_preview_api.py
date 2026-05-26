@@ -287,8 +287,6 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("[EMAIL_ALIAS_", body["replaced_text"])
 
     async def test_manual_preview_audio_rejects_over_duration_wav(self) -> None:
-        """WAV duration > MAX_AUDIO_DURATION_SECONDS returns 413."""
-        # Build a WAV with 0.5s duration but monkeypatch limit to 0.001
         with patch("app.services.audio_transcriber.MAX_AUDIO_DURATION_SECONDS", 0.001):
             response = await self.client.post(
                 "/api/v1/mode/manual-preview/audio",
@@ -371,7 +369,6 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
             await service.build_file_preview(file=oversized, policy="default")
 
     async def test_manual_preview_file_returns_413_for_processing_limit_exceeded(self) -> None:
-        """ProcessingLimitExceededError from the parser is mapped to 413."""
         original_service = self.manual_preview_service
         original_parser = original_service.file_parser
 
@@ -587,3 +584,8 @@ def build_wav_bytes(duration_seconds: float = 0.1) -> bytes:
         wav.setframerate(sample_rate)
         wav.writeframes(b"\x00\x00" * frames)
     return buffer.getvalue()
+
+
+class MissingOcrToolPdfFileParser:
+    async def parse(self, file):
+        raise ValueError("스캔형 PDF OCR을 위한 로컬 도구가 없습니다. tesseract 와 pdftoppm 설치 후 다시 시도해 주세요.")
