@@ -5,6 +5,18 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from engine.src.contracts import Detection
+from engine.src.detector_patterns import (
+    ENGLISH_GENERIC_WORDS,
+    ENGLISH_ORG_SUFFIXES,
+    ENGLISH_PERSON_NAME_INDICATORS,
+    ENGLISH_PERSON_TITLES,
+    GENERIC_ORG_LABELS,
+    GENERIC_PERSON_LABELS,
+    ORG_SUFFIXES,
+    PERSON_TITLES,
+    STRICT_BARE_NAME_PARTICLES,
+    STRICT_OBFUSCATED_EMAIL_PATTERN,
+)
 
 
 @dataclass(frozen=True)
@@ -25,179 +37,6 @@ class DetectionCandidate:
 
 
 class RegexDetector:
-    _PERSON_TITLES = (
-        "대표이사",
-        "부사장",
-        "전무",
-        "상무",
-        "본부장",
-        "센터장",
-        "실장",
-        "팀장",
-        "파트장",
-        "그룹장",
-        "리드",
-        "책임",
-        "수석",
-        "선임",
-        "연구원",
-        "프로",
-        "대표",
-        "이사",
-        "부장",
-        "차장",
-        "과장",
-        "대리",
-        "주임",
-        "매니저",
-        "PM",
-        "PL",
-        "님",
-    )
-    _ORG_SUFFIXES = (
-        "솔루션즈",
-        "시스템즈",
-        "네트웍스",
-        "네트워크",
-        "모빌리티",
-        "솔루션",
-        "시스템",
-        "캐피탈",
-        "미디어",
-        "에너지",
-        "데이터",
-        "바이오",
-        "그룹",
-        "금융",
-        "전자",
-        "기업",
-        "회사",
-        "산업",
-        "증권",
-        "보험",
-        "카드",
-        "제약",
-        "건설",
-        "물산",
-        "상사",
-        "통신",
-        "테크",
-    )
-    _GENERIC_ORG_LABELS = {
-        "회사",
-        "기업",
-        "전자",
-        "금융",
-        "보험",
-        "증권",
-        "카드",
-        "캐피탈",
-        "건설",
-        "제약",
-        "산업",
-        "미디어",
-        "데이터",
-        "통신",
-        "에너지",
-        "대기업",
-        "중견기업",
-        "중소기업",
-        "고객기업",
-        "협력기업",
-        "내부회사",
-        "외부회사",
-    }
-    _GENERIC_PERSON_LABELS = {
-        "브랜드",
-        "고객",
-        "사용자",
-        "담당",
-        "담당자",
-        "대표자",
-        "관리자",
-        "운영팀",
-        "보안팀",
-        "개발팀",
-        "사업팀",
-        "영업팀",
-        "재무팀",
-        "인사팀",
-        "법무팀",
-        "마케팅팀",
-        "서비스팀",
-        "플랫폼팀",
-        "디자인팀",
-        "데이터팀",
-        "연구팀",
-        "사업부",
-        "본부",
-        "센터",
-        "실",
-        "팀",
-    }
-    _ENGLISH_PERSON_TITLES = (
-        "Dr\\.",
-        "Drs\\.",
-        "Prof\\.",
-        "Prof\\s+\\.",
-        "Mr\\.",
-        "Ms\\.",
-        "Mrs\\.",
-        "Miss\\.",
-    )
-    _ENGLISH_ORG_SUFFIXES = (
-        "Inc\\.",
-        "Corp\\.",
-        "LLC",
-        "Ltd\\.",
-        "Co\\.",
-        "Holdings",
-        "Group",
-        "Technologies",
-        "Systems",
-        "Solutions",
-        "Enterprises",
-        "Partners",
-    )
-    _ENGLISH_PERSON_NAME_INDICATORS = (
-        "CEO", "CTO", "CFO", "COO", "CMO", "CIO", "VP",
-        "Director", "Manager", "Lead", "Engineer", "Developer",
-        "Designer", "Analyst", "Consultant", "Advisor", "Attorney",
-    )
-    _ENGLISH_GENERIC_WORDS = {
-        "company", "corporation", "incorporated", "limited", "llc", "inc", "corp",
-        "the company", "this company", "our company", "your company",
-        "example", "sample", "test", "demo", "mock", "fake",
-    }
-    _STRICT_BARE_NAME_PARTICLES = (
-        "에게",
-        "에게는",
-        "에게만",
-        "님께",
-        "씨에게",
-        "씨는",
-        "씨가",
-        "씨를",
-        "와 공유",
-        "와 전달",
-        "에게 공유",
-        "에게 전달",
-        "에게 보고",
-        "에게 문의",
-        "에게 회신",
-        "에게 보내",
-    )
-    _STRICT_OBFUSCATED_EMAIL_PATTERN = re.compile(
-        r"""
-        [A-Z0-9._%+-]+\s+(?:at|AT)\s+[A-Z0-9.-]+
-        (?:
-            \s+(?:dot|DOT)\s+[A-Z]{2,}
-        )+
-        (?:\s+[A-Z]{2,})?
-        """,
-        re.IGNORECASE | re.VERBOSE,
-    )
-
     def __init__(self) -> None:
         self._patterns = self._build_patterns()
 
@@ -223,11 +62,11 @@ class RegexDetector:
         ]
 
     def _build_patterns(self) -> list[DetectionPattern]:
-        person_titles = "|".join(sorted(self._PERSON_TITLES, key=len, reverse=True))
-        org_suffixes = "|".join(sorted(self._ORG_SUFFIXES, key=len, reverse=True))
-        english_person_titles = "|".join(sorted(self._ENGLISH_PERSON_TITLES, key=len, reverse=True))
-        english_org_suffixes = "|".join(sorted(self._ENGLISH_ORG_SUFFIXES, key=len, reverse=True))
-        english_person_indicators = "|".join(sorted(self._ENGLISH_PERSON_NAME_INDICATORS, key=len, reverse=True))
+        person_titles = "|".join(sorted(PERSON_TITLES, key=len, reverse=True))
+        org_suffixes = "|".join(sorted(ORG_SUFFIXES, key=len, reverse=True))
+        english_person_titles = "|".join(sorted(ENGLISH_PERSON_TITLES, key=len, reverse=True))
+        english_org_suffixes = "|".join(sorted(ENGLISH_ORG_SUFFIXES, key=len, reverse=True))
+        english_person_indicators = "|".join(sorted(ENGLISH_PERSON_NAME_INDICATORS, key=len, reverse=True))
 
         return [
             DetectionPattern(
@@ -436,7 +275,7 @@ class RegexDetector:
         normalized = re.sub(r"\s+", "", label)
         core_name = normalized
 
-        for title in sorted(self._PERSON_TITLES, key=len, reverse=True):
+        for title in sorted(PERSON_TITLES, key=len, reverse=True):
             if core_name.endswith(title):
                 core_name = core_name[: -len(title)]
                 break
@@ -451,7 +290,7 @@ class RegexDetector:
         core_name = core_name.strip()
         if len(core_name) < 2 or len(core_name) > 4:
             return False
-        if core_name in self._GENERIC_PERSON_LABELS:
+        if core_name in GENERIC_PERSON_LABELS:
             return False
         return core_name.isalpha() and all("가" <= char <= "힣" for char in core_name)
 
@@ -459,7 +298,7 @@ class RegexDetector:
         if re.search(r"[A-Za-z]", label):
             return self._is_valid_english_org(label)
         normalized = re.sub(r"\s+", "", label)
-        if normalized in self._GENERIC_ORG_LABELS:
+        if normalized in GENERIC_ORG_LABELS:
             return False
 
         if normalized.startswith(("주식회사", "(주)", "재단", "협회")):
@@ -470,7 +309,7 @@ class RegexDetector:
                     break
             return len(body) >= 2
 
-        return normalized not in self._ORG_SUFFIXES
+        return normalized not in ORG_SUFFIXES
 
     def _is_valid_english_person(self, label: str) -> bool:
         if not label:
@@ -494,12 +333,12 @@ class RegexDetector:
         label_lower = label.lower().strip()
 
         # Reject generic words
-        for generic in self._ENGLISH_GENERIC_WORDS:
+        for generic in ENGLISH_GENERIC_WORDS:
             if label_lower == generic or label_lower.startswith("the " + generic):
                 return False
 
         # Check if it has an org suffix
-        org_suffixes_lower = {s.lower() for s in self._ENGLISH_ORG_SUFFIXES}
+        org_suffixes_lower = {s.lower() for s in ENGLISH_ORG_SUFFIXES}
         for part in label.split():
             if part.rstrip(".").lower() in org_suffixes_lower:
                 return True
@@ -533,7 +372,7 @@ class RegexDetector:
         return False
 
     def _find_strict_person_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
-        particles = "|".join(re.escape(item) for item in sorted(self._STRICT_BARE_NAME_PARTICLES, key=len, reverse=True))
+        particles = "|".join(re.escape(item) for item in sorted(STRICT_BARE_NAME_PARTICLES, key=len, reverse=True))
         regex = re.compile(
             rf"(?<![가-힣])([가-힣]{{2,4}})(?=(?:{particles}))"
         )
@@ -557,7 +396,7 @@ class RegexDetector:
 
     def _find_strict_obfuscated_email_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
         candidates: list[DetectionCandidate] = []
-        for match in self._STRICT_OBFUSCATED_EMAIL_PATTERN.finditer(content):
+        for match in STRICT_OBFUSCATED_EMAIL_PATTERN.finditer(content):
             label = match.group(0).strip()
             candidates.append(
                 DetectionCandidate(
