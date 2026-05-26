@@ -145,6 +145,10 @@ class PdfFileParser:
 
         content = "\n".join(extracted_pages).strip()
         if not content:
+            if len(reader.pages) > MAX_OCR_PAGES:
+                raise ProcessingLimitExceededError(
+                    f"OCR page count {len(reader.pages)} exceeds the processing limit of {MAX_OCR_PAGES} pages."
+                )
             content = self._extract_pdf_via_ocr(raw)
         if not content:
             raise ValueError("텍스트를 추출할 수 있는 PDF 파일만 지원합니다.")

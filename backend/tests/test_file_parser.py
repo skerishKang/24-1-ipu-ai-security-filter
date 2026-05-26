@@ -4,7 +4,7 @@ import io
 import subprocess
 import unittest
 from pathlib import Path
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 from zipfile import ZipFile
 
 from pypdf import PdfWriter
@@ -318,10 +318,11 @@ def build_encrypted_pdf_bytes() -> bytes:
     return buffer.getvalue()
 
 
-def build_blank_pdf_bytes() -> bytes:
+def build_blank_pdf_bytes(page_count: int = 1) -> bytes:
     buffer = io.BytesIO()
     writer = PdfWriter()
-    writer.add_blank_page(width=300, height=200)
+    for _ in range(page_count):
+        writer.add_blank_page(width=300, height=200)
     writer.write(buffer)
     return buffer.getvalue()
 
@@ -484,40 +485,50 @@ class PdfProcessingGuardrailTest(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Page 2", parsed.content)
 
     async def test_ocr_page_limit_exceeded_raises_error(self) -> None:
-        """OCR page count > MAX_OCR_PAGES raises ProcessingLimitExceededError."""
-        parser = OcrSimulatedPdfFileParser(simulated_page_count=3)
+        """OCR page count > MAX_OCR_PAGES raises before _extract_pdf_via_ocr is called."""
+        parser = PdfFileParser()
+        ocr_called = False
 
-        with patch("app.services.file_parser.MAX_OCR_PAGES", 2):
-            upload = UploadFile(
-                filename="scan.pdf",
-                file=io.BytesIO(build_blank_pdf_bytes()),
-                headers=Headers({"content-type": "application/pdf"}),
-            )
-            upload.size = len(upload.file.getvalue())
+        def _assert_ocr_not_called(raw: bytes) -> str:
+            nonlocal ocr_called
+            ocr_called = True
+            return "should not reach here"
 
-            with self.assertRaises(ProcessingLimitExceededError) as ctx:
-                await parser.parse(upload)
+        with patch("app.services.file_parser.MAX_OCR_PAGES", 1):
+            with patch.object(parser, "_extract_pdf_via_ocr", _assert_ocr_not_called):
+                upload = UploadFile(
+                    filename="scan.pdf",
+                    file=io.BytesIO(build_blank_pdf_bytes(page_count=2)),
+                    headers=Headers({"content-type": "application/pdf"}),
+                )
+                upload.size = len(upload.file.getvalue())
 
-            self.assertIn("OCR page count", str(ctx.exception))
-            self.assertIn("3", str(ctx.exception))
-            self.assertIn("2", str(ctx.exception))
+                with self.assertRaises(ProcessingLimitExceededError) as ctx:
+                    await parser.parse(upload)
+
+                self.assertIn("OCR page count", str(ctx.exception))
+                self.assertIn("2", str(ctx.exception))
+                self.assertIn("1", str(ctx.exception))
+
+        self.assertFalse(ocr_called, "_extract_pdf_via_ocr must NOT be called when page count exceeds limit")
 
     async def test_ocr_timeout_raises_error(self) -> None:
-        """OCR subprocess timeout raises ProcessingLimitExceededError."""
+        """OCR subprocess timeout raises ProcessingLimitExceededError within page limit."""
         parser = OcrTimeoutPdfFileParser()
 
-        with patch("app.services.file_parser.OCR_TOOL_TIMEOUT_SECONDS", 1):
-            upload = UploadFile(
-                filename="scan.pdf",
-                file=io.BytesIO(build_blank_pdf_bytes()),
-                headers=Headers({"content-type": "application/pdf"}),
-            )
-            upload.size = len(upload.file.getvalue())
+        with patch("app.services.file_parser.MAX_OCR_PAGES", 5):
+            with patch("app.services.file_parser.OCR_TOOL_TIMEOUT_SECONDS", 1):
+                upload = UploadFile(
+                    filename="scan.pdf",
+                    file=io.BytesIO(build_blank_pdf_bytes(page_count=2)),
+                    headers=Headers({"content-type": "application/pdf"}),
+                )
+                upload.size = len(upload.file.getvalue())
 
-            with self.assertRaises(ProcessingLimitExceededError) as ctx:
-                await parser.parse(upload)
+                with self.assertRaises(ProcessingLimitExceededError) as ctx:
+                    await parser.parse(upload)
 
-            self.assertIn("timeout", str(ctx.exception).lower())
+                self.assertIn("timeout", str(ctx.exception).lower())
 
     def test_run_command_timeout_conversion(self) -> None:
         """_run_command converts subprocess.TimeoutExpired to ProcessingLimitExceededError."""
@@ -536,7 +547,7 @@ class PdfProcessingGuardrailTest(unittest.IsolatedAsyncioTestCase):
         with patch("app.services.file_parser.MAX_OCR_PAGES", 5):
             upload = UploadFile(
                 filename="scan.pdf",
-                file=io.BytesIO(build_blank_pdf_bytes()),
+                file=io.BytesIO(build_blank_pdf_bytes(page_count=2)),
                 headers=Headers({"content-type": "application/pdf"}),
             )
             upload.size = len(upload.file.getvalue())
