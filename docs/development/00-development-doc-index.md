@@ -112,6 +112,8 @@
   - local_rewrite 현재 위치와 UX 배치 정책
 - [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
   - restore API의 dev/demo/ops 보안 기준, 세션 소유권, 감사 로그, CORS/CSRF, TTL/cleanup 정책
+- [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
+  - upload processing guardrail 구현 현황, 완료 slice, 남은 보류 항목, 외부 배포 전 기준
 
 ## 추천 읽기 순서
 
@@ -162,6 +164,7 @@
 43. [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
 44. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
 45. [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
+46. [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
 
 ### 구현 작업 직전
 
@@ -209,6 +212,7 @@
 42. [46-document-corpus-comparison.md](./46-document-corpus-comparison.md)
 43. [47-local-rewrite-rollout-policy.md](./47-local-rewrite-rollout-policy.md)
 44. [48-restore-api-security-policy.md](./48-restore-api-security-policy.md)
+45. [49-upload-processing-guardrails-status.md](./49-upload-processing-guardrails-status.md)
 
 ## 현재 개발 상태 요약
 
