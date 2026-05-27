@@ -5,7 +5,6 @@ from engine.src.contracts import Detection
 from engine.src.local_rewriter import OllamaHTTPClient, OllamaLocalRewriter
 
 
-
 class FakeClient:
     def __init__(self, response: str = "", should_fail: bool = False) -> None:
         self.response = response
@@ -40,7 +39,9 @@ class LocalRewriterTest(unittest.TestCase):
 
         self.assertFalse(result.used_fallback)
         self.assertEqual(result.replacements[0].replaced, "담당자 1")
+        self.assertEqual(result.replacements[0].reason, "local_rewrite")
         self.assertEqual(result.replacements[1].replaced, "A사 2")
+        self.assertEqual(result.replacements[1].reason, "local_rewrite")
 
     def test_rewrite_falls_back_when_json_is_invalid(self) -> None:
         client = FakeClient("not-json")
@@ -65,6 +66,84 @@ class LocalRewriterTest(unittest.TestCase):
 
         self.assertTrue(result.used_fallback)
         self.assertEqual(result.replacements[0].replaced, "연락처 1")
+
+    def test_rewrite_falls_back_when_replacement_repeats_original_email(self) -> None:
+        client = FakeClient(
+            json.dumps(
+                {"replacements": [{"index": 1, "replacement": "test@example.com 담당 이메일", "reason": "safe"}]},
+                ensure_ascii=False,
+            )
+        )
+        rewriter = OllamaLocalRewriter(client=client, model="test-model")
+        detections = [
+            Detection(type="EMAIL", label="test@example.com", start=0, end=16, score=0.9, note="test"),
+        ]
+
+        result = rewriter.rewrite("test@example.com", detections)
+
+        self.assertTrue(result.used_fallback)
+        self.assertEqual(result.replacements[0].replaced, "이메일 주소 1")
+        self.assertEqual(result.replacements[0].reason, "fallback_local_rewrite")
+
+    def test_rewrite_falls_back_when_replacement_contains_normalized_original(self) -> None:
+        client = FakeClient(
+            json.dumps(
+                {"replacements": [{"index": 1, "replacement": "01012345678 연락처", "reason": "safe"}]},
+                ensure_ascii=False,
+            )
+        )
+        rewriter = OllamaLocalRewriter(client=client, model="test-model")
+        detections = [
+            Detection(type="PHONE", label="010-1234-5678", start=0, end=13, score=0.9, note="test"),
+        ]
+
+        result = rewriter.rewrite("010-1234-5678", detections)
+
+        self.assertTrue(result.used_fallback)
+        self.assertEqual(result.replacements[0].replaced, "연락처 1")
+
+    def test_rewrite_falls_back_when_replacement_matches_strict_sensitive_pattern(self) -> None:
+        client = FakeClient(
+            json.dumps(
+                {
+                    "replacements": [
+                        {
+                            "index": 1,
+                            "replacement": "새 API 키 abcdef1234567890abcdef1234567890",
+                            "reason": "safe",
+                        }
+                    ]
+                },
+                ensure_ascii=False,
+            )
+        )
+        rewriter = OllamaLocalRewriter(client=client, model="test-model")
+        detections = [
+            Detection(type="API_KEY", label="old-secret-token", start=0, end=16, score=0.9, note="test"),
+        ]
+
+        result = rewriter.rewrite("old-secret-token", detections)
+
+        self.assertTrue(result.used_fallback)
+        self.assertEqual(result.replacements[0].replaced, "API 키 1")
+
+    def test_rewrite_falls_back_when_reason_contains_original(self) -> None:
+        client = FakeClient(
+            json.dumps(
+                {"replacements": [{"index": 1, "replacement": "담당자", "reason": "홍길동을 일반화"}]},
+                ensure_ascii=False,
+            )
+        )
+        rewriter = OllamaLocalRewriter(client=client, model="test-model")
+        detections = [
+            Detection(type="PERSON", label="홍길동", start=0, end=3, score=0.9, note="test"),
+        ]
+
+        result = rewriter.rewrite("홍길동", detections)
+
+        self.assertTrue(result.used_fallback)
+        self.assertEqual(result.replacements[0].replaced, "담당자 1")
+        self.assertEqual(result.replacements[0].reason, "fallback_local_rewrite")
 
 
 class LocalRewriteEndpointGuardTest(unittest.TestCase):
@@ -105,4 +184,3 @@ class LocalRewriteEndpointGuardTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
