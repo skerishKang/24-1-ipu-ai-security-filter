@@ -19,6 +19,7 @@ class BackendSettings:
     ollama_enabled: bool
     ollama_base_url: str
     ollama_model: str
+    manual_preview_response_mode: str
 
 
 def get_settings() -> BackendSettings:
@@ -43,6 +44,9 @@ def get_settings() -> BackendSettings:
     ollama_enabled = os.getenv("IPU_OLLAMA_ENABLED", "false").strip().lower() not in {"0", "false", "no"}
     ollama_base_url = os.getenv("IPU_OLLAMA_BASE_URL", "http://127.0.0.1:11434").strip()
     ollama_model = os.getenv("IPU_OLLAMA_MODEL", "qwen2.5:7b-instruct").strip() or "qwen2.5:7b-instruct"
+    manual_preview_response_mode = (
+        os.getenv("IPU_MANUAL_PREVIEW_RESPONSE_MODE", "full").strip().lower() or "full"
+    )
 
     return BackendSettings(
         session_store_kind=session_store_kind,
@@ -57,4 +61,5 @@ def get_settings() -> BackendSettings:
         ollama_enabled=ollama_enabled,
         ollama_base_url=ollama_base_url,
         ollama_model=ollama_model,
+        manual_preview_response_mode=manual_preview_response_mode,
     )
