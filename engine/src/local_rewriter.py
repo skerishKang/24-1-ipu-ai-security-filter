@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Protocol
 from urllib import request
 from urllib.parse import urlparse
 
 from engine.src.contracts import Detection, Replacement
+from engine.src.detector import RegexDetector
 
 _LOCAL_REWRITE_HOSTS = {"localhost", "127.0.0.1", "::1"}
+_HIGH_ENTROPY_TOKEN_PATTERN = re.compile(r"\b[A-Za-z0-9_\-.]{20,}\b")
 
 
 class OllamaClient(Protocol):
@@ -79,6 +82,7 @@ class OllamaLocalRewriter:
     ) -> None:
         self._client = client or OllamaHTTPClient(base_url=base_url, allow_remote=allow_remote)
         self._model = model
+        self._output_detector = RegexDetector()
 
     def rewrite(self, content: str, detections: list[Detection]) -> LocalRewriteResult:
         if not detections:
@@ -149,16 +153,45 @@ class OllamaLocalRewriter:
             reason = str(item.get("reason", "local_rewrite")).strip() or "local_rewrite"
             if not replacement or replacement == detection.label:
                 raise ValueError("invalid_replacement")
+            if self._contains_sensitive_output(replacement, reason, detection):
+                raise ValueError("unsafe_replacement_output")
             replacement = self._ensure_stable_replacement_text(replacement, detection.type, index)
             replacements.append(
                 Replacement(
                     type=detection.type,
                     original=detection.label,
                     replaced=replacement,
-                    reason=reason,
+                    reason="local_rewrite",
                 )
             )
         return replacements
+
+    def _contains_sensitive_output(self, replacement: str, reason: str, detection: Detection) -> bool:
+        values_to_check = (replacement, reason)
+        original = detection.label.strip()
+        normalized_original = self._normalize_sensitive_text(original)
+
+        for value in values_to_check:
+            if not value:
+                continue
+            if original and original.lower() in value.lower():
+                return True
+            normalized_value = self._normalize_sensitive_text(value)
+            if normalized_original and len(normalized_original) >= 3 and normalized_original in normalized_value:
+                return True
+
+        return self._looks_like_sensitive_token(replacement) or bool(
+            self._output_detector.detect(replacement, content_type="text", policy="strict_token")
+        )
+
+    def _looks_like_sensitive_token(self, value: str) -> bool:
+        return any(
+            re.search(r"[A-Za-z]", token) and re.search(r"\d", token)
+            for token in _HIGH_ENTROPY_TOKEN_PATTERN.findall(value)
+        )
+
+    def _normalize_sensitive_text(self, value: str) -> str:
+        return re.sub(r"[^0-9A-Za-z가-힣]+", "", value).lower()
 
     def _fallback_replacements(self, detections: list[Detection]) -> list[Replacement]:
         counters: dict[str, int] = {}
