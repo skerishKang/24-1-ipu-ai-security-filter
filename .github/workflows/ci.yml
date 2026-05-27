@@ -63,7 +63,9 @@ jobs:
           python -m unittest \
             tests.test_manual_preview_api \
             tests.test_manual_preview_local_rewrite_api \
-            tests.test_manual_preview_restore_limits
+            tests.test_manual_preview_restore_limits \
+            tests.test_upload_guardrails \
+            tests.test_file_parser
 
       - name: Install frontend smoke dependencies
         working-directory: frontend
