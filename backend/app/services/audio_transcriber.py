@@ -16,6 +16,7 @@ else:
     UploadFile = Any
 
 from app.core.exceptions import ProcessingLimitExceededError
+from app.services.upload_reader import read_limited_upload
 
 MAX_AUDIO_UPLOAD_BYTES = 104_857_600
 MAX_AUDIO_DURATION_SECONDS = 60
@@ -52,9 +53,13 @@ class BaseAudioTranscriber:
         if file_size is not None and file_size > self.max_upload_bytes:
             raise ValueError(f"현재 manual-preview 음성 업로드는 {self.max_upload_bytes // (1024 * 1024)}MB 이하 파일만 고려합니다.")
 
-        raw = await file.read()
-        if len(raw) > self.max_upload_bytes:
-            raise ValueError(f"현재 manual-preview 음성 업로드는 {self.max_upload_bytes // (1024 * 1024)}MB 이하 파일만 고려합니다.")
+        raw = await read_limited_upload(
+            file,
+            self.max_upload_bytes,
+            error_factory=lambda: ValueError(
+                f"현재 manual-preview 음성 업로드는 {self.max_upload_bytes // (1024 * 1024)}MB 이하 파일만 고려합니다."
+            ),
+        )
 
         if suffix == ".wav" or content_type in SUPPORTED_WAV_CONTENT_TYPES:
             self._validate_wav_duration(raw)

@@ -21,6 +21,7 @@ from app.core.exceptions import (
     ProcessingLimitExceededError,
     UnsupportedFileTypeError,
 )
+from app.services.upload_reader import read_limited_upload
 
 MAX_UPLOAD_FILE_BYTES = 104_857_600
 MAX_PDF_PAGES = 50
@@ -84,9 +85,11 @@ class TextFileParser:
         if file_size is not None and file_size > self.max_upload_bytes:
             raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
-        raw = await file.read()
-        if len(raw) > self.max_upload_bytes:
-            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
+        raw = await read_limited_upload(
+            file,
+            self.max_upload_bytes,
+            error_factory=lambda: FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024)),
+        )
 
         try:
             text = raw.decode("utf-8")
@@ -129,9 +132,11 @@ class PdfFileParser:
         if file_size is not None and file_size > self.max_upload_bytes:
             raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
-        raw = await file.read()
-        if len(raw) > self.max_upload_bytes:
-            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
+        raw = await read_limited_upload(
+            file,
+            self.max_upload_bytes,
+            error_factory=lambda: FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024)),
+        )
 
         try:
             reader = PdfReader(io.BytesIO(raw))
@@ -298,9 +303,11 @@ class DocxFileParser:
         if file_size is not None and file_size > self.max_upload_bytes:
             raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
-        raw = await file.read()
-        if len(raw) > self.max_upload_bytes:
-            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
+        raw = await read_limited_upload(
+            file,
+            self.max_upload_bytes,
+            error_factory=lambda: FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024)),
+        )
 
         content = self._extract_docx_text(raw)
         if not content:
@@ -363,9 +370,11 @@ class HwpxFileParser:
         if file_size is not None and file_size > self.max_upload_bytes:
             raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
-        raw = await file.read()
-        if len(raw) > self.max_upload_bytes:
-            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
+        raw = await read_limited_upload(
+            file,
+            self.max_upload_bytes,
+            error_factory=lambda: FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024)),
+        )
 
         content = self._extract_hwpx_text(raw)
         if not content:
