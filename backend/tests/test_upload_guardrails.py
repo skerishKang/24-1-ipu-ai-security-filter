@@ -311,3 +311,74 @@ class ExistingTestsNotBrokenTest(unittest.IsolatedAsyncioTestCase):
     async def test_audio_max_duration_still_60s(self):
         from app.services.audio_transcriber import MAX_AUDIO_DURATION_SECONDS
         self.assertEqual(MAX_AUDIO_DURATION_SECONDS, 60)
+
+
+class DeploymentEnvironmentPriorityTest(unittest.TestCase):
+    """Tests for prioritizing IPU_DEPLOYMENT_ENV, IPU_ENV, and APP_ENV."""
+
+    def test_deployment_env_priority_ipu_deployment_env(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "production",
+            "IPU_ENV": "dev-local",
+            "APP_ENV": "dev-local"
+        }):
+            settings = get_settings()
+            self.assertEqual(settings.deployment_env, "production")
+            self.assertTrue(settings.is_public_deployment())
+
+    def test_deployment_env_priority_ipu_env(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "",
+            "IPU_ENV": "production",
+            "APP_ENV": "dev-local"
+        }):
+            settings = get_settings()
+            self.assertEqual(settings.deployment_env, "production")
+            self.assertTrue(settings.is_public_deployment())
+
+    def test_deployment_env_priority_app_env(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "",
+            "IPU_ENV": "",
+            "APP_ENV": "production"
+        }):
+            settings = get_settings()
+            self.assertEqual(settings.deployment_env, "production")
+            self.assertTrue(settings.is_public_deployment())
+
+    def test_deployment_env_no_env_defaults_to_dev_local(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "",
+            "IPU_ENV": "",
+            "APP_ENV": ""
+        }):
+            settings = get_settings()
+            self.assertEqual(settings.deployment_env, "dev-local")
+            self.assertFalse(settings.is_public_deployment())
+
+
+class CorsDeploymentSettingsTest(unittest.TestCase):
+    """Tests for CORS allowed origins behavior under different deployment environments."""
+
+    def test_ops_stage_without_allowed_origins_raises_error(self):
+        # When APP_ENV=production but IPU_ALLOWED_ORIGINS is not set, create_app should fail
+        with patch.dict(os.environ, {
+            "APP_ENV": "production",
+            "IPU_ALLOWED_ORIGINS": "",
+            "IPU_DEPLOYMENT_ENV": "",
+            "IPU_ENV": ""
+        }):
+            with self.assertRaises(RuntimeError) as ctx:
+                create_app()
+            self.assertIn("IPU_ALLOWED_ORIGINS must be set", str(ctx.exception))
+
+    def test_ops_stage_with_allowed_origins_starts_successfully(self):
+        with patch.dict(os.environ, {
+            "APP_ENV": "production",
+            "IPU_ALLOWED_ORIGINS": "http://example.com,http://localhost:3000",
+            "IPU_DEPLOYMENT_ENV": "",
+            "IPU_ENV": ""
+        }):
+            app = create_app()
+            self.assertIsNotNone(app)
+

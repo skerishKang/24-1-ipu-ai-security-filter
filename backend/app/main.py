@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.router import api_router
 from app.services.manual_preview_service import ManualPreviewService
+from app.core.settings import resolve_deployment_env
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -28,12 +29,7 @@ def _env_flag(name: str, default: bool = False) -> bool:
 
 
 def _deployment_stage() -> str:
-    return (
-        os.getenv("IPU_DEPLOYMENT_ENV")
-        or os.getenv("IPU_ENV")
-        or os.getenv("APP_ENV")
-        or "dev-local"
-    ).strip().lower()
+    return resolve_deployment_env()
 
 
 def _is_ops_stage() -> bool:
