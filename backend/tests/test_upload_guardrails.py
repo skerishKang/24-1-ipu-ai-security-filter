@@ -12,7 +12,7 @@ from unittest.mock import patch
 import httpx
 from fastapi import UploadFile
 
-from app.core.settings import BackendSettings, get_settings
+from app.core.settings import BackendSettings, UnsafePublicResponseModeError, get_settings
 from app.main import create_app
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.api.routes import manual_mode as manual_mode_module
@@ -79,7 +79,7 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
                 ollama_enabled=False,
                 ollama_base_url="",
                 ollama_model="",
-                manual_preview_response_mode="full",
+                manual_preview_response_mode="minimized",
                 deployment_env=env,
                 upload_max_bytes=104_857_600,
                 public_upload_max_bytes=20_971_520,
@@ -103,10 +103,43 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
             settings = get_settings()
             self.assertEqual(settings.upload_max_concurrency, 2)
 
-    def test_env_override_deployment_env(self):
-        with patch.dict(os.environ, {"IPU_DEPLOYMENT_ENV": "ops"}):
+    def test_env_override_deployment_env_requires_minimized_response_mode(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "ops",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+        }):
             settings = get_settings()
             self.assertTrue(settings.is_public_deployment())
+            self.assertEqual(settings.manual_preview_response_mode, "minimized")
+
+    def test_public_deployment_rejects_full_response_mode(self):
+        for env in ("production", "prod", "ops", "ops-target"):
+            with self.subTest(env=env):
+                with patch.dict(os.environ, {
+                    "IPU_DEPLOYMENT_ENV": env,
+                    "IPU_ALLOWED_ORIGINS": "http://example.com",
+                    "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
+                }):
+                    with self.assertRaises(UnsafePublicResponseModeError):
+                        get_settings()
+
+    def test_create_app_rejects_public_deployment_with_full_response_mode(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "ops",
+            "IPU_ALLOWED_ORIGINS": "http://example.com",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
+        }):
+            with self.assertRaises(UnsafePublicResponseModeError):
+                create_app()
+
+    def test_create_app_allows_public_deployment_with_minimized_response_mode(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "ops",
+            "IPU_ALLOWED_ORIGINS": "http://example.com",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+        }):
+            app = create_app()
+            self.assertIsNotNone(app)
 
 
 class UploadSizeLimitApiTest(unittest.IsolatedAsyncioTestCase):
@@ -178,6 +211,7 @@ class PublicModeUploadLimitTest(unittest.IsolatedAsyncioTestCase):
             "IPU_PUBLIC_UPLOAD_MAX_BYTES": "20971520",
             "IPU_UPLOAD_MAX_CONCURRENCY": "8",
             "IPU_ALLOWED_ORIGINS": "http://localhost:4241",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
         })
         self._env_patcher.start()
         _reset_rate_limiters()
@@ -352,7 +386,8 @@ class DeploymentEnvironmentPriorityTest(unittest.TestCase):
         with patch.dict(os.environ, {
             "IPU_DEPLOYMENT_ENV": "production",
             "IPU_ENV": "dev-local",
-            "APP_ENV": "dev-local"
+            "APP_ENV": "dev-local",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
         }):
             settings = get_settings()
             self.assertEqual(settings.deployment_env, "production")
@@ -362,7 +397,8 @@ class DeploymentEnvironmentPriorityTest(unittest.TestCase):
         with patch.dict(os.environ, {
             "IPU_DEPLOYMENT_ENV": "",
             "IPU_ENV": "production",
-            "APP_ENV": "dev-local"
+            "APP_ENV": "dev-local",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
         }):
             settings = get_settings()
             self.assertEqual(settings.deployment_env, "production")
@@ -372,7 +408,8 @@ class DeploymentEnvironmentPriorityTest(unittest.TestCase):
         with patch.dict(os.environ, {
             "IPU_DEPLOYMENT_ENV": "",
             "IPU_ENV": "",
-            "APP_ENV": "production"
+            "APP_ENV": "production",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
         }):
             settings = get_settings()
             self.assertEqual(settings.deployment_env, "production")
@@ -398,7 +435,8 @@ class CorsDeploymentSettingsTest(unittest.TestCase):
             "APP_ENV": "production",
             "IPU_ALLOWED_ORIGINS": "",
             "IPU_DEPLOYMENT_ENV": "",
-            "IPU_ENV": ""
+            "IPU_ENV": "",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
         }):
             with self.assertRaises(RuntimeError) as ctx:
                 create_app()
@@ -409,7 +447,8 @@ class CorsDeploymentSettingsTest(unittest.TestCase):
             "APP_ENV": "production",
             "IPU_ALLOWED_ORIGINS": "http://example.com,http://localhost:3000",
             "IPU_DEPLOYMENT_ENV": "",
-            "IPU_ENV": ""
+            "IPU_ENV": "",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
         }):
             app = create_app()
             self.assertIsNotNone(app)
@@ -446,5 +485,3 @@ class UploadGuardrailSettingsValidationTest(unittest.TestCase):
             self.assertEqual(settings.upload_max_bytes, 1048576)
             self.assertEqual(settings.public_upload_max_bytes, 2097152)
             self.assertEqual(settings.upload_max_concurrency, 4)
-
-

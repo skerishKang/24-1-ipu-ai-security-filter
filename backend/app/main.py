@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.router import api_router
 from app.services.manual_preview_service import ManualPreviewService
-from app.core.settings import resolve_deployment_env
+from app.core.settings import get_settings, resolve_deployment_env
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -94,6 +94,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    get_settings()
     app = FastAPI(
         title="IPU AI Firewall Backend",
         description="Manual mode security replacement workbench API",
