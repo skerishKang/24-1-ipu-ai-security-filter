@@ -180,10 +180,6 @@ export async function restoreManualPreview(sessionId, replacedText) {
     throw createApiError("restore-invalid-json", "복원 응답 JSON을 해석할 수 없습니다.");
   }
 
-  if (data.restored) {
-    forgetRestoreToken(sessionId);
-  }
-
   return {
     session_id: data.session_id ?? "",
     restored_text: data.restored_text ?? "",
@@ -252,12 +248,6 @@ function getRestoreToken(sessionId) {
     return "";
   }
   return cached.token;
-}
-
-function forgetRestoreToken(sessionId) {
-  if (sessionId) {
-    restoreTokensBySession.delete(sessionId);
-  }
 }
 
 function pruneRestoreTokenCache(now = Date.now()) {
