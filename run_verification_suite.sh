@@ -26,7 +26,7 @@ echo
 echo "[2/5] Backend API + PDF quality tests"
 cd "$BACKEND_DIR"
 echo "Using backend python: $BACKEND_PY"
-"$BACKEND_PY" -m unittest tests.test_manual_preview_api tests.test_pdf_quality_samples
+"$BACKEND_PY" -m unittest tests.test_manual_preview_api tests.test_manual_preview_restore_limits tests.test_pdf_quality_samples
 
 echo
 echo "[3/5] Frontend browser smoke tests"

@@ -19,7 +19,7 @@ python engine\scripts\run_quality_harness.py || goto :fail
 echo.
 echo [2/5] Backend API + PDF quality tests
 cd /d "%BACKEND_DIR%"
-"%BACKEND_PY%" -m unittest tests.test_manual_preview_api tests.test_pdf_quality_samples || goto :fail
+"%BACKEND_PY%" -m unittest tests.test_manual_preview_api tests.test_manual_preview_restore_limits tests.test_pdf_quality_samples || goto :fail
 
 echo.
 echo [3/5] Frontend browser smoke tests
