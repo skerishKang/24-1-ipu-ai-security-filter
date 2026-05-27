@@ -11,6 +11,7 @@ from app.api.schemas.manual_preview import (
     ManualPreviewResponse,
     PolicyName,
 )
+from app.core.auth import optional_auth_owner_hash
 from app.core.exceptions import (
     EmptyFileError,
     FileTooLargeError,
@@ -35,27 +36,28 @@ def get_manual_preview_service(request: Request) -> ManualPreviewService:
     return request.app.state.manual_preview_service
 
 
-
 @router.post("/manual-preview", response_model=ManualPreviewResponse)
 @limiter.limit("30/minute")
 async def manual_preview(
     request: Request,
     payload: ManualPreviewRequest,
+    owner_hash: Annotated[str, Depends(optional_auth_owner_hash)],
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
 ) -> ManualPreviewResponse:
-    return manual_preview_service.build_preview(payload)
+    return manual_preview_service.build_preview(payload, owner_hash=owner_hash)
 
 
 @router.post("/manual-preview/file", response_model=ManualPreviewResponse)
 @limiter.limit("10/minute")
 async def manual_preview_file(
     request: Request,
+    owner_hash: Annotated[str, Depends(optional_auth_owner_hash)],
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
     file: UploadFile = File(...),
     policy: PolicyName = Form(default="default"),
 ) -> ManualPreviewResponse:
     try:
-        return await manual_preview_service.build_file_preview(file=file, policy=policy)
+        return await manual_preview_service.build_file_preview(file=file, policy=policy, owner_hash=owner_hash)
     except UploadConcurrencyExceededError as error:
         raise HTTPException(status_code=503, detail=str(error))
     except ProcessingLimitExceededError as error:
@@ -76,12 +78,13 @@ async def manual_preview_file(
 @limiter.limit("5/minute")
 async def manual_preview_audio(
     request: Request,
+    owner_hash: Annotated[str, Depends(optional_auth_owner_hash)],
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
     file: UploadFile = File(...),
     policy: PolicyName = Form(default="default"),
 ) -> ManualPreviewResponse:
     try:
-        return await manual_preview_service.build_audio_preview(file=file, policy=policy)
+        return await manual_preview_service.build_audio_preview(file=file, policy=policy, owner_hash=owner_hash)
     except UploadConcurrencyExceededError as error:
         raise HTTPException(status_code=503, detail=str(error))
     except NotImplementedError as error:
@@ -103,9 +106,10 @@ async def manual_preview_audio(
 async def manual_preview_restore(
     request: Request,
     payload: ManualRestoreRequest,
+    owner_hash: Annotated[str, Depends(optional_auth_owner_hash)],
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
 ) -> ManualRestoreResponse:
     try:
-        return manual_preview_service.restore_preview(payload)
+        return manual_preview_service.restore_preview(payload, owner_hash=owner_hash)
     except RestoreTokenError as error:
         raise HTTPException(status_code=403, detail=str(error))
