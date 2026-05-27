@@ -66,6 +66,9 @@ class FileParser(Protocol):
 
 
 class TextFileParser:
+    def __init__(self, max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES) -> None:
+        self.max_upload_bytes = max_upload_bytes
+
     async def parse(self, file: UploadFile) -> ParsedFileContent:
         filename = file.filename or "uploaded.txt"
         content_type = file.content_type or "text/plain"
@@ -78,12 +81,12 @@ class TextFileParser:
         if content_type not in SUPPORTED_TEXT_CONTENT_TYPES:
             raise UnsupportedFileTypeError("text/plain, text/markdown, text/csv")
 
-        if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if file_size is not None and file_size > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         raw = await file.read()
-        if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if len(raw) > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         try:
             text = raw.decode("utf-8")
@@ -108,6 +111,9 @@ class TextFileParser:
 
 
 class PdfFileParser:
+    def __init__(self, max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES) -> None:
+        self.max_upload_bytes = max_upload_bytes
+
     async def parse(self, file: UploadFile) -> ParsedFileContent:
         filename = file.filename or "uploaded.pdf"
         content_type = file.content_type or "application/pdf"
@@ -120,12 +126,12 @@ class PdfFileParser:
         if content_type not in SUPPORTED_PDF_CONTENT_TYPES:
             raise UnsupportedFileTypeError("application/pdf")
 
-        if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if file_size is not None and file_size > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         raw = await file.read()
-        if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if len(raw) > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         try:
             reader = PdfReader(io.BytesIO(raw))
@@ -254,11 +260,11 @@ class PdfFileParser:
 
 
 class DefaultFileParser:
-    def __init__(self) -> None:
-        self._text_parser = TextFileParser()
-        self._pdf_parser = PdfFileParser()
-        self._docx_parser = DocxFileParser()
-        self._hwpx_parser = HwpxFileParser()
+    def __init__(self, max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES) -> None:
+        self._text_parser = TextFileParser(max_upload_bytes=max_upload_bytes)
+        self._pdf_parser = PdfFileParser(max_upload_bytes=max_upload_bytes)
+        self._docx_parser = DocxFileParser(max_upload_bytes=max_upload_bytes)
+        self._hwpx_parser = HwpxFileParser(max_upload_bytes=max_upload_bytes)
 
     async def parse(self, file: UploadFile) -> ParsedFileContent:
         filename = (file.filename or "").lower()
@@ -274,6 +280,9 @@ class DefaultFileParser:
 
 
 class DocxFileParser:
+    def __init__(self, max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES) -> None:
+        self.max_upload_bytes = max_upload_bytes
+
     async def parse(self, file: UploadFile) -> ParsedFileContent:
         filename = file.filename or "uploaded.docx"
         content_type = file.content_type or "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -286,12 +295,12 @@ class DocxFileParser:
         if content_type not in SUPPORTED_DOCX_CONTENT_TYPES:
             raise UnsupportedFileTypeError(".docx")
 
-        if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if file_size is not None and file_size > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         raw = await file.read()
-        if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if len(raw) > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         content = self._extract_docx_text(raw)
         if not content:
@@ -336,6 +345,9 @@ class DocxFileParser:
 
 
 class HwpxFileParser:
+    def __init__(self, max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES) -> None:
+        self.max_upload_bytes = max_upload_bytes
+
     async def parse(self, file: UploadFile) -> ParsedFileContent:
         filename = file.filename or "uploaded.hwpx"
         content_type = file.content_type or "application/zip"
@@ -348,12 +360,12 @@ class HwpxFileParser:
         if content_type not in SUPPORTED_HWPX_CONTENT_TYPES:
             raise UnsupportedFileTypeError(".hwpx")
 
-        if file_size is not None and file_size > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if file_size is not None and file_size > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         raw = await file.read()
-        if len(raw) > MAX_UPLOAD_FILE_BYTES:
-            raise FileTooLargeError()
+        if len(raw) > self.max_upload_bytes:
+            raise FileTooLargeError(max_size_mb=self.max_upload_bytes // (1024 * 1024))
 
         content = self._extract_hwpx_text(raw)
         if not content:

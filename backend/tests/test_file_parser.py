@@ -391,6 +391,7 @@ def build_hwpx_bytes(sections: list[list[str]]) -> bytes:
 
 class OcrFallbackPdfFileParser(PdfFileParser):
     def __init__(self, ocr_text: str) -> None:
+        super().__init__()
         self._ocr_text = ocr_text
 
     def _extract_pdf_via_ocr(self, raw: bytes) -> str:

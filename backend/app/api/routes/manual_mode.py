@@ -20,7 +20,7 @@ from app.core.exceptions import (
     SessionExpiredError,
     UnsupportedFileTypeError,
 )
-from app.services.manual_preview_service import ManualPreviewService
+from app.services.manual_preview_service import ManualPreviewService, UploadConcurrencyExceededError
 
 router = APIRouter(prefix="/mode", tags=["manual-mode"])
 
@@ -56,6 +56,8 @@ async def manual_preview_file(
 ) -> ManualPreviewResponse:
     try:
         return await manual_preview_service.build_file_preview(file=file, policy=policy)
+    except UploadConcurrencyExceededError as error:
+        raise HTTPException(status_code=503, detail=str(error))
     except ProcessingLimitExceededError as error:
         raise HTTPException(status_code=413, detail=str(error))
     except FileTooLargeError as error:
@@ -80,6 +82,8 @@ async def manual_preview_audio(
 ) -> ManualPreviewResponse:
     try:
         return await manual_preview_service.build_audio_preview(file=file, policy=policy)
+    except UploadConcurrencyExceededError as error:
+        raise HTTPException(status_code=503, detail=str(error))
     except NotImplementedError as error:
         raise HTTPException(status_code=501, detail=str(error))
     except ProcessingLimitExceededError as error:

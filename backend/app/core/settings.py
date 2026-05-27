@@ -20,6 +20,18 @@ class BackendSettings:
     ollama_base_url: str
     ollama_model: str
     manual_preview_response_mode: str
+    deployment_env: str
+    upload_max_bytes: int
+    public_upload_max_bytes: int
+    upload_max_concurrency: int
+
+    def is_public_deployment(self) -> bool:
+        return self.deployment_env in {"production", "prod", "ops", "ops-target"}
+
+    def effective_upload_max_bytes(self) -> int:
+        if self.is_public_deployment():
+            return self.public_upload_max_bytes
+        return self.upload_max_bytes
 
 
 def get_settings() -> BackendSettings:
@@ -47,6 +59,10 @@ def get_settings() -> BackendSettings:
     manual_preview_response_mode = (
         os.getenv("IPU_MANUAL_PREVIEW_RESPONSE_MODE", "full").strip().lower() or "full"
     )
+    deployment_env = os.getenv("IPU_DEPLOYMENT_ENV", "dev-local").strip().lower() or "dev-local"
+    upload_max_bytes = int(os.getenv("IPU_UPLOAD_MAX_BYTES", str(104_857_600)))
+    public_upload_max_bytes = int(os.getenv("IPU_PUBLIC_UPLOAD_MAX_BYTES", str(20_971_520)))
+    upload_max_concurrency = int(os.getenv("IPU_UPLOAD_MAX_CONCURRENCY", "8"))
 
     return BackendSettings(
         session_store_kind=session_store_kind,
@@ -62,4 +78,8 @@ def get_settings() -> BackendSettings:
         ollama_base_url=ollama_base_url,
         ollama_model=ollama_model,
         manual_preview_response_mode=manual_preview_response_mode,
+        deployment_env=deployment_env,
+        upload_max_bytes=upload_max_bytes,
+        public_upload_max_bytes=public_upload_max_bytes,
+        upload_max_concurrency=upload_max_concurrency,
     )

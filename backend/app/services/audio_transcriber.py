@@ -37,6 +37,9 @@ class AudioTranscriber(Protocol):
 
 
 class BaseAudioTranscriber:
+    def __init__(self, max_upload_bytes: int = MAX_AUDIO_UPLOAD_BYTES) -> None:
+        self.max_upload_bytes = max_upload_bytes
+
     async def _read_validated_audio(self, file: UploadFile) -> tuple[str, str, bytes]:
         filename = file.filename or "uploaded-audio"
         suffix = Path(filename).suffix.lower()
@@ -46,12 +49,12 @@ class BaseAudioTranscriber:
             raise ValueError("현재 manual-preview 음성 업로드는 .wav, .mp3, .m4a, .mp4, .webm 파일만 고려합니다.")
 
         file_size = getattr(file, "size", None)
-        if file_size is not None and file_size > MAX_AUDIO_UPLOAD_BYTES:
-            raise ValueError("현재 manual-preview 음성 업로드는 100MB 이하 파일만 고려합니다.")
+        if file_size is not None and file_size > self.max_upload_bytes:
+            raise ValueError(f"현재 manual-preview 음성 업로드는 {self.max_upload_bytes // (1024 * 1024)}MB 이하 파일만 고려합니다.")
 
         raw = await file.read()
-        if len(raw) > MAX_AUDIO_UPLOAD_BYTES:
-            raise ValueError("현재 manual-preview 음성 업로드는 100MB 이하 파일만 고려합니다.")
+        if len(raw) > self.max_upload_bytes:
+            raise ValueError(f"현재 manual-preview 음성 업로드는 {self.max_upload_bytes // (1024 * 1024)}MB 이하 파일만 고려합니다.")
 
         if suffix == ".wav" or content_type in SUPPORTED_WAV_CONTENT_TYPES:
             self._validate_wav_duration(raw)
@@ -76,6 +79,9 @@ class BaseAudioTranscriber:
 
 
 class PlaceholderAudioTranscriber(BaseAudioTranscriber):
+    def __init__(self, max_upload_bytes: int = MAX_AUDIO_UPLOAD_BYTES) -> None:
+        super().__init__(max_upload_bytes=max_upload_bytes)
+
     async def transcribe(self, file: UploadFile) -> TranscribedAudio:
         await self._read_validated_audio(file)
         raise NotImplementedError(
@@ -92,7 +98,9 @@ class WhisperAudioTranscriber(BaseAudioTranscriber):
         language: str | None = None,
         task: str = "transcribe",
         use_gpu: bool = True,
+        max_upload_bytes: int = MAX_AUDIO_UPLOAD_BYTES,
     ) -> None:
+        super().__init__(max_upload_bytes=max_upload_bytes)
         self.model_name = model_name
         self.model_dir = model_dir
         self.language = language

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import secrets
@@ -37,6 +38,16 @@ from app.services.file_parser import DefaultFileParser, FileParser
 logger = logging.getLogger("uvicorn.error")
 
 
+class UploadConcurrencyExceededError(Exception):
+    """Raised when too many upload requests are being processed concurrently."""
+
+    def __init__(self, max_concurrency: int) -> None:
+        self.max_concurrency = max_concurrency
+        super().__init__(
+            f"현재 처리 중인 업로드가 많습니다. 잠시 후 다시 시도해 주세요. (최대 동시 처리: {max_concurrency})"
+        )
+
+
 class ManualPreviewService:
     def __init__(
         self,
@@ -44,16 +55,20 @@ class ManualPreviewService:
         file_parser: FileParser | None = None,
         audio_transcriber: AudioTranscriber | None = None,
         local_rewriter=None,
+        settings=None,
     ) -> None:
-        self.settings = get_settings()
+        self.settings = settings or get_settings()
         self.session_store = session_store or self._build_session_store()
-        self.file_parser = file_parser or DefaultFileParser()
+        self.file_parser = file_parser or DefaultFileParser(
+            max_upload_bytes=self.settings.effective_upload_max_bytes(),
+        )
         self.audio_transcriber = audio_transcriber or self._build_audio_transcriber()
         self.local_rewriter = local_rewriter or self._build_local_rewriter()
         self.engine = ManualPreviewEngine(
             session_store=self.session_store,
             local_rewriter=self.local_rewriter,
         )
+        self._upload_semaphore = asyncio.Semaphore(self.settings.upload_max_concurrency)
 
     def build_preview(self, payload: ManualPreviewRequest) -> ManualPreviewResponse:
         session_id = self._create_session_id()
@@ -137,100 +152,108 @@ class ManualPreviewService:
         file: UploadFile,
         policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
-        session_id = self._create_session_id()
-        restore_token = self._create_restore_token(session_id)
-        content_type = file.content_type or "text/plain"
-        started_at = monotonic()
-        self._log_request_started(
-            request_type="file",
-            session_id=session_id,
-            policy=policy,
-            content_type=content_type,
-        )
+        if self._upload_semaphore.locked():
+            raise UploadConcurrencyExceededError(self.settings.upload_max_concurrency)
 
-        try:
-            parsed_file = await self.file_parser.parse(file)
-            strategy = self._resolve_strategy(policy)
-            engine_result = self.engine.manual_preview(
-                content=parsed_file.content,
-                session_id=session_id,
-                content_type="text",
-                policy=policy,
-                strategy=strategy,
-            )
-        except Exception as error:
-            self._log_request_failed(
+        async with self._upload_semaphore:
+            session_id = self._create_session_id()
+            restore_token = self._create_restore_token(session_id)
+            content_type = file.content_type or "text/plain"
+            started_at = monotonic()
+            self._log_request_started(
                 request_type="file",
                 session_id=session_id,
                 policy=policy,
                 content_type=content_type,
-                processing_ms=self._processing_ms(started_at),
-                error=error,
             )
-            raise
 
-        self._log_request_succeeded(
-            request_type="file",
-            session_id=session_id,
-            policy=policy,
-            content_type=content_type,
-            detection_count=len(engine_result["detections"]),
-            replacement_count=len(engine_result["replacements"]),
-            report_strategy=str(engine_result["report"]["strategy"]),
-            processing_ms=self._processing_ms(started_at),
-        )
+            try:
+                parsed_file = await self.file_parser.parse(file)
+                strategy = self._resolve_strategy(policy)
+                engine_result = self.engine.manual_preview(
+                    content=parsed_file.content,
+                    session_id=session_id,
+                    content_type="text",
+                    policy=policy,
+                    strategy=strategy,
+                )
+            except Exception as error:
+                self._log_request_failed(
+                    request_type="file",
+                    session_id=session_id,
+                    policy=policy,
+                    content_type=content_type,
+                    processing_ms=self._processing_ms(started_at),
+                    error=error,
+                )
+                raise
 
-        return self._build_response(engine_result, restore_token=restore_token)
+            self._log_request_succeeded(
+                request_type="file",
+                session_id=session_id,
+                policy=policy,
+                content_type=content_type,
+                detection_count=len(engine_result["detections"]),
+                replacement_count=len(engine_result["replacements"]),
+                report_strategy=str(engine_result["report"]["strategy"]),
+                processing_ms=self._processing_ms(started_at),
+            )
+
+            return self._build_response(engine_result, restore_token=restore_token)
 
     async def build_audio_preview(
         self,
         file: UploadFile,
         policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
-        session_id = self._create_session_id()
-        restore_token = self._create_restore_token(session_id)
-        content_type = file.content_type or "application/octet-stream"
-        started_at = monotonic()
-        self._log_request_started(
-            request_type="audio",
-            session_id=session_id,
-            policy=policy,
-            content_type=content_type,
-        )
+        if self._upload_semaphore.locked():
+            raise UploadConcurrencyExceededError(self.settings.upload_max_concurrency)
 
-        try:
-            transcribed_audio = await self.audio_transcriber.transcribe(file)
-            strategy = self._resolve_strategy(policy)
-            engine_result = self.engine.manual_preview(
-                content=transcribed_audio.text,
-                session_id=session_id,
-                content_type="text",
-                policy=policy,
-                strategy=strategy,
-            )
-        except Exception as error:
-            self._log_request_failed(
+        async with self._upload_semaphore:
+            session_id = self._create_session_id()
+            restore_token = self._create_restore_token(session_id)
+            content_type = file.content_type or "application/octet-stream"
+            started_at = monotonic()
+            self._log_request_started(
                 request_type="audio",
                 session_id=session_id,
                 policy=policy,
                 content_type=content_type,
-                processing_ms=self._processing_ms(started_at),
-                error=error,
             )
-            raise
 
-        self._log_request_succeeded(
-            request_type="audio",
-            session_id=session_id,
-            policy=policy,
-            content_type=content_type,
-            detection_count=len(engine_result["detections"]),
-            replacement_count=len(engine_result["replacements"]),
-            report_strategy=str(engine_result["report"]["strategy"]),
-            processing_ms=self._processing_ms(started_at),
-        )
+            try:
+                transcribed_audio = await self.audio_transcriber.transcribe(file)
+                strategy = self._resolve_strategy(policy)
+                engine_result = self.engine.manual_preview(
+                    content=transcribed_audio.text,
+                    session_id=session_id,
+                    content_type="text",
+                    policy=policy,
+                    strategy=strategy,
+                )
+            except Exception as error:
+                self._log_request_failed(
+                    request_type="audio",
+                    session_id=session_id,
+                    policy=policy,
+                    content_type=content_type,
+                    processing_ms=self._processing_ms(started_at),
+                    error=error,
+                )
+                raise
 
-        return self._build_response(engine_result, restore_token=restore_token)
+            self._log_request_succeeded(
+                request_type="audio",
+                session_id=session_id,
+                policy=policy,
+                content_type=content_type,
+                detection_count=len(engine_result["detections"]),
+                replacement_count=len(engine_result["replacements"]),
+                report_strategy=str(engine_result["report"]["strategy"]),
+                processing_ms=self._processing_ms(started_at),
+            )
+
+            return self._build_response(engine_result, restore_token=restore_token)
 
     def _resolve_strategy(self, policy: PolicyName) -> str:
         if policy == "local_rewrite":
@@ -320,20 +343,22 @@ class ManualPreviewService:
         )
 
     def _build_audio_transcriber(self) -> AudioTranscriber:
+        max_bytes = self.settings.effective_upload_max_bytes()
         if self.settings.audio_transcriber_kind == "placeholder":
-            return PlaceholderAudioTranscriber()
+            return PlaceholderAudioTranscriber(max_upload_bytes=max_bytes)
         if self.settings.audio_transcriber_kind != "whisper":
             logger.warning(
                 "manual_preview_audio_transcriber_unknown kind=%s fallback=placeholder",
                 self.settings.audio_transcriber_kind,
             )
-            return PlaceholderAudioTranscriber()
+            return PlaceholderAudioTranscriber(max_upload_bytes=max_bytes)
         return WhisperAudioTranscriber(
             model_name=self.settings.whisper_model_name,
             model_dir=self.settings.whisper_model_dir,
             language=self.settings.whisper_language,
             task=self.settings.whisper_task,
             use_gpu=self.settings.whisper_use_gpu,
+            max_upload_bytes=max_bytes,
         )
 
     def _build_local_rewriter(self):
