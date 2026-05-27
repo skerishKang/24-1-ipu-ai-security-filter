@@ -5,6 +5,8 @@ import {
   getManualPreviewUrl,
 } from "../config.js";
 
+const RESTORE_TOKEN_CACHE_TTL_MS = 15 * 60 * 1000;
+const RESTORE_TOKEN_CACHE_MAX_ENTRIES = 20;
 const restoreTokensBySession = new Map();
 
 export async function fetchManualPreview(content, policy = "default", taskType = "") {
@@ -141,7 +143,7 @@ export async function uploadManualPreviewAudio(file, policy = "default") {
 
 export async function restoreManualPreview(sessionId, replacedText) {
   const manualPreviewRestoreUrl = getManualPreviewRestoreUrl();
-  const restoreToken = restoreTokensBySession.get(sessionId);
+  const restoreToken = getRestoreToken(sessionId);
 
   if (!restoreToken) {
     throw createApiError("restore-token-missing", "복원 권한 정보를 찾을 수 없습니다. 미리보기를 다시 생성해 주세요.");
@@ -176,6 +178,10 @@ export async function restoreManualPreview(sessionId, replacedText) {
     data = await response.json();
   } catch (error) {
     throw createApiError("restore-invalid-json", "복원 응답 JSON을 해석할 수 없습니다.");
+  }
+
+  if (data.restored) {
+    forgetRestoreToken(sessionId);
   }
 
   return {
@@ -221,7 +227,55 @@ function rememberRestoreToken(sessionId, restoreToken) {
   if (!sessionId || !restoreToken) {
     return;
   }
-  restoreTokensBySession.set(sessionId, restoreToken);
+  const now = Date.now();
+  pruneRestoreTokenCache(now);
+  restoreTokensBySession.delete(sessionId);
+  restoreTokensBySession.set(sessionId, {
+    token: restoreToken,
+    storedAt: now,
+  });
+  trimRestoreTokenCache();
+}
+
+function getRestoreToken(sessionId) {
+  if (!sessionId) {
+    return "";
+  }
+  const now = Date.now();
+  pruneRestoreTokenCache(now);
+  const cached = restoreTokensBySession.get(sessionId);
+  if (!cached) {
+    return "";
+  }
+  if (now - cached.storedAt > RESTORE_TOKEN_CACHE_TTL_MS) {
+    restoreTokensBySession.delete(sessionId);
+    return "";
+  }
+  return cached.token;
+}
+
+function forgetRestoreToken(sessionId) {
+  if (sessionId) {
+    restoreTokensBySession.delete(sessionId);
+  }
+}
+
+function pruneRestoreTokenCache(now = Date.now()) {
+  for (const [sessionId, cached] of restoreTokensBySession.entries()) {
+    if (!cached || now - cached.storedAt > RESTORE_TOKEN_CACHE_TTL_MS) {
+      restoreTokensBySession.delete(sessionId);
+    }
+  }
+}
+
+function trimRestoreTokenCache() {
+  while (restoreTokensBySession.size > RESTORE_TOKEN_CACHE_MAX_ENTRIES) {
+    const oldestSessionId = restoreTokensBySession.keys().next().value;
+    if (!oldestSessionId) {
+      return;
+    }
+    restoreTokensBySession.delete(oldestSessionId);
+  }
 }
 
 function normalizeRiskLevel(value) {
