@@ -45,6 +45,7 @@ class ManualPreviewService:
         audio_transcriber: AudioTranscriber | None = None,
         local_rewriter=None,
     ) -> None:
+        self.settings = get_settings()
         self.session_store = session_store or self._build_session_store()
         self.file_parser = file_parser or DefaultFileParser()
         self.audio_transcriber = audio_transcriber or self._build_audio_transcriber()
@@ -311,59 +312,75 @@ class ManualPreviewService:
         return int((monotonic() - started_at) * 1000)
 
     def _build_session_store(self) -> SessionStore:
-        settings = get_settings()
-        if settings.session_store_kind == "memory":
-            return InMemorySessionStore(ttl_seconds=settings.session_ttl_seconds)
+        if self.settings.session_store_kind == "memory":
+            return InMemorySessionStore(ttl_seconds=self.settings.session_ttl_seconds)
         return SQLiteSessionStore(
-            db_path=settings.session_store_path,
-            ttl_seconds=settings.session_ttl_seconds,
+            db_path=self.settings.session_store_path,
+            ttl_seconds=self.settings.session_ttl_seconds,
         )
 
     def _build_audio_transcriber(self) -> AudioTranscriber:
-        settings = get_settings()
-        if settings.audio_transcriber_kind == "placeholder":
+        if self.settings.audio_transcriber_kind == "placeholder":
             return PlaceholderAudioTranscriber()
-        if settings.audio_transcriber_kind != "whisper":
+        if self.settings.audio_transcriber_kind != "whisper":
             logger.warning(
                 "manual_preview_audio_transcriber_unknown kind=%s fallback=placeholder",
-                settings.audio_transcriber_kind,
+                self.settings.audio_transcriber_kind,
             )
             return PlaceholderAudioTranscriber()
         return WhisperAudioTranscriber(
-            model_name=settings.whisper_model_name,
-            model_dir=settings.whisper_model_dir,
-            language=settings.whisper_language,
-            task=settings.whisper_task,
-            use_gpu=settings.whisper_use_gpu,
+            model_name=self.settings.whisper_model_name,
+            model_dir=self.settings.whisper_model_dir,
+            language=self.settings.whisper_language,
+            task=self.settings.whisper_task,
+            use_gpu=self.settings.whisper_use_gpu,
         )
 
     def _build_local_rewriter(self):
-        settings = get_settings()
-        if not settings.ollama_enabled:
+        if not self.settings.ollama_enabled:
             logger.info("Ollama disabled, using placeholder local rewriter")
             return PlaceholderLocalRewriter()
         try:
             return OllamaLocalRewriter(
-                base_url=settings.ollama_base_url,
-                model=settings.ollama_model,
+                base_url=self.settings.ollama_base_url,
+                model=self.settings.ollama_model,
             )
         except Exception:
             logger.warning("Failed to initialize OllamaLocalRewriter, using placeholder")
             return PlaceholderLocalRewriter()
 
     def _build_response(self, engine_result: dict, restore_token: str) -> ManualPreviewResponse:
+        minimized = self.settings.manual_preview_response_mode == "minimized"
         return ManualPreviewResponse(
             session_id=str(engine_result["session_id"]),
             restore_token=restore_token,
-            original_text=str(engine_result["original_text"]),
+            original_text="" if minimized else str(engine_result["original_text"]),
             replaced_text=str(engine_result["replaced_text"]),
-            detections=[
-                DetectionItem(**item) for item in engine_result["detections"]
-            ],
-            replacements=[
-                ReplacementItem(**item) for item in engine_result["replacements"]
-            ],
+            detections=self._build_detection_items(engine_result["detections"], minimized=minimized),
+            replacements=self._build_replacement_items(engine_result["replacements"], minimized=minimized),
             report=ManualPreviewReport(**engine_result["report"]),
             readiness=ManualPreviewReadiness(**engine_result["readiness"]),
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )
+
+    def _build_detection_items(self, detections: list[dict], minimized: bool) -> list[DetectionItem]:
+        return [
+            DetectionItem(
+                **{
+                    **item,
+                    "label": "" if minimized else item.get("label", ""),
+                }
+            )
+            for item in detections
+        ]
+
+    def _build_replacement_items(self, replacements: list[dict], minimized: bool) -> list[ReplacementItem]:
+        return [
+            ReplacementItem(
+                **{
+                    **item,
+                    "original": "" if minimized else item.get("original", ""),
+                }
+            )
+            for item in replacements
+        ]
