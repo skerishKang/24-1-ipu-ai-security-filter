@@ -34,6 +34,20 @@ class BackendSettings:
         return self.upload_max_bytes
 
 
+def _validate_positive_int(env_name: str, default_val: int, *, min_value: int = 1) -> int:
+    raw_val = os.getenv(env_name)
+    if raw_val is None:
+        return default_val
+    raw_val_str = raw_val.strip()
+    try:
+        val = int(raw_val_str)
+    except ValueError as e:
+        raise ValueError(f"Invalid integer value for {env_name}: '{raw_val_str}'") from e
+    if val < min_value:
+        raise ValueError(f"{env_name} must be greater than or equal to {min_value}, got: {val}")
+    return val
+
+
 def resolve_deployment_env() -> str:
     val = (
         os.getenv("IPU_DEPLOYMENT_ENV")
@@ -70,9 +84,21 @@ def get_settings() -> BackendSettings:
         os.getenv("IPU_MANUAL_PREVIEW_RESPONSE_MODE", "full").strip().lower() or "full"
     )
     deployment_env = resolve_deployment_env()
-    upload_max_bytes = int(os.getenv("IPU_UPLOAD_MAX_BYTES", str(104_857_600)))
-    public_upload_max_bytes = int(os.getenv("IPU_PUBLIC_UPLOAD_MAX_BYTES", str(20_971_520)))
-    upload_max_concurrency = int(os.getenv("IPU_UPLOAD_MAX_CONCURRENCY", "8"))
+    upload_max_bytes = _validate_positive_int(
+        "IPU_UPLOAD_MAX_BYTES",
+        104_857_600,
+        min_value=1_048_576,
+    )
+    public_upload_max_bytes = _validate_positive_int(
+        "IPU_PUBLIC_UPLOAD_MAX_BYTES",
+        20_971_520,
+        min_value=1_048_576,
+    )
+    upload_max_concurrency = _validate_positive_int(
+        "IPU_UPLOAD_MAX_CONCURRENCY",
+        8,
+        min_value=1,
+    )
 
     return BackendSettings(
         session_store_kind=session_store_kind,

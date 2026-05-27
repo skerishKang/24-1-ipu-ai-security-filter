@@ -414,3 +414,37 @@ class CorsDeploymentSettingsTest(unittest.TestCase):
             app = create_app()
             self.assertIsNotNone(app)
 
+
+class UploadGuardrailSettingsValidationTest(unittest.TestCase):
+    """Tests for validating upload guardrail settings values."""
+
+    def test_upload_max_bytes_invalid_values(self):
+        for invalid_val in ("5000", "1000000", "0", "-5", "abc", ""):
+            with patch.dict(os.environ, {"IPU_UPLOAD_MAX_BYTES": invalid_val}):
+                with self.assertRaises(ValueError):
+                    get_settings()
+
+    def test_public_upload_max_bytes_invalid_values(self):
+        for invalid_val in ("2000", "1000000", "0", "-10", "xyz", ""):
+            with patch.dict(os.environ, {"IPU_PUBLIC_UPLOAD_MAX_BYTES": invalid_val}):
+                with self.assertRaises(ValueError):
+                    get_settings()
+
+    def test_upload_max_concurrency_invalid_values(self):
+        for invalid_val in ("0", "-1", "foo", ""):
+            with patch.dict(os.environ, {"IPU_UPLOAD_MAX_CONCURRENCY": invalid_val}):
+                with self.assertRaises(ValueError):
+                    get_settings()
+
+    def test_valid_positive_values_succeed(self):
+        with patch.dict(os.environ, {
+            "IPU_UPLOAD_MAX_BYTES": "1048576",
+            "IPU_PUBLIC_UPLOAD_MAX_BYTES": "2097152",
+            "IPU_UPLOAD_MAX_CONCURRENCY": "4"
+        }):
+            settings = get_settings()
+            self.assertEqual(settings.upload_max_bytes, 1048576)
+            self.assertEqual(settings.public_upload_max_bytes, 2097152)
+            self.assertEqual(settings.upload_max_concurrency, 4)
+
+
