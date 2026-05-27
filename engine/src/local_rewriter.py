@@ -11,6 +11,7 @@ from engine.src.contracts import Detection, Replacement
 from engine.src.detector import RegexDetector
 
 _LOCAL_REWRITE_HOSTS = {"localhost", "127.0.0.1", "::1"}
+_HIGH_ENTROPY_TOKEN_PATTERN = re.compile(r"\b[A-Za-z0-9_\-.]{20,}\b")
 
 
 class OllamaClient(Protocol):
@@ -179,7 +180,15 @@ class OllamaLocalRewriter:
             if normalized_original and len(normalized_original) >= 3 and normalized_original in normalized_value:
                 return True
 
-        return bool(self._output_detector.detect(replacement, content_type="text", policy="strict_token"))
+        return self._looks_like_sensitive_token(replacement) or bool(
+            self._output_detector.detect(replacement, content_type="text", policy="strict_token")
+        )
+
+    def _looks_like_sensitive_token(self, value: str) -> bool:
+        return any(
+            re.search(r"[A-Za-z]", token) and re.search(r"\d", token)
+            for token in _HIGH_ENTROPY_TOKEN_PATTERN.findall(value)
+        )
 
     def _normalize_sensitive_text(self, value: str) -> str:
         return re.sub(r"[^0-9A-Za-z가-힣]+", "", value).lower()
