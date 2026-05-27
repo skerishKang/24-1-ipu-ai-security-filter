@@ -9,12 +9,17 @@ ReportStrategyName = Literal["alias", "strict_token", "local_rewrite"]
 ReportReviewStatusName = Literal["clean", "review-required"]
 TaskTypeName = Literal["summarize", "risk_review", "action_items"]
 
+MAX_MANUAL_PREVIEW_CONTENT_LENGTH = 50_000
+MAX_RESTORE_SESSION_ID_LENGTH = 128
+MAX_RESTORE_TOKEN_LENGTH = 256
+MAX_RESTORE_TEXT_LENGTH = MAX_MANUAL_PREVIEW_CONTENT_LENGTH
+
 
 class ManualPreviewRequest(BaseModel):
     content: str = Field(
         ...,
         min_length=1,
-        max_length=50_000,
+        max_length=MAX_MANUAL_PREVIEW_CONTENT_LENGTH,
         description="Original content to inspect",
     )
     content_type: ContentTypeName = Field(default="text", description="Input content type")
@@ -73,9 +78,24 @@ class ManualPreviewResponse(BaseModel):
 
 
 class ManualRestoreRequest(BaseModel):
-    session_id: str = Field(..., min_length=1, description="Existing manual-preview session id")
-    restore_token: str = Field(..., min_length=1, description="Manual-preview restore authorization token")
-    replaced_text: str = Field(..., min_length=1, description="Tokenized text to restore")
+    session_id: str = Field(
+        ...,
+        min_length=1,
+        max_length=MAX_RESTORE_SESSION_ID_LENGTH,
+        description="Existing manual-preview session id",
+    )
+    restore_token: str = Field(
+        ...,
+        min_length=1,
+        max_length=MAX_RESTORE_TOKEN_LENGTH,
+        description="Manual-preview restore authorization token",
+    )
+    replaced_text: str = Field(
+        ...,
+        min_length=1,
+        max_length=MAX_RESTORE_TEXT_LENGTH,
+        description="Tokenized text to restore",
+    )
 
 
 class ManualRestoreResponse(BaseModel):
