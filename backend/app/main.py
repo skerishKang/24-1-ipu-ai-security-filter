@@ -11,6 +11,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.api.router import api_router
+from app.core.auth import API_KEY_HEADER_NAME
 from app.services.manual_preview_service import ManualPreviewService
 from app.core.settings import get_settings, resolve_deployment_env
 
@@ -63,7 +64,7 @@ def _cors_headers() -> list[str]:
     configured = os.getenv("IPU_CORS_ALLOW_HEADERS", "").strip()
     if configured:
         return _split_env_list(configured)
-    return ["Content-Type"]
+    return ["Content-Type", API_KEY_HEADER_NAME]
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -83,7 +84,7 @@ async def cleanup_expired_sessions(app: FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.manual_preview_service = ManualPreviewService()
+    app.state.manual_preview_service = ManualPreviewService(settings=app.state.settings)
     task = asyncio.create_task(cleanup_expired_sessions(app))
     yield
     task.cancel()
@@ -94,7 +95,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    get_settings()
+    settings = get_settings()
     app = FastAPI(
         title="IPU AI Firewall Backend",
         description="Manual mode security replacement workbench API",
@@ -102,6 +103,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.state.settings = settings
     app.state.limiter = limiter
 
     @app.exception_handler(RateLimitExceeded)
