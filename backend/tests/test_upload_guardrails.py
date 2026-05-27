@@ -216,7 +216,7 @@ class PublicModeUploadLimitTest(unittest.IsolatedAsyncioTestCase):
 
 
 class UploadConcurrencyGuardTest(unittest.IsolatedAsyncioTestCase):
-    """Test that the concurrency semaphore rejects excess upload requests."""
+    """Test that the concurrency limiter rejects excess upload requests."""
 
     async def asyncSetUp(self):
         self.temp_dir = TemporaryDirectory()
@@ -248,11 +248,11 @@ class UploadConcurrencyGuardTest(unittest.IsolatedAsyncioTestCase):
         self.temp_dir.cleanup()
 
     async def test_concurrency_exceeded_returns_503_file(self):
-        """When semaphore is locked, file upload should return 503."""
+        """When limiter is full, file upload should return 503."""
         service = self.app.state.manual_preview_service
 
-        # Manually lock the semaphore to simulate full concurrency
-        await service._upload_semaphore.acquire()
+        # Manually acquire the limiter slot to simulate full concurrency
+        self.assertTrue(await service._upload_limiter.try_acquire())
         try:
             resp = await self.client.post(
                 "/api/v1/mode/manual-preview/file",
@@ -263,13 +263,13 @@ class UploadConcurrencyGuardTest(unittest.IsolatedAsyncioTestCase):
             body = resp.json()
             self.assertIn("동시 처리", body["detail"])
         finally:
-            service._upload_semaphore.release()
+            await service._upload_limiter.release()
 
     async def test_concurrency_exceeded_returns_503_audio(self):
-        """When semaphore is locked, audio upload should return 503."""
+        """When limiter is full, audio upload should return 503."""
         service = self.app.state.manual_preview_service
 
-        await service._upload_semaphore.acquire()
+        self.assertTrue(await service._upload_limiter.try_acquire())
         try:
             wav_bytes = _make_wav_bytes(0.1)
             resp = await self.client.post(
@@ -279,15 +279,15 @@ class UploadConcurrencyGuardTest(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(resp.status_code, 503)
         finally:
-            service._upload_semaphore.release()
+            await service._upload_limiter.release()
 
     async def test_concurrency_allows_after_release(self):
-        """After semaphore is released, upload should succeed."""
+        """After limiter is released, upload should succeed."""
         service = self.app.state.manual_preview_service
 
         # Acquire and release immediately — next request should work
-        await service._upload_semaphore.acquire()
-        service._upload_semaphore.release()
+        self.assertTrue(await service._upload_limiter.try_acquire())
+        await service._upload_limiter.release()
 
         resp = await self.client.post(
             "/api/v1/mode/manual-preview/file",
@@ -295,6 +295,38 @@ class UploadConcurrencyGuardTest(unittest.IsolatedAsyncioTestCase):
             data={"policy": "default"},
         )
         self.assertEqual(resp.status_code, 200)
+
+
+class UploadConcurrencyLimiterTest(unittest.IsolatedAsyncioTestCase):
+    """Unit tests for UploadConcurrencyLimiter."""
+
+    async def test_acquire_and_release_flow(self):
+        from app.services.manual_preview_service import UploadConcurrencyLimiter
+        limiter = UploadConcurrencyLimiter(max_concurrency=2)
+
+        # 1. 첫 acquire 성공
+        self.assertTrue(await limiter.try_acquire())
+        self.assertEqual(limiter._active, 1)
+
+        self.assertTrue(await limiter.try_acquire())
+        self.assertEqual(limiter._active, 2)
+
+        # 2. max 초과 acquire 실패
+        self.assertFalse(await limiter.try_acquire())
+        self.assertEqual(limiter._active, 2)
+
+        # 3. release 후 acquire 성공
+        await limiter.release()
+        self.assertEqual(limiter._active, 1)
+        self.assertTrue(await limiter.try_acquire())
+        self.assertEqual(limiter._active, 2)
+
+        # 4. release를 중복 호출해도 active count가 음수로 내려가지 않음
+        await limiter.release()
+        await limiter.release()
+        await limiter.release()
+        await limiter.release()
+        self.assertEqual(limiter._active, 0)
 
 
 class ExistingTestsNotBrokenTest(unittest.IsolatedAsyncioTestCase):

@@ -38,6 +38,25 @@ from app.services.file_parser import DefaultFileParser, FileParser
 logger = logging.getLogger("uvicorn.error")
 
 
+class UploadConcurrencyLimiter:
+    def __init__(self, max_concurrency: int):
+        self.max_concurrency = max_concurrency
+        self._active = 0
+        self._lock = asyncio.Lock()
+
+    async def try_acquire(self) -> bool:
+        async with self._lock:
+            if self._active >= self.max_concurrency:
+                return False
+            self._active += 1
+            return True
+
+    async def release(self) -> None:
+        async with self._lock:
+            if self._active > 0:
+                self._active -= 1
+
+
 class UploadConcurrencyExceededError(Exception):
     """Raised when too many upload requests are being processed concurrently."""
 
@@ -68,7 +87,7 @@ class ManualPreviewService:
             session_store=self.session_store,
             local_rewriter=self.local_rewriter,
         )
-        self._upload_semaphore = asyncio.Semaphore(self.settings.upload_max_concurrency)
+        self._upload_limiter = UploadConcurrencyLimiter(self.settings.upload_max_concurrency)
 
     def build_preview(self, payload: ManualPreviewRequest) -> ManualPreviewResponse:
         session_id = self._create_session_id()
@@ -152,10 +171,10 @@ class ManualPreviewService:
         file: UploadFile,
         policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
-        if self._upload_semaphore.locked():
+        if not await self._upload_limiter.try_acquire():
             raise UploadConcurrencyExceededError(self.settings.upload_max_concurrency)
 
-        async with self._upload_semaphore:
+        try:
             session_id = self._create_session_id()
             restore_token = self._create_restore_token(session_id)
             content_type = file.content_type or "text/plain"
@@ -200,16 +219,18 @@ class ManualPreviewService:
             )
 
             return self._build_response(engine_result, restore_token=restore_token)
+        finally:
+            await self._upload_limiter.release()
 
     async def build_audio_preview(
         self,
         file: UploadFile,
         policy: PolicyName = "default",
     ) -> ManualPreviewResponse:
-        if self._upload_semaphore.locked():
+        if not await self._upload_limiter.try_acquire():
             raise UploadConcurrencyExceededError(self.settings.upload_max_concurrency)
 
-        async with self._upload_semaphore:
+        try:
             session_id = self._create_session_id()
             restore_token = self._create_restore_token(session_id)
             content_type = file.content_type or "application/octet-stream"
@@ -254,6 +275,8 @@ class ManualPreviewService:
             )
 
             return self._build_response(engine_result, restore_token=restore_token)
+        finally:
+            await self._upload_limiter.release()
 
     def _resolve_strategy(self, policy: PolicyName) -> str:
         if policy == "local_rewrite":
