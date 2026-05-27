@@ -122,6 +122,11 @@ class ManualPreviewEngine:
         effective_strategy = self._resolve_strategy(policy=policy, strategy=strategy)
         detection_policy = "strict_token" if policy == "local_rewrite" else policy
         detections = self.detect(content, content_type=content_type, policy=detection_policy)
+        strict_readiness_detections = self.detect(content, content_type=content_type, policy="strict_token")
+        strict_residual_detections = self._find_strict_residual_detections(
+            strict_detections=strict_readiness_detections,
+            displayed_detections=detections,
+        )
         if effective_strategy == "local_rewrite":
             replaced_text, replacements = self.replace_with_local_rewrite(
                 content=content,
@@ -136,7 +141,13 @@ class ManualPreviewEngine:
                 strategy=effective_strategy,
             )
         report = self.build_report(detections, replacements, strategy=effective_strategy)
-        readiness = self.check_send_readiness(replaced_text, detections, report, task_type)
+        readiness = self.check_send_readiness(
+            replaced_text,
+            detections,
+            report,
+            task_type,
+            strict_residual_detections=strict_residual_detections,
+        )
         return {
             "session_id": session_id,
             "original_text": content,
@@ -157,6 +168,25 @@ class ManualPreviewEngine:
         if policy == "strict_token":
             return "strict_token"
         return "alias"
+
+    def _find_strict_residual_detections(
+        self,
+        strict_detections: list[dict[str, str | int | float]],
+        displayed_detections: list[dict[str, str | int | float]],
+    ) -> list[dict[str, str | int | float]]:
+        residual: list[dict[str, str | int | float]] = []
+        for strict_detection in strict_detections:
+            if any(self._detections_overlap(strict_detection, displayed_detection) for displayed_detection in displayed_detections):
+                continue
+            residual.append(strict_detection)
+        return residual
+
+    def _detections_overlap(
+        self,
+        left: dict[str, str | int | float],
+        right: dict[str, str | int | float],
+    ) -> bool:
+        return int(left["start"]) < int(right["end"]) and int(right["start"]) < int(left["end"])
 
     def _apply_custom_replacements(
         self,
@@ -225,14 +255,30 @@ class ManualPreviewEngine:
         detections: list[dict],
         report: dict[str, str | int],
         task_type: str | None = None,
+        *,
+        strict_residual_detections: list[dict] | None = None,
     ) -> dict[str, object]:
-        total_detections = len(detections)
+        strict_residual_detections = strict_residual_detections or []
+        display_detection_count = len(detections)
+        strict_residual_count = len(strict_residual_detections)
+        total_detections = display_detection_count + strict_residual_count
         risk_level = report.get("risk_level", "low-risk")
         review_status = report.get("review_status", "clean")
 
         remaining_risks: list[str] = []
 
-        if total_detections == 0:
+        if strict_residual_count:
+            residual_risk_level = "high-risk" if strict_residual_count >= 3 else "moderate-risk"
+            if risk_level == "high-risk" or residual_risk_level == "high-risk":
+                risk_level = "high-risk"
+                status = "fail"
+            else:
+                risk_level = "moderate-risk"
+                status = "review-required"
+            ready_to_send = False
+            remaining_risks = [d["type"] for d in detections] + [d["type"] for d in strict_residual_detections]
+            reason = f"strict residual scan에서 {strict_residual_count}개의 추가 민감정보가 탐지되었습니다. 전달 전 검토가 필요합니다."
+        elif total_detections == 0:
             ready_to_send = True
             status = "pass"
             reason = "탐지된 민감정보가 없습니다. 현재 상태로 전달 가능합니다."

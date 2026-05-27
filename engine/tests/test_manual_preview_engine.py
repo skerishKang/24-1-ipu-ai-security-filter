@@ -186,6 +186,30 @@ class ManualPreviewEngineTest(unittest.TestCase):
         self.assertIn("PERSON", strict_types)
         self.assertNotIn("[EMAIL_ALIAS_", default_preview["replaced_text"])
         self.assertIn("[EMAIL_", strict_preview["replaced_text"])
+        self.assertEqual(default_preview["readiness"]["ready_to_send"], False)
+        self.assertEqual(default_preview["readiness"]["review_status"], "review-required")
+        self.assertEqual(default_preview["readiness"]["detection_count"], 2)
+        self.assertEqual(default_preview["readiness"]["risk_level"], "moderate-risk")
+        self.assertIn("EMAIL", default_preview["readiness"]["remaining_risks"])
+        self.assertIn("PERSON", default_preview["readiness"]["remaining_risks"])
+
+    def test_default_policy_blocks_readiness_for_strict_only_api_key(self) -> None:
+        content = "외부 전달 전 검토: api_key: abcdef1234567890abcdef1234567890"
+
+        preview = self.engine.manual_preview(
+            content=content,
+            session_id="ipu-default-strict-residual-api-key",
+            policy="default",
+        )
+
+        self.assertEqual(preview["detections"], [])
+        self.assertEqual(preview["replaced_text"], content)
+        self.assertEqual(preview["report"]["review_status"], "clean")
+        self.assertEqual(preview["readiness"]["ready_to_send"], False)
+        self.assertEqual(preview["readiness"]["review_status"], "review-required")
+        self.assertEqual(preview["readiness"]["detection_count"], 1)
+        self.assertEqual(preview["readiness"]["risk_level"], "moderate-risk")
+        self.assertIn("API_KEY", preview["readiness"]["remaining_risks"])
 
     def test_strict_token_rejects_generic_person_phrase(self) -> None:
         preview = self.engine.manual_preview(
