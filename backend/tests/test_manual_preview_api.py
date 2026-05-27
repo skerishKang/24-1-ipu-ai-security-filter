@@ -287,6 +287,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("[EMAIL_ALIAS_", body["replaced_text"])
 
     async def test_manual_preview_audio_rejects_over_duration_wav(self) -> None:
+        """WAV duration > MAX_AUDIO_DURATION_SECONDS returns 413."""
         with patch("app.services.audio_transcriber.MAX_AUDIO_DURATION_SECONDS", 0.001):
             response = await self.client.post(
                 "/api/v1/mode/manual-preview/audio",
@@ -369,6 +370,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
             await service.build_file_preview(file=oversized, policy="default")
 
     async def test_manual_preview_file_returns_413_for_processing_limit_exceeded(self) -> None:
+        """ProcessingLimitExceededError from the parser is mapped to 413."""
         original_service = self.manual_preview_service
         original_parser = original_service.file_parser
 
@@ -518,71 +520,120 @@ def build_pdf_bytes(page_texts: list[str]) -> bytes:
         )
     )
 
-    offset = 0
+    header = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
     body = b""
-    offsets = []
+    offsets = [0]
+    current = len(header)
     for obj in objects:
-        offsets.append(offset)
+        offsets.append(current)
         body += obj
-        offset += len(obj)
+        current += len(obj)
 
-    xref_offset = len(body)
+    xref_offset = len(header) + len(body)
     xref_entries = [b"0000000000 65535 f \n"]
-    xref_entries.extend(
-        f"{item:010d} 00000 n \n".encode("ascii") for item in offsets
-    )
+    for offset in offsets[1:]:
+        xref_entries.append(f"{offset:010d} 00000 n \n".encode("ascii"))
+
     trailer = (
         b"xref\n0 "
-        + str(len(objects) + 1).encode("ascii")
+        + str(len(offsets)).encode("ascii")
         + b"\n"
         + b"".join(xref_entries)
         + b"trailer\n<< /Size "
-        + str(len(objects) + 1).encode("ascii")
+        + str(len(offsets)).encode("ascii")
         + b" /Root 1 0 R >>\nstartxref\n"
         + str(xref_offset).encode("ascii")
         + b"\n%%EOF\n"
     )
-    return b"%PDF-1.4\n" + body + trailer
 
-
-def build_blank_pdf_bytes() -> bytes:
-    return build_pdf_bytes([""])
+    return header + body + trailer
 
 
 def build_docx_bytes(paragraphs: list[str]) -> bytes:
-    import zipfile
+    from zipfile import ZipFile
 
-    document_xml = "".join(
-        f"<w:p><w:r><w:t>{text}</w:t></w:r></w:p>" for text in paragraphs
+    content_types = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>
+"""
+    rels = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>
+"""
+    paragraph_xml = "".join(
+        f"<w:p><w:r><w:t>{escape_xml(paragraph)}</w:t></w:r></w:p>" for paragraph in paragraphs
     )
+    document = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>{paragraph_xml}</w:body>
+</w:document>
+"""
+
     buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w") as zf:
-        zf.writestr("[Content_Types].xml", "<Types></Types>")
-        zf.writestr("word/document.xml", f"<w:document><w:body>{document_xml}</w:body></w:document>")
+    with ZipFile(buffer, "w") as archive:
+        archive.writestr("[Content_Types].xml", content_types)
+        archive.writestr("_rels/.rels", rels)
+        archive.writestr("word/document.xml", document)
     return buffer.getvalue()
+
+
+def escape_xml(text: str) -> str:
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
 
 
 def build_hwpx_bytes(sections: list[list[str]]) -> bytes:
-    import zipfile
+    from zipfile import ZipFile
 
     buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w") as zf:
-        zf.writestr("mimetype", "application/hwp+zip")
-        for index, paragraphs in enumerate(sections, start=1):
-            text = "".join(f"<hp:p><hp:t>{item}</hp:t></hp:p>" for item in paragraphs)
-            zf.writestr(f"Contents/section{index}.xml", text)
+    with ZipFile(buffer, "w") as archive:
+        archive.writestr("mimetype", "application/hwp+zip")
+        archive.writestr("version.xml", "<?xml version='1.0' encoding='UTF-8'?><version app='manual-preview'/>")
+        archive.writestr(
+            "Contents/content.hpf",
+            "<?xml version='1.0' encoding='UTF-8'?><opf:package xmlns:opf='http://www.idpf.org/2007/opf'/>",
+        )
+        for index, paragraphs in enumerate(sections):
+            para_xml = "".join(
+                f"<hp:p id='{1000 + paragraph_index}'><hp:run charPrIDRef='0'><hp:t>{escape_xml(paragraph)}</hp:t></hp:run></hp:p>"
+                for paragraph_index, paragraph in enumerate(paragraphs)
+            )
+            section_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section"
+        xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">
+  {para_xml}
+</hs:sec>
+"""
+            archive.writestr(f"Contents/section{index}.xml", section_xml)
     return buffer.getvalue()
 
 
-def build_wav_bytes(duration_seconds: float = 0.1) -> bytes:
-    sample_rate = 8000
-    frames = int(sample_rate * duration_seconds)
+def build_blank_pdf_bytes() -> bytes:
+    from pypdf import PdfWriter
+
+    buffer = io.BytesIO()
+    writer = PdfWriter()
+    writer.add_blank_page(width=300, height=200)
+    writer.write(buffer)
+    return buffer.getvalue()
+
+
+def build_wav_bytes(duration_seconds: float = 0.1, sample_rate: int = 8000) -> bytes:
+    """Build a valid minimal WAV file with silence."""
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav:
         wav.setnchannels(1)
         wav.setsampwidth(2)
         wav.setframerate(sample_rate)
-        wav.writeframes(b"\x00\x00" * frames)
+        num_frames = int(sample_rate * duration_seconds)
+        wav.writeframes(b"\x00\x00" * num_frames)
     return buffer.getvalue()
 
 
