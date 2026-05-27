@@ -26,6 +26,9 @@ def optional_auth_owner_hash(
     if not settings.is_public_deployment():
         return "dev-local"
 
+    if not settings.api_key_hash:
+        return "public-unconfigured"
+
     if not x_ipu_api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -33,7 +36,7 @@ def optional_auth_owner_hash(
             headers={"WWW-Authenticate": "ApiKey"},
         )
 
-    if not settings.api_key_hash or not verify_api_key(x_ipu_api_key, settings.api_key_hash):
+    if not verify_api_key(x_ipu_api_key, settings.api_key_hash):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API key",
