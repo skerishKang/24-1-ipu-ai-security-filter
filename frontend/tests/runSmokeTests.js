@@ -7,6 +7,8 @@ const { chromium } = require("playwright");
 const FRONTEND_DIR = path.resolve(__dirname, "..");
 const BASE_URL = "http://127.0.0.1:4241";
 const SERVER_START_TIMEOUT_MS = 10000;
+const EXPECTED_SMOKE_TEST_COUNT = 8;
+let executedSmokeTestCount = 0;
 
 const fileUploadResponse = {
   session_id: "session-file-001",
@@ -252,6 +254,11 @@ async function main() {
       await expectTextIncludes(page.getByTestId("simple-replaced-text"), "[EMAIL_ALIAS_01]");
     });
 
+    assert.equal(
+      executedSmokeTestCount,
+      EXPECTED_SMOKE_TEST_COUNT,
+      `Expected ${EXPECTED_SMOKE_TEST_COUNT} frontend smoke tests to run, got ${executedSmokeTestCount}.`,
+    );
     console.log("\nAll frontend smoke tests passed.");
   } finally {
     await browser.close();
@@ -260,6 +267,7 @@ async function main() {
 }
 
 async function runTest(browser, name, testFn) {
+  executedSmokeTestCount += 1;
   const page = await browser.newPage();
   try {
     await testFn(page);
@@ -333,4 +341,3 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-
