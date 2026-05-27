@@ -27,6 +27,7 @@ class BackendSettings:
     upload_max_bytes: int
     public_upload_max_bytes: int
     upload_max_concurrency: int
+    api_key_hash: str | None
 
     def is_public_deployment(self) -> bool:
         return self.deployment_env in PUBLIC_DEPLOYMENT_ENVS
@@ -39,6 +40,10 @@ class BackendSettings:
 
 class UnsafePublicResponseModeError(RuntimeError):
     """Raised when a public deployment would expose full manual-preview responses."""
+
+
+class MissingPublicApiKeyHashError(RuntimeError):
+    """Raised when public deployment has no configured API key hash boundary."""
 
 
 def _validate_positive_int(env_name: str, default_val: int, *, min_value: int = 1) -> int:
@@ -76,6 +81,17 @@ def validate_public_response_mode(deployment_env: str, manual_preview_response_m
     )
 
 
+def validate_public_api_key_hash(deployment_env: str, api_key_hash: str | None) -> None:
+    if deployment_env not in PUBLIC_DEPLOYMENT_ENVS:
+        return
+    if api_key_hash:
+        return
+    raise MissingPublicApiKeyHashError(
+        "IPU_API_KEY_HASH must be set for public/ops deployments. "
+        f"deployment_env={deployment_env}"
+    )
+
+
 def get_settings() -> BackendSettings:
     root_dir = Path(__file__).resolve().parents[3]
     default_store_path = root_dir / "data" / "runtime" / "manual_preview_sessions.sqlite3"
@@ -102,7 +118,9 @@ def get_settings() -> BackendSettings:
         os.getenv("IPU_MANUAL_PREVIEW_RESPONSE_MODE", "full").strip().lower() or "full"
     )
     deployment_env = resolve_deployment_env()
+    api_key_hash = os.getenv("IPU_API_KEY_HASH", "").strip() or None
     validate_public_response_mode(deployment_env, manual_preview_response_mode)
+    validate_public_api_key_hash(deployment_env, api_key_hash)
     upload_max_bytes = _validate_positive_int(
         "IPU_UPLOAD_MAX_BYTES",
         104_857_600,
@@ -137,4 +155,5 @@ def get_settings() -> BackendSettings:
         upload_max_bytes=upload_max_bytes,
         public_upload_max_bytes=public_upload_max_bytes,
         upload_max_concurrency=upload_max_concurrency,
+        api_key_hash=api_key_hash,
     )
