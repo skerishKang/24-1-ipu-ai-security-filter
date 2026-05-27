@@ -4,6 +4,9 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+PUBLIC_DEPLOYMENT_ENVS = {"production", "prod", "ops", "ops-target"}
+SAFE_PUBLIC_RESPONSE_MODE = "minimized"
+
 
 @dataclass(frozen=True)
 class BackendSettings:
@@ -26,12 +29,16 @@ class BackendSettings:
     upload_max_concurrency: int
 
     def is_public_deployment(self) -> bool:
-        return self.deployment_env in {"production", "prod", "ops", "ops-target"}
+        return self.deployment_env in PUBLIC_DEPLOYMENT_ENVS
 
     def effective_upload_max_bytes(self) -> int:
         if self.is_public_deployment():
             return self.public_upload_max_bytes
         return self.upload_max_bytes
+
+
+class UnsafePublicResponseModeError(RuntimeError):
+    """Raised when a public deployment would expose full manual-preview responses."""
 
 
 def _validate_positive_int(env_name: str, default_val: int, *, min_value: int = 1) -> int:
@@ -56,6 +63,17 @@ def resolve_deployment_env() -> str:
         or "dev-local"
     )
     return val.strip().lower()
+
+
+def validate_public_response_mode(deployment_env: str, manual_preview_response_mode: str) -> None:
+    if deployment_env not in PUBLIC_DEPLOYMENT_ENVS:
+        return
+    if manual_preview_response_mode == SAFE_PUBLIC_RESPONSE_MODE:
+        return
+    raise UnsafePublicResponseModeError(
+        "IPU_MANUAL_PREVIEW_RESPONSE_MODE must be set to minimized for public/ops deployments. "
+        f"deployment_env={deployment_env} response_mode={manual_preview_response_mode}"
+    )
 
 
 def get_settings() -> BackendSettings:
@@ -84,6 +102,7 @@ def get_settings() -> BackendSettings:
         os.getenv("IPU_MANUAL_PREVIEW_RESPONSE_MODE", "full").strip().lower() or "full"
     )
     deployment_env = resolve_deployment_env()
+    validate_public_response_mode(deployment_env, manual_preview_response_mode)
     upload_max_bytes = _validate_positive_int(
         "IPU_UPLOAD_MAX_BYTES",
         104_857_600,
