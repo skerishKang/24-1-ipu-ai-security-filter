@@ -315,7 +315,22 @@ async function expectVisible(locator) {
   assert.equal(await locator.isVisible(), true);
 }
 
-async function expectTextIncludes(locator, expectedText) {
-  const text = await locator.textContent();
-  assert.ok(text && text.includes(expectedText), `Expected "${text}" to include "${expectedText}"`);
+async function expectTextIncludes(locator, expectedText, timeoutMs = 2000) {
+  const start = Date.now();
+  while (true) {
+    const text = await locator.textContent();
+    if (text && text.includes(expectedText)) {
+      return;
+    }
+    if (Date.now() - start > timeoutMs) {
+      assert.ok(text && text.includes(expectedText), `Expected "${text}" to include "${expectedText}"`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
 }
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+
