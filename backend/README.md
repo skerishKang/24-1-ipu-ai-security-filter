@@ -71,6 +71,19 @@ export IPU_AUDIO_TRANSCRIBER=whisper
 export IPU_WHISPER_MODEL_NAME=small
 export IPU_WHISPER_MODEL_DIR="~/.ipu/whisper-models"
 ```
+
+## 공개/운영 배포 설정
+
+`IPU_DEPLOYMENT_ENV` 값이 `production`, `prod`, `ops`, `ops-target` 중 하나이면 공개/운영 배포로 간주한다. 이 모드에서는 다음 설정이 필요하다.
+
+```bash
+export IPU_DEPLOYMENT_ENV=ops
+export IPU_ALLOWED_ORIGINS="https://example.com"
+export IPU_MANUAL_PREVIEW_RESPONSE_MODE=minimized
+```
+
+공개/운영 배포에서 `IPU_MANUAL_PREVIEW_RESPONSE_MODE=full` 또는 미설정 상태로 실행하면 앱 시작 단계에서 오류가 발생한다. 운영 응답에서는 `original_text`, detection `label`, replacement `original` 값을 비워 원문 노출을 줄인다. 로컬 개발 기본값은 기존과 동일하게 `full` 이다.
+
 - 세션 저장소 상태 확인: `python3 scripts/manage_manual_preview_sessions.py stats`
 - 만료 세션 정리: `python3 scripts/manage_manual_preview_sessions.py cleanup`
 
@@ -129,6 +142,7 @@ curl -s -X POST http://127.0.0.1:8241/api/v1/mode/manual-preview/restore \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "ipu-20260315000000-abcdef",
+    "restore_token": "<restore-token-from-preview-response>",
     "replaced_text": "[ORG_01] [PERSON_01] 이사는 [EMAIL_01] 로 연락합니다."
   }'
 ```
@@ -146,6 +160,7 @@ curl -s -X POST http://127.0.0.1:8241/api/v1/mode/manual-preview/restore \
 ## 응답 필드
 
 - `session_id`
+- `restore_token`
 - `original_text`
 - `replaced_text`
 - `detections`
@@ -213,49 +228,6 @@ segment / timestamp 기준은 [`docs/development/26-audio-segment-and-timestamp-
 ## policy 동작
 
 - frontend 가 보내는 `policy` 값은 backend 를 거쳐 engine 으로 전달된다.
-- 현재 공식 preset은 `default`, `strict_token`, `local_rewrite` 세 가지다.
-- `default` 는 `EMAIL`, `PHONE`, `PERSON`, `ORG` 중심의 기본 탐지 범위를 사용한다.
-- `strict_token` 은 `AMOUNT`, `API_KEY`, `IP_ADDRESS`, `BUSINESS_REGISTRATION_NUMBER`, `RESIDENT_REGISTRATION_NUMBER`, `FOREIGN_REGISTRATION_NUMBER`, `CARD_NUMBER`, `ACCOUNT_NUMBER`, `VEHICLE_REGISTRATION_NUMBER` 등 더 넓은 민감정보 타입을 포함한다.
-- `local_rewrite` 는 strict_token 수준의 탐지 범위를 사용하고, Ollama 로컬 모델이 생성한 문맥 기반 일반화 표현으로 치환한다. 모델 실패 시 deterministic fallback을 사용한다.
-- 응답 스키마는 동일하며, policy 차이는 `detections`, `replacements`, `replaced_text`, `report` 값에 반영된다.
-- preset 기준 문서는 [`docs/development/17-security-policy-presets.md`](../docs/development/17-security-policy-presets.md) 를 따른다.
-
-## 최소 운영 로그 범위
-
-- `manual_preview_started`
-- `manual_preview_succeeded`
-- `manual_preview_failed`
-
-현재 로그에는 아래 메타 정보만 남긴다.
-
-- `request_type`: `text` 또는 `file`
-- `policy`
-- `content_type`
-- `session_id`
-- `detection_count`
-- `replacement_count`
-- `report_strategy`
-- `processing_ms`
-
-민감정보 보호 원칙:
-
-- 원문 전체 텍스트는 로그에 남기지 않는다.
-- 이메일, 전화번호, 사람 이름 같은 실제 탐지 값도 로그에 남기지 않는다.
-- 운영 관찰 목적의 최소 메타 정보만 기록한다.
-- 자세한 기준은 [`docs/development/15-logging-and-audit-scope.md`](../docs/development/15-logging-and-audit-scope.md) 를 따른다.
-
-## import 경로 처리
-
-- backend `requirements.txt` 는 `-e ..` 로 프로젝트 루트의 `engine` 패키지를 editable install 한다.
-- 따라서 `manual_preview_service.py` 는 `sys.path` 를 직접 조작하지 않고 `engine.src.manual_preview_engine` 를 import 한다.
-- 새 환경에서는 `pip install -r requirements.txt` 를 먼저 실행해야 한다.
-
-## 다음 연동 포인트
-
-- 바이너리 `.hwp` 는 직접 파싱 대신 변환 안내 전략 유지
-- 스캔형 PDF/OCR 경로 검토
-- OCR 품질 샘플셋 확대
-- PDF 품질 샘플셋 확대
-- DOCX 스타일/표/머리글 처리 범위 확장
-- HWPX 표/중첩 객체 추출 범위 확장
-- 파일/음성 입력 라우트가 추가되면 같은 엔진 계층을 재사용하도록 확장
+- `default` 는 사람이 읽기 쉬운 alias 전략으로 치환한다.
+- `strict_token` 은 외부 전송 전 더 보수적인 토큰 치환 전략을 사용한다.
+- `local_rewrite` 는 로컬 Ollama 기반 의미 보존 리라이트를 시도하고 실패 시 deterministic placeholder 로 fallback 한다.
