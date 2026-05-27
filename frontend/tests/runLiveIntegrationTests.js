@@ -55,7 +55,7 @@ async function main() {
       await expectTextIncludes(page.getByTestId("status-message"), "백엔드 응답");
       await page.getByTestId("restore-preview").click();
 
-      await expectTextIncludes(page.getByTestId("restore-status"), "복원 테스트가 성공");
+      await expectTextIncludes(page.getByTestId("restore-status"), "복원 테스트가 완료");
       await expectTextIncludes(page.getByTestId("restored-text"), "아이피유테크");
       await expectTextIncludes(page.getByTestId("restored-text"), "contact@ipu.co.kr");
     });
