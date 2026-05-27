@@ -16,6 +16,7 @@ from app.core.exceptions import (
     FileTooLargeError,
     InvalidEncodingError,
     ProcessingLimitExceededError,
+    RestoreTokenError,
     SessionExpiredError,
     UnsupportedFileTypeError,
 )
@@ -100,4 +101,7 @@ async def manual_preview_restore(
     payload: ManualRestoreRequest,
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
 ) -> ManualRestoreResponse:
-    return manual_preview_service.restore_preview(payload)
+    try:
+        return manual_preview_service.restore_preview(payload)
+    except RestoreTokenError as error:
+        raise HTTPException(status_code=403, detail=str(error))

@@ -18,7 +18,6 @@ from app.services.manual_preview_service import ManualPreviewService
 
 
 
-
 class FakeAudioTranscriber:
     async def transcribe(self, file: UploadFile):
         return type(
@@ -85,6 +84,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         for field in (
             "session_id",
+            "restore_token",
             "original_text",
             "replaced_text",
             "detections",
@@ -96,6 +96,7 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(body["original_text"], payload["content"])
         self.assertNotEqual(body["replaced_text"], body["original_text"])
+        self.assertTrue(body["restore_token"])
         self.assertIsInstance(body["detections"], list)
         self.assertIsInstance(body["replacements"], list)
         self.assertGreaterEqual(len(body["detections"]), 1)
@@ -148,8 +149,10 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertIn("session_id", body)
+        self.assertIn("restore_token", body)
         self.assertIn("replaced_text", body)
         self.assertIn("report", body)
+        self.assertTrue(body["restore_token"])
         self.assertNotEqual(body["replaced_text"], body["original_text"])
         self.assertIsInstance(body["detections"], list)
         self.assertIsInstance(body["replacements"], list)
@@ -285,7 +288,6 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_manual_preview_audio_rejects_over_duration_wav(self) -> None:
         """WAV duration > MAX_AUDIO_DURATION_SECONDS returns 413."""
-        # Build a WAV with 0.5s duration but monkeypatch limit to 0.001
         with patch("app.services.audio_transcriber.MAX_AUDIO_DURATION_SECONDS", 0.001):
             response = await self.client.post(
                 "/api/v1/mode/manual-preview/audio",
@@ -434,11 +436,13 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         preview_response = await self.client.post("/api/v1/mode/manual-preview", json=preview_payload)
         self.assertEqual(preview_response.status_code, 200)
         preview_body = preview_response.json()
+        self.assertTrue(preview_body["restore_token"])
 
         restore_response = await self.client.post(
             "/api/v1/mode/manual-preview/restore",
             json={
                 "session_id": preview_body["session_id"],
+                "restore_token": preview_body["restore_token"],
                 "replaced_text": preview_body["replaced_text"],
             },
         )
@@ -449,19 +453,17 @@ class ManualPreviewApiSmokeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restore_body["restored_text"], preview_payload["content"])
         self.assertEqual(restore_body["restored"], True)
 
-    async def test_manual_preview_restore_endpoint_returns_original_text_when_session_missing(self) -> None:
+    async def test_manual_preview_restore_endpoint_rejects_missing_session(self) -> None:
         restore_response = await self.client.post(
             "/api/v1/mode/manual-preview/restore",
             json={
                 "session_id": "missing-session",
+                "restore_token": "missing-session-token",
                 "replaced_text": "[EMAIL_01] 에 연락해 주세요.",
             },
         )
 
-        self.assertEqual(restore_response.status_code, 200)
-        restore_body = restore_response.json()
-        self.assertEqual(restore_body["restored_text"], "[EMAIL_01] 에 연락해 주세요.")
-        self.assertEqual(restore_body["restored"], False)
+        self.assertEqual(restore_response.status_code, 403)
 
     def test_default_transcriber_is_placeholder(self) -> None:
         from app.core.settings import get_settings

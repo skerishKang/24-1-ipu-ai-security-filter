@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import os
 import sqlite3
 from contextlib import contextmanager
@@ -20,12 +21,15 @@ SQLITE_SESSION_FILE_MODE = 0o600
 class SessionRecord:
     mappings: list[SessionMapping]
     expires_at: float
+    restore_token_hash: str | None = None
 
 
 class SessionStore(Protocol):
     ttl_seconds: int
 
     def save_mapping(self, session_id: str, mapping: SessionMapping) -> None: ...
+    def save_restore_token_hash(self, session_id: str, token_hash: str) -> None: ...
+    def verify_restore_token_hash(self, session_id: str, token_hash: str) -> bool: ...
     def get_mappings(self, session_id: str) -> list[SessionMapping]: ...
     def clear(self, session_id: str) -> None: ...
     def cleanup_expired_sessions(self) -> None: ...
@@ -52,6 +56,26 @@ class InMemorySessionStore:
 
             record.mappings.append(mapping)
             record.expires_at = self._build_expiration()
+
+    def save_restore_token_hash(self, session_id: str, token_hash: str) -> None:
+        with self._lock:
+            self._cleanup_expired_sessions_locked()
+            record = self._store.get(session_id)
+            if record is None or self._is_expired_locked(session_id):
+                record = SessionRecord(mappings=[], expires_at=self._build_expiration())
+                self._store[session_id] = record
+            record.restore_token_hash = token_hash
+            record.expires_at = self._build_expiration()
+
+    def verify_restore_token_hash(self, session_id: str, token_hash: str) -> bool:
+        with self._lock:
+            if self._is_expired_locked(session_id):
+                self.clear(session_id)
+                return False
+            record = self._store.get(session_id)
+            if record is None or record.restore_token_hash is None:
+                return False
+            return hmac.compare_digest(record.restore_token_hash, token_hash)
 
     def get_mappings(self, session_id: str) -> list[SessionMapping]:
         with self._lock:
@@ -133,6 +157,47 @@ class SQLiteSessionStore:
             conn.commit()
             self._apply_file_permissions()
 
+    def save_restore_token_hash(self, session_id: str, token_hash: str) -> None:
+        expires_at = self._build_expiration()
+        with self._lock, self._connect() as conn:
+            self._cleanup_expired_sessions_locked(conn)
+            conn.execute(
+                """
+                INSERT INTO session_restore_tokens (session_id, token_hash, expires_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(session_id)
+                DO UPDATE SET token_hash=excluded.token_hash, expires_at=excluded.expires_at
+                """,
+                (session_id, token_hash, expires_at),
+            )
+            conn.execute(
+                """
+                INSERT INTO session_expirations (session_id, expires_at)
+                VALUES (?, ?)
+                ON CONFLICT(session_id) DO UPDATE SET expires_at=excluded.expires_at
+                """,
+                (session_id, expires_at),
+            )
+            conn.commit()
+            self._apply_file_permissions()
+
+    def verify_restore_token_hash(self, session_id: str, token_hash: str) -> bool:
+        with self._lock, self._connect() as conn:
+            if self._is_expired_locked(conn, session_id):
+                self.clear(session_id)
+                return False
+            now = self._clock()
+            row = conn.execute(
+                """
+                SELECT token_hash FROM session_restore_tokens
+                WHERE session_id = ? AND expires_at > ?
+                """,
+                (session_id, now),
+            ).fetchone()
+            if row is None:
+                return False
+            return hmac.compare_digest(str(row["token_hash"]), token_hash)
+
     def list_sessions(self, limit: int = 50) -> list[dict]:
         with self._lock, self._connect() as conn:
             self._cleanup_expired_sessions_locked(conn)
@@ -204,6 +269,7 @@ class SQLiteSessionStore:
         with self._lock, self._connect() as conn:
             conn.execute("DELETE FROM session_mappings WHERE session_id = ?", (session_id,))
             conn.execute("DELETE FROM session_expirations WHERE session_id = ?", (session_id,))
+            conn.execute("DELETE FROM session_restore_tokens WHERE session_id = ?", (session_id,))
             conn.commit()
 
     def cleanup_expired_sessions(self) -> None:
@@ -237,6 +303,15 @@ class SQLiteSessionStore:
                 """
             )
             conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS session_restore_tokens (
+                    session_id TEXT PRIMARY KEY,
+                    token_hash TEXT NOT NULL,
+                    expires_at REAL NOT NULL
+                )
+                """
+            )
+            conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_session_mappings_session_id ON session_mappings(session_id)"
             )
             conn.execute(
@@ -244,6 +319,9 @@ class SQLiteSessionStore:
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_session_expirations_expires_at ON session_expirations(expires_at)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_session_restore_tokens_expires_at ON session_restore_tokens(expires_at)"
             )
             conn.commit()
 
@@ -277,6 +355,7 @@ class SQLiteSessionStore:
             ).fetchall()
         ]
         if not expired_ids:
+            conn.execute("DELETE FROM session_restore_tokens WHERE expires_at <= ?", (now,))
             return
 
         conn.executemany(
@@ -287,6 +366,11 @@ class SQLiteSessionStore:
             "DELETE FROM session_expirations WHERE session_id = ?",
             [(session_id,) for session_id in expired_ids],
         )
+        conn.executemany(
+            "DELETE FROM session_restore_tokens WHERE session_id = ?",
+            [(session_id,) for session_id in expired_ids],
+        )
+        conn.execute("DELETE FROM session_restore_tokens WHERE expires_at <= ?", (now,))
 
     def _is_expired_locked(self, conn: sqlite3.Connection, session_id: str) -> bool:
         row = conn.execute(

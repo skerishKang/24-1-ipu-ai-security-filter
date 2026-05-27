@@ -62,6 +62,7 @@ class ManualPreviewReadiness(BaseModel):
 
 class ManualPreviewResponse(BaseModel):
     session_id: str
+    restore_token: str
     original_text: str
     replaced_text: str
     detections: list[DetectionItem]
@@ -73,6 +74,7 @@ class ManualPreviewResponse(BaseModel):
 
 class ManualRestoreRequest(BaseModel):
     session_id: str = Field(..., min_length=1, description="Existing manual-preview session id")
+    restore_token: str = Field(..., min_length=1, description="Manual-preview restore authorization token")
     replaced_text: str = Field(..., min_length=1, description="Tokenized text to restore")
 
 

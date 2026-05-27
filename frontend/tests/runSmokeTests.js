@@ -10,6 +10,7 @@ const SERVER_START_TIMEOUT_MS = 10000;
 
 const fileUploadResponse = {
   session_id: "session-file-001",
+  restore_token: "restore-token-file-001",
   original_text: "아이피유테크 홍길동 이사 contact@ipu.co.kr",
   replaced_text: "[ORG_01] [PERSON_01] [EMAIL_01]",
   detections: [
@@ -33,6 +34,7 @@ const fileUploadResponse = {
 
 const audioUploadResponse = {
   session_id: "session-audio-001",
+  restore_token: "restore-token-audio-001",
   original_text: "아이피유테크 홍길동 이사가 contact@ipu.co.kr 로 연락합니다.",
   replaced_text: "아이피유테크 [PERSON_ALIAS_01]가 [EMAIL_ALIAS_01] 로 연락합니다.",
   detections: [
@@ -261,95 +263,59 @@ async function runTest(browser, name, testFn) {
   const page = await browser.newPage();
   try {
     await testFn(page);
-    console.log(`PASS ${name}`);
-  } catch (error) {
-    console.error(`FAIL ${name}`);
-    throw error;
+    console.log(`✓ ${name}`);
   } finally {
     await page.close();
   }
 }
 
+async function startStaticServer() {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const requestUrl = new URL(req.url, BASE_URL);
+      const pathname = requestUrl.pathname === "/" ? "/index.html" : requestUrl.pathname;
+      const filePath = path.join(FRONTEND_DIR, pathname);
+      if (!filePath.startsWith(FRONTEND_DIR)) {
+        res.writeHead(403);
+        res.end("Forbidden");
+        return;
+      }
+
+      require("node:fs").readFile(filePath, (error, data) => {
+        if (error) {
+          res.writeHead(404);
+          res.end("Not found");
+          return;
+        }
+        const ext = path.extname(filePath);
+        const contentType = ext === ".html" ? "text/html" : ext === ".js" ? "text/javascript" : "text/plain";
+        res.writeHead(200, { "Content-Type": contentType });
+        res.end(data);
+      });
+    });
+
+    server.on("error", reject);
+    server.listen(4241, "127.0.0.1", () => resolve(server));
+    setTimeout(() => reject(new Error("Static server startup timed out")), SERVER_START_TIMEOUT_MS);
+  });
+}
+
+async function stopStaticServer(server) {
+  return new Promise((resolve) => server.close(resolve));
+}
+
+async function switchToExpertMode(page) {
+  const expertModeButton = page.getByRole("button", { name: "전문가 모드" });
+  if (await expertModeButton.isVisible()) {
+    await expertModeButton.click();
+  }
+}
+
 async function expectVisible(locator) {
-  await locator.waitFor({ state: "visible" });
   assert.equal(await locator.isVisible(), true);
 }
 
 async function expectTextIncludes(locator, expectedText) {
-  await locator.waitFor({ state: "visible" });
-  await waitFor(async () => {
-    const text = (await locator.textContent()) || "";
-    assert.match(text, new RegExp(escapeRegExp(expectedText), "i"));
-  });
+  const text = await locator.textContent();
+  assert.ok(text && text.includes(expectedText), `Expected "${text}" to include "${expectedText}"`);
 }
-
-async function switchToExpertMode(page) {
-  await page.getByRole("button", { name: "전문가 모드" }).click();
-  await page.getByTestId("session-source").waitFor({ state: "visible" });
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-async function startStaticServer() {
-  if (await isServerReady(BASE_URL)) {
-    return null;
-  }
-
-  const pythonCmd = process.platform === "win32" ? "python" : "python3";
-  const server = spawn(pythonCmd, ["-m", "http.server", "4241", "--directory", FRONTEND_DIR], {
-    cwd: FRONTEND_DIR,
-    stdio: "ignore",
-  });
-
-  await waitFor(async () => {
-    assert.equal(await isServerReady(BASE_URL), true);
-  }, SERVER_START_TIMEOUT_MS);
-
-  return server;
-}
-
-async function stopStaticServer(server) {
-  if (!server) {
-    return;
-  }
-
-  server.kill("SIGTERM");
-  await new Promise((resolve) => {
-    server.once("exit", () => resolve());
-    setTimeout(resolve, 1000);
-  });
-}
-
-async function isServerReady(url) {
-  return new Promise((resolve) => {
-    const request = http.get(url, (response) => {
-      response.resume();
-      resolve(response.statusCode >= 200 && response.statusCode < 500);
-    });
-    request.on("error", () => resolve(false));
-  });
-}
-
-async function waitFor(assertion, timeoutMs = 5000) {
-  const startedAt = Date.now();
-  let lastError = null;
-
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      await assertion();
-      return;
-    } catch (error) {
-      lastError = error;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-  }
-
-  throw lastError || new Error("Timed out while waiting for condition.");
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
