@@ -6,6 +6,8 @@ const { chromium } = require("playwright");
 
 const BACKEND_URL = "http://127.0.0.1:8241";
 const FRONTEND_URL = "http://127.0.0.1:4241";
+const EXPECTED_LIVE_TEST_COUNT = 4;
+let executedLiveTestCount = 0;
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
@@ -60,6 +62,11 @@ async function main() {
       await expectTextIncludes(page.getByTestId("restored-text"), "contact@ipu.co.kr");
     });
 
+    assert.equal(
+      executedLiveTestCount,
+      EXPECTED_LIVE_TEST_COUNT,
+      `Expected ${EXPECTED_LIVE_TEST_COUNT} live integration tests to run, got ${executedLiveTestCount}.`,
+    );
     console.log("\nAll live integration tests passed.");
   } finally {
     await browser.close();
@@ -67,6 +74,7 @@ async function main() {
 }
 
 async function runTest(browser, name, testFn) {
+  executedLiveTestCount += 1;
   const page = await browser.newPage();
   try {
     await testFn(page);
