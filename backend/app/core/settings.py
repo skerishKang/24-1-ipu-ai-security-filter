@@ -34,6 +34,16 @@ class BackendSettings:
         return self.upload_max_bytes
 
 
+def resolve_deployment_env() -> str:
+    val = (
+        os.getenv("IPU_DEPLOYMENT_ENV")
+        or os.getenv("IPU_ENV")
+        or os.getenv("APP_ENV")
+        or "dev-local"
+    )
+    return val.strip().lower()
+
+
 def get_settings() -> BackendSettings:
     root_dir = Path(__file__).resolve().parents[3]
     default_store_path = root_dir / "data" / "runtime" / "manual_preview_sessions.sqlite3"
@@ -59,7 +69,7 @@ def get_settings() -> BackendSettings:
     manual_preview_response_mode = (
         os.getenv("IPU_MANUAL_PREVIEW_RESPONSE_MODE", "full").strip().lower() or "full"
     )
-    deployment_env = os.getenv("IPU_DEPLOYMENT_ENV", "dev-local").strip().lower() or "dev-local"
+    deployment_env = resolve_deployment_env()
     upload_max_bytes = int(os.getenv("IPU_UPLOAD_MAX_BYTES", str(104_857_600)))
     public_upload_max_bytes = int(os.getenv("IPU_PUBLIC_UPLOAD_MAX_BYTES", str(20_971_520)))
     upload_max_concurrency = int(os.getenv("IPU_UPLOAD_MAX_CONCURRENCY", "8"))
