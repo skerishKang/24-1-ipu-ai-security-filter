@@ -27,7 +27,7 @@ class BackendSettings:
     upload_max_bytes: int
     public_upload_max_bytes: int
     upload_max_concurrency: int
-    api_key_hash: str | None
+    api_key_hash: str | None = None
 
     def is_public_deployment(self) -> bool:
         return self.deployment_env in PUBLIC_DEPLOYMENT_ENVS
@@ -120,7 +120,6 @@ def get_settings() -> BackendSettings:
     deployment_env = resolve_deployment_env()
     api_key_hash = os.getenv("IPU_API_KEY_HASH", "").strip() or None
     validate_public_response_mode(deployment_env, manual_preview_response_mode)
-    validate_public_api_key_hash(deployment_env, api_key_hash)
     upload_max_bytes = _validate_positive_int(
         "IPU_UPLOAD_MAX_BYTES",
         104_857_600,
