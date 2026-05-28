@@ -24,6 +24,7 @@ from app.core.exceptions import (
 from app.services.upload_reader import read_limited_upload
 
 MAX_UPLOAD_FILE_BYTES = 104_857_600
+MAX_EXTRACTED_TEXT_CHARS = 100_000
 MAX_PDF_PAGES = 50
 MAX_OCR_PAGES = 5
 OCR_TOOL_TIMEOUT_SECONDS = 15
@@ -265,7 +266,12 @@ class PdfFileParser:
 
 
 class DefaultFileParser:
-    def __init__(self, max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES) -> None:
+    def __init__(
+        self,
+        max_upload_bytes: int = MAX_UPLOAD_FILE_BYTES,
+        max_extracted_text_chars: int = MAX_EXTRACTED_TEXT_CHARS,
+    ) -> None:
+        self.max_extracted_text_chars = max_extracted_text_chars
         self._text_parser = TextFileParser(max_upload_bytes=max_upload_bytes)
         self._pdf_parser = PdfFileParser(max_upload_bytes=max_upload_bytes)
         self._docx_parser = DocxFileParser(max_upload_bytes=max_upload_bytes)
@@ -276,12 +282,19 @@ class DefaultFileParser:
         if any(filename.endswith(extension) for extension in UNSUPPORTED_HWP_FILE_EXTENSIONS):
             raise UnsupportedFileTypeError(".hwpx, .pdf, .docx, .txt (바이너리 .hwp 미지원)")
         if filename.endswith(".pdf"):
-            return await self._pdf_parser.parse(file)
+            return self._enforce_extracted_text_limit(await self._pdf_parser.parse(file))
         if filename.endswith(".docx"):
-            return await self._docx_parser.parse(file)
+            return self._enforce_extracted_text_limit(await self._docx_parser.parse(file))
         if filename.endswith(".hwpx"):
-            return await self._hwpx_parser.parse(file)
-        return await self._text_parser.parse(file)
+            return self._enforce_extracted_text_limit(await self._hwpx_parser.parse(file))
+        return self._enforce_extracted_text_limit(await self._text_parser.parse(file))
+
+    def _enforce_extracted_text_limit(self, parsed: ParsedFileContent) -> ParsedFileContent:
+        if len(parsed.content) <= self.max_extracted_text_chars:
+            return parsed
+        raise ProcessingLimitExceededError(
+            f"Extracted text length {len(parsed.content)} exceeds the processing limit of {self.max_extracted_text_chars} characters."
+        )
 
 
 class DocxFileParser:
