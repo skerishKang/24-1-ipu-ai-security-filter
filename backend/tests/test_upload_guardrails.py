@@ -12,12 +12,16 @@ from unittest.mock import patch
 import httpx
 from fastapi import UploadFile
 
-from app.core.settings import BackendSettings, UnsafePublicResponseModeError, get_settings
+from app.core.auth import hash_api_key, optional_auth_owner_hash
+from app.core.settings import BackendSettings, MissingPublicApiKeyHashError, UnsafePublicResponseModeError, get_settings
 from app.main import create_app
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.api.routes import manual_mode as manual_mode_module
 from app.main import limiter as main_limiter
 from app.services.manual_preview_service import ManualPreviewService
+
+TEST_PUBLIC_VALUE = "public"
+TEST_PUBLIC_HASH = hash_api_key(TEST_PUBLIC_VALUE)
 
 
 def _reset_rate_limiters() -> None:
@@ -84,6 +88,7 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
                 upload_max_bytes=104_857_600,
                 public_upload_max_bytes=20_971_520,
                 upload_max_concurrency=8,
+                api_key_hash=TEST_PUBLIC_HASH,
             )
             self.assertTrue(settings.is_public_deployment(), f"{env} should be public")
             self.assertEqual(settings.effective_upload_max_bytes(), 20_971_520)
@@ -107,10 +112,12 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
         with patch.dict(os.environ, {
             "IPU_DEPLOYMENT_ENV": "ops",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+            "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
         }):
             settings = get_settings()
             self.assertTrue(settings.is_public_deployment())
             self.assertEqual(settings.manual_preview_response_mode, "minimized")
+            self.assertEqual(settings.api_key_hash, TEST_PUBLIC_HASH)
 
     def test_public_deployment_rejects_full_response_mode(self):
         for env in ("production", "prod", "ops", "ops-target"):
@@ -119,6 +126,7 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
                     "IPU_DEPLOYMENT_ENV": env,
                     "IPU_ALLOWED_ORIGINS": "http://example.com",
                     "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
+                    "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
                 }):
                     with self.assertRaises(UnsafePublicResponseModeError):
                         get_settings()
@@ -128,8 +136,19 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
             "IPU_DEPLOYMENT_ENV": "ops",
             "IPU_ALLOWED_ORIGINS": "http://example.com",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
+            "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
         }):
             with self.assertRaises(UnsafePublicResponseModeError):
+                create_app()
+
+    def test_create_app_rejects_public_deployment_without_auth_hash(self):
+        with patch.dict(os.environ, {
+            "IPU_DEPLOYMENT_ENV": "ops",
+            "IPU_ALLOWED_ORIGINS": "http://example.com",
+            "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+            "IPU_API_KEY_HASH": "",
+        }):
+            with self.assertRaises(MissingPublicApiKeyHashError):
                 create_app()
 
     def test_create_app_allows_public_deployment_with_minimized_response_mode(self):
@@ -137,6 +156,7 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
             "IPU_DEPLOYMENT_ENV": "ops",
             "IPU_ALLOWED_ORIGINS": "http://example.com",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+            "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
         }):
             app = create_app()
             self.assertIsNotNone(app)
@@ -212,12 +232,14 @@ class PublicModeUploadLimitTest(unittest.IsolatedAsyncioTestCase):
             "IPU_UPLOAD_MAX_CONCURRENCY": "8",
             "IPU_ALLOWED_ORIGINS": "http://localhost:4241",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+            "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
         })
         self._env_patcher.start()
         _reset_rate_limiters()
 
         self.app = create_app()
-        service = ManualPreviewService()
+        self.app.dependency_overrides[optional_auth_owner_hash] = lambda request=None: TEST_PUBLIC_HASH
+        service = ManualPreviewService(settings=self.app.state.settings)
         self.app.state.manual_preview_service = service
         self.app.dependency_overrides[get_manual_preview_service] = lambda request=None: service
 
@@ -226,6 +248,7 @@ class PublicModeUploadLimitTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self):
         await self.client.aclose()
+        self.app.dependency_overrides.clear()
         self._env_patcher.stop()
         self.temp_dir.cleanup()
 
@@ -437,6 +460,7 @@ class CorsDeploymentSettingsTest(unittest.TestCase):
             "IPU_DEPLOYMENT_ENV": "",
             "IPU_ENV": "",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+            "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
         }):
             with self.assertRaises(RuntimeError) as ctx:
                 create_app()
@@ -449,6 +473,7 @@ class CorsDeploymentSettingsTest(unittest.TestCase):
             "IPU_DEPLOYMENT_ENV": "",
             "IPU_ENV": "",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
+            "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
         }):
             app = create_app()
             self.assertIsNotNone(app)
