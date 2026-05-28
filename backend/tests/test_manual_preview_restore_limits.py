@@ -11,6 +11,7 @@ from app.api.schemas.manual_preview import (
     MAX_RESTORE_TEXT_LENGTH,
     MAX_RESTORE_TOKEN_LENGTH,
 )
+from app.core.exceptions import RestoreTokenError
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
 
@@ -119,6 +120,29 @@ class ManualPreviewRestoreLimitTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ai_response_restore.status_code, 200)
         self.assertTrue(ai_response_restore.json()["restored"])
         self.assertIn("contact@ipu.co.kr", ai_response_restore.json()["restored_text"])
+
+    async def test_restore_requires_matching_owner_hash(self) -> None:
+        service = self.app.state.manual_preview_service
+        payload = {
+            "content": "아이피유테크 홍길동 이사는 contact@ipu.co.kr 로 연락합니다.",
+            "content_type": "text",
+            "policy": "strict_token",
+        }
+        request_model = service._build_response.__globals__["ManualPreviewRequest"](**payload)
+        preview = service.build_preview(request_model, owner_hash="owner-a")
+
+        restore_model = service._build_response.__globals__["ManualRestoreRequest"](
+            session_id=preview.session_id,
+            restore_token=preview.restore_token,
+            replaced_text=preview.replaced_text,
+        )
+
+        with self.assertRaises(RestoreTokenError):
+            service.restore_preview(restore_model, owner_hash="owner-b")
+
+        restored = service.restore_preview(restore_model, owner_hash="owner-a")
+        self.assertTrue(restored.restored)
+        self.assertIn("contact@ipu.co.kr", restored.restored_text)
 
 
 if __name__ == "__main__":
