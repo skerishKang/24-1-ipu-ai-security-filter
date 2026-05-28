@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 import unittest
 
 import httpx
+from fastapi import HTTPException
 
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.api.schemas.manual_preview import (
@@ -11,6 +13,7 @@ from app.api.schemas.manual_preview import (
     MAX_RESTORE_TEXT_LENGTH,
     MAX_RESTORE_TOKEN_LENGTH,
 )
+from app.core.auth import hash_api_key, optional_auth_owner_hash
 from app.core.exceptions import RestoreTokenError
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
@@ -143,6 +146,39 @@ class ManualPreviewRestoreLimitTest(unittest.IsolatedAsyncioTestCase):
         restored = service.restore_preview(restore_model, owner_hash="owner-a")
         self.assertTrue(restored.restored)
         self.assertIn("contact@ipu.co.kr", restored.restored_text)
+
+    async def test_public_auth_dependency_requires_valid_header_when_configured(self) -> None:
+        secret = "valid-test-secret"
+        settings = SimpleNamespace(
+            is_public_deployment=lambda: True,
+            api_key_hash=hash_api_key(secret),
+        )
+        request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(settings=settings)))
+
+        self.assertEqual(optional_auth_owner_hash(request, secret), settings.api_key_hash)
+
+        with self.assertRaises(HTTPException) as missing_ctx:
+            optional_auth_owner_hash(request, None)
+        self.assertEqual(missing_ctx.exception.status_code, 401)
+
+        with self.assertRaises(HTTPException) as wrong_ctx:
+            optional_auth_owner_hash(request, "other-test-secret")
+        self.assertEqual(wrong_ctx.exception.status_code, 403)
+
+    async def test_auth_dependency_preserves_dev_local_and_unconfigured_public_behavior(self) -> None:
+        dev_settings = SimpleNamespace(
+            is_public_deployment=lambda: False,
+            api_key_hash=None,
+        )
+        dev_request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(settings=dev_settings)))
+        self.assertEqual(optional_auth_owner_hash(dev_request, None), "dev-local")
+
+        public_settings = SimpleNamespace(
+            is_public_deployment=lambda: True,
+            api_key_hash=None,
+        )
+        public_request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(settings=public_settings)))
+        self.assertEqual(optional_auth_owner_hash(public_request, None), "public-unconfigured")
 
 
 if __name__ == "__main__":
