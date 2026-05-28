@@ -2,18 +2,15 @@
 
 ## Purpose
 
-This document records the evaluation decision for Issue #31: whether MP3, M4A, MP4, and WEBM duration validation should be added to the lightweight default upload path.
-
-This is a design and evaluation document only. It does not implement non-WAV duration probing by itself.
+This document records the evaluation decision for Issue #31 and the follow-up hardening implementation for Issue #75: whether MP3, M4A, MP4, and WEBM duration validation should be added to the lightweight default upload path.
 
 ## Background
 
-The audio intake path currently has two layers of protection:
+The audio intake path has these protection layers:
 
 - A byte-size upload limit for all supported audio formats.
-- A WAV duration limit implemented with Python stdlib `wave` in #28.
-
-The remaining question is whether non-WAV formats should also be duration-checked by default.
+- A WAV duration limit implemented with Python stdlib `wave`.
+- Optional non-WAV duration validation through `ffprobe` when explicitly enabled.
 
 Supported non-WAV extensions currently include:
 
@@ -24,14 +21,22 @@ Supported non-WAV extensions currently include:
 
 ## Current Decision
 
-Do not add MP3/M4A/MP4/WEBM duration probing to the lightweight default path yet.
+Keep the default path dependency-light, but allow deployment hardening with optional `ffprobe` duration probing.
 
-Keep the current default behavior:
+Default behavior:
 
 1. Validate supported extension and content type where available.
 2. Enforce the audio byte-size limit.
 3. Validate WAV duration using Python stdlib `wave`.
-4. Leave non-WAV duration validation as an opt-in deployment hardening decision.
+4. Leave MP3/M4A/MP4/WEBM duration probing disabled unless explicitly configured.
+
+Optional hardening behavior:
+
+```text
+IPU_AUDIO_DURATION_PROBER=ffprobe
+```
+
+When this setting is enabled, non-WAV uploads are written to a temporary file, probed with `ffprobe`, and rejected before STT if duration exceeds `MAX_AUDIO_DURATION_SECONDS`.
 
 ## Rationale
 
@@ -49,34 +54,33 @@ Adding that to the default path has costs:
 - More failure modes when the binary is missing or malformed media is uploaded.
 - Extra security and timeout considerations around spawning another external process.
 
-The project has intentionally kept heavy audio dependencies opt-in so far. Non-WAV probing should follow that same principle unless the deployment target requires it.
+The project keeps heavy audio dependencies opt-in. Optional non-WAV probing follows that same principle while allowing stronger deployment hardening before untrusted external-user testing.
 
 ## Options Considered
 
 ### Option A: Keep default path dependency-light
 
-Decision: selected for now.
+Decision: still selected as the default behavior.
 
 Behavior:
 
 - WAV duration is checked with stdlib `wave`.
-- MP3/M4A/MP4/WEBM keep byte-size validation only.
-- Operators who need stronger validation can enable media probing in a deployment-specific path later.
+- MP3/M4A/MP4/WEBM keep byte-size validation only unless `IPU_AUDIO_DURATION_PROBER=ffprobe` is set.
 
 Benefits:
 
 - Keeps default CI lightweight.
 - Avoids mandatory FFmpeg installation.
-- Avoids additional subprocess failure modes.
+- Avoids additional subprocess failure modes in local demos.
 - Preserves the existing opt-in philosophy for heavy audio processing.
 
 Tradeoff:
 
-- A non-WAV file under the byte-size limit may still be long in duration.
+- A non-WAV file under the byte-size limit may still be long in duration when the optional prober is disabled.
 
 ### Option B: Add `ffprobe` to the default path
 
-Decision: not selected for now.
+Decision: not selected for the default path.
 
 Behavior:
 
@@ -98,13 +102,13 @@ Costs:
 
 ### Option C: Add optional `ffprobe` probing behind configuration
 
-Decision: possible future direction.
+Decision: selected as the hardening path in #75.
 
 Behavior:
 
 - Keep default path dependency-light.
-- Add an environment flag such as `IPU_AUDIO_DURATION_PROBER=ffprobe` later.
-- Add optional requirements/setup docs only for deployments that need it.
+- Add `IPU_AUDIO_DURATION_PROBER=ffprobe` for deployments that need non-WAV duration validation.
+- Add subprocess timeout and clear missing-tool behavior.
 
 Benefits:
 
@@ -115,57 +119,44 @@ Benefits:
 Costs:
 
 - More configuration surface.
-- Requires separate tests and documentation.
-- Still needs subprocess timeout and missing-tool behavior.
+- Still needs optional setup guidance.
+- Default CI does not validate real FFmpeg integration unless opt-in smoke tests are added later.
 
-## Recommended Future Implementation
-
-If non-WAV duration probing is needed later, use Option C rather than adding FFmpeg tooling unconditionally.
-
-Recommended shape:
-
-- Add a small prober abstraction, for example `AudioDurationProber`.
-- Keep `WavDurationProber` as the default stdlib implementation for WAV.
-- Add optional `FfprobeDurationProber` only when explicitly enabled.
-- Apply subprocess timeout to `ffprobe` calls.
-- Map over-limit media to `ProcessingLimitExceededError` and HTTP 413.
-- Map missing `ffprobe` to a clear configuration/tooling error, not a silent pass.
-
-Potential environment setting:
+## Environment Setting
 
 ```text
-IPU_AUDIO_DURATION_PROBER=none|wav|ffprobe
+IPU_AUDIO_DURATION_PROBER=none|ffprobe
 ```
 
-Potential defaults:
+| Value | Behavior |
+| --- | --- |
+| unset / `none` / `disabled` | WAV duration is checked; non-WAV keeps byte-size validation only. |
+| `ffprobe` | MP3/M4A/MP4/WEBM duration is probed before STT. |
+
+Recommended defaults:
 
 | Environment | Recommended value | Notes |
 | --- | --- | --- |
-| Local default | `wav` | stdlib-only duration validation. |
-| CI default | `wav` | no FFmpeg dependency required. |
-| Controlled demo | `wav` | acceptable when sample files are known. |
+| Local default | unset / `none` | no FFmpeg dependency required. |
+| CI default | unset / `none` | no FFmpeg dependency required. |
+| Controlled demo | unset / `none` | acceptable when sample files are known. |
 | Untrusted external upload | `ffprobe` if available | stronger validation before STT. |
 
 ## Error Behavior
 
-Recommended status mapping if optional probing is implemented later:
-
-| Condition | Recommended status | Notes |
+| Condition | Status mapping | Notes |
 | --- | --- | --- |
-| Duration exceeds configured limit | 413 | Use `ProcessingLimitExceededError`. |
+| Duration exceeds configured limit | 413 | Uses `ProcessingLimitExceededError`. |
 | Audio file exceeds byte limit | 413 | Existing behavior. |
 | Unsupported extension | 415 | Existing behavior. |
-| Malformed WAV | 400 or existing validation error | Current WAV path raises a clear parsing error. |
-| Missing optional `ffprobe` when required | 501 or 500-level configuration error | Depends on whether the mode is user-triggered or deployment-required. |
-| `ffprobe` timeout | 413 or 504 | Prefer processing-limit style only if treated as guardrail rejection. |
+| Malformed WAV | Existing validation error | Current WAV path raises a clear parsing error. |
+| Missing `ffprobe` when enabled | Existing validation error | Clear configuration/tooling error. |
+| `ffprobe` timeout | 413 | Treated as processing-limit style guardrail rejection. |
 
 ## Testing Strategy
 
-If optional `ffprobe` probing is implemented later:
-
 - Do not add large audio fixtures.
-- Use small generated or fake media files only when needed.
-- Prefer mocking subprocess output for unit tests.
+- Prefer mocking subprocess output for unit tests in follow-up work.
 - Test timeout behavior without invoking a real long-running process.
 - Keep real media probing smoke tests opt-in, similar to real Whisper smoke tests.
 - Do not require FFmpeg in the default CI path unless the project explicitly changes the default dependency policy.
@@ -174,24 +165,23 @@ If optional `ffprobe` probing is implemented later:
 
 For internal MVP and controlled demos:
 
-- Keep current WAV-only duration validation.
-- Keep MP3/M4A/MP4/WEBM duration probing deferred.
+- Keep WAV-only duration validation plus byte-size validation by default.
 - Prefer known short demo samples.
 
 Before untrusted external-user testing:
 
-- Decide whether optional `ffprobe` probing is required.
-- If required, implement it behind explicit configuration.
-- Add subprocess timeout and missing-tool behavior.
+- Enable `IPU_AUDIO_DURATION_PROBER=ffprobe`.
+- Ensure `ffprobe` is installed in the deployment image or host.
 - Keep default CI dependency-light unless there is a clear product reason to change it.
 
 ## Relationship to Other Issues
 
-- #31 tracks non-WAV audio duration probing.
+- #75 tracks optional non-WAV audio duration probing implementation.
+- #31 tracked the initial evaluation decision.
 - #30 tracks upload timeout and concurrency design.
 - #32 tracks broader compressed package inspection.
 - #20 remains separate because address detection has high false-positive risk and should not be mixed with upload guardrail work.
 
 ## Acceptance Status
 
-This document satisfies the evaluation-first requirement for #31. Implementation should be done in a separate PR only if a deployment mode needs non-WAV duration validation.
+The default path remains dependency-light, and optional `ffprobe` probing is available for deployments that need non-WAV duration validation.
