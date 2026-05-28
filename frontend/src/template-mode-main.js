@@ -1,6 +1,7 @@
 import { createTemplateFormPanel } from "./components/TemplateFormPanel.js";
 import { createTemplatePreviewPanel } from "./components/TemplatePreviewPanel.js";
 import { defaultTemplateCatalogKey, templateCatalog } from "./data/templateCatalog.js";
+import { escapeHtml } from "./utils/resultRendering.js";
 
 const app = document.querySelector("#app");
 
@@ -55,7 +56,7 @@ function render() {
         </div>
         <aside class="hero__session">
           <span class="hero__session-label">Current Template</span>
-          <strong class="hero__session-value">${state.template.id}</strong>
+          <strong class="hero__session-value">${escapeHtml(state.template.id)}</strong>
           <span class="hero__session-label">Document Type</span>
           <strong class="hero__session-value">${escapeHtml(state.template.meta.documentType)}</strong>
         </aside>
@@ -349,13 +350,6 @@ function normalizeSampleValue(type, value) {
   }
 
   return value;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }
 
 initialize();
