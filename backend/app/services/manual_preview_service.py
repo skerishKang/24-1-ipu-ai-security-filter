@@ -89,8 +89,9 @@ class ManualPreviewService:
         )
         self._upload_limiter = UploadConcurrencyLimiter(self.settings.upload_max_concurrency)
 
-    def build_preview(self, payload: ManualPreviewRequest) -> ManualPreviewResponse:
+    def build_preview(self, payload: ManualPreviewRequest, owner_hash: str = "dev-local") -> ManualPreviewResponse:
         session_id = self._create_session_id()
+        self.session_store.save_owner_hash(session_id, owner_hash)
         restore_token = self._create_restore_token(session_id)
         strategy = self._resolve_strategy(payload.policy)
         started_at = monotonic()
@@ -134,10 +135,13 @@ class ManualPreviewService:
 
         return self._build_response(engine_result, restore_token=restore_token)
 
-    def restore_preview(self, payload: ManualRestoreRequest) -> ManualRestoreResponse:
+    def restore_preview(self, payload: ManualRestoreRequest, owner_hash: str = "dev-local") -> ManualRestoreResponse:
         token_hash = self._hash_restore_token(payload.restore_token)
         if not self.session_store.verify_restore_token_hash(payload.session_id, token_hash):
             logger.warning("manual_preview_restore_denied session_id=%s", payload.session_id)
+            raise RestoreTokenError()
+        if not self.session_store.verify_owner_hash(payload.session_id, owner_hash):
+            logger.warning("manual_preview_restore_owner_denied session_id=%s", payload.session_id)
             raise RestoreTokenError()
 
         restored_text = self.engine.restore(
@@ -170,12 +174,14 @@ class ManualPreviewService:
         self,
         file: UploadFile,
         policy: PolicyName = "default",
+        owner_hash: str = "dev-local",
     ) -> ManualPreviewResponse:
         if not await self._upload_limiter.try_acquire():
             raise UploadConcurrencyExceededError(self.settings.upload_max_concurrency)
 
         try:
             session_id = self._create_session_id()
+            self.session_store.save_owner_hash(session_id, owner_hash)
             restore_token = self._create_restore_token(session_id)
             content_type = file.content_type or "text/plain"
             started_at = monotonic()
@@ -226,12 +232,14 @@ class ManualPreviewService:
         self,
         file: UploadFile,
         policy: PolicyName = "default",
+        owner_hash: str = "dev-local",
     ) -> ManualPreviewResponse:
         if not await self._upload_limiter.try_acquire():
             raise UploadConcurrencyExceededError(self.settings.upload_max_concurrency)
 
         try:
             session_id = self._create_session_id()
+            self.session_store.save_owner_hash(session_id, owner_hash)
             restore_token = self._create_restore_token(session_id)
             content_type = file.content_type or "application/octet-stream"
             started_at = monotonic()
