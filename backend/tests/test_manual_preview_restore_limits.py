@@ -13,7 +13,7 @@ from app.api.schemas.manual_preview import (
     MAX_RESTORE_TEXT_LENGTH,
     MAX_RESTORE_TOKEN_LENGTH,
 )
-from app.core.auth import hash_api_key, optional_auth_owner_hash
+from app.core.auth import derive_caller_identity, hash_api_key, optional_auth_owner_hash
 from app.core.exceptions import RestoreTokenError
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
@@ -155,7 +155,12 @@ class ManualPreviewRestoreLimitTest(unittest.IsolatedAsyncioTestCase):
         )
         request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(settings=settings)))
 
-        self.assertEqual(optional_auth_owner_hash(request, secret), settings.api_key_hash)
+        # Per-caller identity is derived from the raw key, not from the
+        # configured hash, so two distinct callers holding the same shared
+        # key get distinct owner scopes.
+        expected = derive_caller_identity(secret, expected_hash=settings.api_key_hash)
+        self.assertEqual(optional_auth_owner_hash(request, secret), expected)
+        self.assertNotEqual(expected, settings.api_key_hash)
 
         with self.assertRaises(HTTPException) as missing_ctx:
             optional_auth_owner_hash(request, None)
@@ -165,7 +170,7 @@ class ManualPreviewRestoreLimitTest(unittest.IsolatedAsyncioTestCase):
             optional_auth_owner_hash(request, "other-test-secret")
         self.assertEqual(wrong_ctx.exception.status_code, 403)
 
-    async def test_auth_dependency_preserves_dev_local_and_unconfigured_public_behavior(self) -> None:
+    async def test_auth_dependency_preserves_dev_local_behavior(self) -> None:
         dev_settings = SimpleNamespace(
             is_public_deployment=lambda: False,
             api_key_hash=None,
@@ -173,12 +178,27 @@ class ManualPreviewRestoreLimitTest(unittest.IsolatedAsyncioTestCase):
         dev_request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(settings=dev_settings)))
         self.assertEqual(optional_auth_owner_hash(dev_request, None), "dev-local")
 
+    async def test_auth_dependency_fails_closed_when_public_key_hash_missing(self) -> None:
+        # Public mode without IPU_API_KEY_HASH must NOT return a shared
+        # bucket. The startup guard in ``create_app`` is the primary line
+        # of defense; this asserts the runtime dep also fails closed.
         public_settings = SimpleNamespace(
             is_public_deployment=lambda: True,
             api_key_hash=None,
         )
         public_request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(settings=public_settings)))
-        self.assertEqual(optional_auth_owner_hash(public_request, None), "public-unconfigured")
+
+        with self.assertRaises(HTTPException) as ctx:
+            optional_auth_owner_hash(public_request, "any-key")
+        self.assertEqual(ctx.exception.status_code, 503)
+
+    async def test_derive_caller_identity_distinguishes_caller_keys(self) -> None:
+        # Two distinct API keys under the same configured hash should yield
+        # distinct caller identities.
+        salt = "0123456789abcdef" * 4
+        ident_a = derive_caller_identity("key-a", expected_hash=salt)
+        ident_b = derive_caller_identity("key-b", expected_hash=salt)
+        self.assertNotEqual(ident_a, ident_b)
 
 
 if __name__ == "__main__":

@@ -84,12 +84,19 @@ def validate_public_response_mode(deployment_env: str, manual_preview_response_m
 def validate_public_api_key_hash(deployment_env: str, api_key_hash: str | None) -> None:
     if deployment_env not in PUBLIC_DEPLOYMENT_ENVS:
         return
-    if api_key_hash:
-        return
-    raise MissingPublicApiKeyHashError(
-        "IPU_API_KEY_HASH must be set for public/ops deployments. "
-        f"deployment_env={deployment_env}"
-    )
+    if not api_key_hash:
+        raise MissingPublicApiKeyHashError(
+            "IPU_API_KEY_HASH must be set for public/ops deployments. "
+            f"deployment_env={deployment_env}"
+        )
+    # SHA-256 produces a 64-character hex digest. Operators that paste a
+    # different value (e.g. a raw key, or a value with whitespace) would
+    # cause a silent 403-for-everyone lockout; surface that at startup.
+    if len(api_key_hash) != 64 or not all(c in "0123456789abcdefABCDEF" for c in api_key_hash):
+        raise MissingPublicApiKeyHashError(
+            "IPU_API_KEY_HASH must be a 64-character SHA-256 hex digest. "
+            f"deployment_env={deployment_env}"
+        )
 
 
 def get_settings() -> BackendSettings:

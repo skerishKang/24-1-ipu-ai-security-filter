@@ -147,6 +147,8 @@ class ManualPreviewService:
         restored_text = self.engine.restore(
             content=payload.replaced_text,
             session_id=payload.session_id,
+            token=payload.restore_token,
+            owner_hash=owner_hash,
         )
         return ManualRestoreResponse(
             session_id=payload.session_id,

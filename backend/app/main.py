@@ -97,11 +97,18 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     validate_public_api_key_hash(settings.deployment_env, settings.api_key_hash)
+    # Hide the OpenAPI surface in non-dev deployments. ``/docs``, ``/redoc``
+    # and ``/openapi.json`` would otherwise leak field names, the API key
+    # header, and request constraints to anyone who can reach the server.
+    public = settings.is_public_deployment()
     app = FastAPI(
         title="IPU AI Firewall Backend",
         description="Manual mode security replacement workbench API",
         version="0.1.0",
         lifespan=lifespan,
+        docs_url=None if public else "/docs",
+        redoc_url=None if public else "/redoc",
+        openapi_url=None if public else "/openapi.json",
     )
 
     app.state.settings = settings
@@ -125,10 +132,15 @@ def create_app() -> FastAPI:
     @app.get("/")
     @limiter.limit("60/minute")
     async def root(request: Request) -> dict[str, str]:
-        return {"status": "running", "service": "ipu-ai-firewall-backend"}
+        return {"status": "running", "service": "ipu-ai-security-filter-backend"}
 
     @app.get("/health")
-    async def health() -> dict[str, str]:
+    @limiter.limit("60/minute")
+    async def health(request: Request) -> dict[str, str]:
+        # ``mode`` is informational and not used by any orchestrator; drop
+        # it in public mode so unauthenticated probes learn less.
+        if public:
+            return {"status": "ok"}
         return {"status": "healthy", "mode": "manual-preview"}
 
     app.include_router(api_router)

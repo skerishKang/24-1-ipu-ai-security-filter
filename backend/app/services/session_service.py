@@ -13,6 +13,10 @@ class SessionHistoryUnavailableError(Exception):
     pass
 
 
+class SessionOwnershipError(Exception):
+    """Raised when a caller requests a session they do not own."""
+
+
 class SessionService:
     def __init__(self) -> None:
         settings = get_settings()
@@ -30,11 +34,25 @@ class SessionService:
             ttl_seconds=self._settings.session_ttl_seconds,
         )
 
-    def list_sessions(self, limit: int = 50) -> list[dict]:
-        return self._store.list_sessions(limit=limit)
+    def list_sessions(self, limit: int = 50, owner_hash: str = "dev-local") -> list[dict]:
+        # Filter at the service layer: only return sessions owned by the caller.
+        # ``owner_hash`` is supplied by the auth dependency; in dev mode it is
+        # always ``"dev-local"``.
+        all_sessions = self._store.list_sessions(limit=limit)
+        return [
+            s
+            for s in all_sessions
+            if self._store.verify_owner_hash(s["session_id"], owner_hash)
+        ]
 
-    def get_session_metadata(self, session_id: str) -> dict | None:
+    def get_session_metadata(
+        self, session_id: str, owner_hash: str = "dev-local"
+    ) -> dict | None:
+        if not self._store.verify_owner_hash(session_id, owner_hash):
+            return None
         return self._store.get_session_metadata(session_id)
 
-    def get_mappings(self, session_id: str) -> list:
+    def get_mappings(self, session_id: str, owner_hash: str = "dev-local") -> list:
+        if not self._store.verify_owner_hash(session_id, owner_hash):
+            raise SessionOwnershipError(session_id)
         return self._store.get_mappings(session_id)
