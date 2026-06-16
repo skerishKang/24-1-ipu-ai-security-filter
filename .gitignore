@@ -10,7 +10,6 @@ __pycache__/
 venv/
 .venv*/
 *.venv*/
-backend/DdriveBatangDtaskworkdiary24-1-ipu-ai-firewallbackend.venv-win/
 *.egg-info/
 
 # Node / browser test artifacts

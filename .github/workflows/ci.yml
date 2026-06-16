@@ -64,10 +64,14 @@ jobs:
             tests.test_manual_preview_api \
             tests.test_manual_preview_local_rewrite_api \
             tests.test_manual_preview_restore_limits \
+            tests.test_manual_preview_response_mode \
             tests.test_upload_guardrails \
+            tests.test_upload_concurrent_requests \
+            tests.test_upload_streaming_read_guard \
             tests.test_file_parser \
             tests.test_audio_duration_prober \
-            tests.test_parser_limit_coverage
+            tests.test_parser_limit_coverage \
+            tests.test_pdf_quality_samples
 
       - name: Install frontend smoke dependencies
         working-directory: frontend

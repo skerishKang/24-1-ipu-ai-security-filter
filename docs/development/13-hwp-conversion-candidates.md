@@ -65,7 +65,7 @@
 현재 저장소에는 변환 도구 존재 여부를 빠르게 확인하는 스크립트를 추가했다.
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter
 python3 scripts/probe_hwp_conversion_tools.py
 python3 scripts/probe_hwp_conversion_tools.py --json
 ```

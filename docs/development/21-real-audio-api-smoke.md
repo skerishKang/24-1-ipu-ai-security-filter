@@ -13,7 +13,7 @@
 ## 실행
 
 ```bash
-cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-firewall
+cd /mnt/g/Ddrive/BatangD/task/workdiary/24-1-ipu-ai-security-filter
 python3 scripts/run_real_whisper_api_smoke.py
 ```
 
