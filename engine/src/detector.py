@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -17,6 +18,55 @@ from engine.src.detector_patterns import (
     STRICT_BARE_NAME_PARTICLES,
     STRICT_OBFUSCATED_EMAIL_PATTERN,
 )
+
+# Zero-width / format characters an attacker can insert to break regex matching.
+_INVISIBLE_CODEPOINT_PATTERN = re.compile(
+    "[​-‏﻿⁠­͏؜ᅟᅠ឴឵᠎]"
+)
+
+
+def _normalize_text(content: str) -> tuple[str, list[int]]:
+    """Normalize Unicode while keeping a position map back to the original.
+
+    Returns ``(normalized_text, position_map)`` where ``position_map[norm_pos]``
+    is the original index of the character at ``norm_pos``. Characters that are
+    invisible / format-only (zero-width space, soft hyphen, etc.) are dropped.
+    Other characters are NFKC-normalized, so e.g. ``"０"`` (U+FF10) collapses
+    to ``"0"`` and ligatures decompose.
+
+    This defeats the most common evasion classes:
+    * fullwidth digits splitting ``\d`` patterns
+    * zero-width spaces splitting a PII token into fragments
+    * soft hyphens and other invisible boundaries
+    """
+    if not content:
+        return content, []
+
+    normalized_chars: list[str] = []
+    position_map: list[int] = []
+    for orig_pos, ch in enumerate(content):
+        if _INVISIBLE_CODEPOINT_PATTERN.match(ch):
+            continue
+        for sub_ch in unicodedata.normalize("NFKC", ch):
+            position_map.append(orig_pos)
+            normalized_chars.append(sub_ch)
+    return "".join(normalized_chars), position_map
+
+
+def _luhn_check(digits: str) -> bool:
+    """Return True if ``digits`` passes the Luhn check (credit card / IMEI / etc.)."""
+    if not digits or not digits.isdigit():
+        return False
+    total = 0
+    parity = len(digits) % 2
+    for index, char in enumerate(digits):
+        digit = int(char)
+        if index % 2 == parity:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        total += digit
+    return total % 10 == 0
 
 
 @dataclass(frozen=True)
@@ -35,10 +85,17 @@ class DetectionCandidate:
     reason: str
     priority: int
 
+    # ``original_label`` is what the user originally typed (preserved even after
+    # Unicode normalization that may have changed the match text). When labels
+    # come from the original content (e.g. email regex) this is the same as
+    # ``label``. Bare-format PII detections fall back to the normalized form.
+    original_label: str = ""
+
 
 class RegexDetector:
     def __init__(self) -> None:
         self._patterns = self._build_patterns()
+        self._bare_format_patterns = self._build_bare_format_patterns()
 
     def detect(
         self,
@@ -49,16 +106,22 @@ class RegexDetector:
         if content_type != "text":
             return []
 
+        # Normalize once: NFKC + zero-width strip defeats the most common
+        # evasion classes (fullwidth digits, zero-width space splits, soft hyphens).
+        normalized, position_map = _normalize_text(content)
+
         return [
             Detection(
                 type=candidate.type,
-                label=candidate.label,
+                label=candidate.original_label or candidate.label,
                 start=candidate.start,
                 end=candidate.end,
                 score=self._score_for_policy(policy),
                 note=self._note_for_policy(candidate.reason, policy),
             )
-            for candidate in self._select_non_overlapping(self._find_candidates(content, policy))
+            for candidate in self._select_non_overlapping(
+                self._find_candidates(normalized, position_map, content, policy)
+            )
         ]
 
     def _build_patterns(self) -> list[DetectionPattern]:
@@ -238,35 +301,152 @@ class RegexDetector:
             ),
         ]
 
-    def _find_candidates(self, content: str, policy: str) -> list[DetectionCandidate]:
+    def _build_bare_format_patterns(self) -> list[DetectionPattern]:
+        """Patterns that catch PII presented *without* a Korean/English label.
+
+        These are noisier (false-positive risk) so they are only consulted when
+        the policy is ``strict_token`` or ``local_rewrite``. They protect against
+        the obvious bypass: an attacker drops the label and ships the raw value.
+
+        Order matters: more specific shapes run first so the non-overlap
+        selection picks the right type when two patterns could match the same
+        span (e.g. Korean RRN vs Foreign RRN).
+        """
+        return [
+            # Foreign registration number: same shape as RRN, post-hyphen digit
+            # 5-8 indicates a foreign resident. Tried first so it wins over the
+            # generic RRN pattern.
+            DetectionPattern(
+                type="FOREIGN_REGISTRATION_NUMBER",
+                regex=re.compile(
+                    r"(?<!\d)(?:\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))"
+                    r"[-\s][5678]\d{6}(?!\d)"
+                ),
+                reason="라벨 없는 외국인등록번호 형식",
+            ),
+            # Resident registration number: post-hyphen digit 1-4 (1900-1999) or
+            # 9 (1800-1899 / 2000+ Korean nationals). Foreign-resident 5-8 range
+            # is excluded here and handled by the FOREIGN pattern above.
+            DetectionPattern(
+                type="RESIDENT_REGISTRATION_NUMBER",
+                regex=re.compile(
+                    r"(?<!\d)(?:\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))"
+                    r"[-\s][12349]\d{6}(?!\d)"
+                ),
+                reason="라벨 없는 주민등록번호 형식",
+            ),
+            # Credit card numbers: 13-19 digit groups, validated by Luhn.
+            DetectionPattern(
+                type="CARD_NUMBER",
+                regex=re.compile(
+                    r"(?<!\d)(?:\d{4}[-\s]\d{4}[-\s]\d{4}[-\s]\d{4}"
+                    r"|\d{4}[-\s]\d{6}[-\s]\d{4,5}"
+                    r"|\d{15,19})(?!\d)"
+                ),
+                reason="라벨 없는 카드번호 형식",
+            ),
+            # API key: prefix ``sk-``, ``pk-``, ``gho_`` (GitHub), ``xoxb-`` (Slack),
+            # or AWS access key pattern.
+            DetectionPattern(
+                type="API_KEY",
+                regex=re.compile(
+                    r"(?<![A-Za-z0-9])(?:sk-[A-Za-z0-9]{20,}|pk-[A-Za-z0-9]{20,}"
+                    r"|gho_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{20,}"
+                    r"|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,})(?![\w-])"
+                ),
+                reason="라벨 없는 API 키 형식",
+            ),
+            # Bare-format account number: 3+ groups of 2-6 digits separated by
+            # hyphens or spaces. The labelled pattern requires a Korean/English
+            # prefix; this catches the obvious "drop the label" bypass.
+            DetectionPattern(
+                type="ACCOUNT_NUMBER",
+                regex=re.compile(
+                    r"(?<!\d)\d{2,6}[-\s]\d{2,6}[-\s]\d{2,6}(?:\d{2,6})?(?!\d)"
+                ),
+                reason="라벨 없는 계좌번호 형식",
+            ),
+        ]
+
+    def _find_candidates(
+        self,
+        normalized: str,
+        position_map: list[int],
+        original: str,
+        policy: str,
+    ) -> list[DetectionCandidate]:
         candidates: list[DetectionCandidate] = []
         for priority, pattern in enumerate(self._patterns):
             if not self._is_enabled_for_policy(pattern.type, policy):
                 continue
-            for match in pattern.regex.finditer(content):
+            for match in pattern.regex.finditer(normalized):
                 label = match.group(0).strip()
                 if not self._is_valid_candidate(pattern.type, label):
+                    continue
+                orig_start, orig_end = self._remap_span(
+                    position_map, match.start(), match.end()
+                )
+                original_label = original[orig_start:orig_end]
+                if not self._is_valid_candidate(pattern.type, original_label):
                     continue
                 candidates.append(
                     DetectionCandidate(
                         type=pattern.type,
                         label=label,
-                        start=match.start(),
-                        end=match.end(),
+                        start=orig_start,
+                        end=orig_end,
                         reason=pattern.reason,
                         priority=priority,
+                        original_label=original_label,
                     )
                 )
-        if policy == "strict_token":
-            candidates.extend(self._find_strict_person_candidates(content, len(self._patterns)))
-            candidates.extend(self._find_strict_obfuscated_email_candidates(content, len(self._patterns) + 1))
+        if policy in {"strict_token", "local_rewrite"}:
+            candidates.extend(
+                self._find_strict_person_candidates(
+                    normalized, position_map, original, len(self._patterns)
+                )
+            )
+            candidates.extend(
+                self._find_strict_obfuscated_email_candidates(
+                    normalized, position_map, original, len(self._patterns) + 1
+                )
+            )
+            candidates.extend(
+                self._find_bare_format_candidates(
+                    normalized, position_map, original, len(self._patterns) + 2
+                )
+            )
         return candidates
+
+    def _remap_span(
+        self,
+        position_map: list[int],
+        norm_start: int,
+        norm_end: int,
+    ) -> tuple[int, int]:
+        """Map a normalized-text span back to the original text span.
+
+        ``norm_end`` is exclusive. We expand to include the last mapped character
+        so that decomposition-expanded matches (e.g. NFKC that split one char
+        into many) still recover the full original span.
+        """
+        if not position_map:
+            return norm_start, norm_end
+        orig_start = position_map[norm_start]
+        last_norm_index = norm_end - 1
+        if last_norm_index >= len(position_map):
+            last_norm_index = len(position_map) - 1
+        orig_end = position_map[last_norm_index] + 1
+        return orig_start, orig_end
 
     def _is_valid_candidate(self, detection_type: str, label: str) -> bool:
         if detection_type == "ORG":
             return self._is_valid_org_candidate(label)
         if detection_type == "PERSON":
             return self._is_valid_person_candidate(label)
+        if detection_type == "CARD_NUMBER":
+            digits = re.sub(r"\D", "", label)
+            return 13 <= len(digits) <= 19 and _luhn_check(digits)
         return True
 
     def _is_valid_person_candidate(self, label: str) -> bool:
@@ -346,7 +526,6 @@ class RegexDetector:
         # If no suffix, reject common document/email phrases
         parts = label.split()
         if len(parts) >= 2:
-            # Avoid document titles, email subjects, common phrases
             common_phrases = {
                 "project report", "meeting notes", "meeting summary", "weekly update",
                 "quarterly report", "annual report", "sales report", "financial report",
@@ -364,50 +543,99 @@ class RegexDetector:
             }
             if label_lower in common_phrases:
                 return False
-            # Also reject if starts with common words
             for phrase in common_phrases:
                 if label_lower.startswith(phrase + " ") or label_lower.startswith("re: " + phrase):
                     return False
 
         return False
 
-    def _find_strict_person_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
+    def _find_strict_person_candidates(
+        self,
+        normalized: str,
+        position_map: list[int],
+        original: str,
+        priority: int,
+    ) -> list[DetectionCandidate]:
         particles = "|".join(re.escape(item) for item in sorted(STRICT_BARE_NAME_PARTICLES, key=len, reverse=True))
         regex = re.compile(
             rf"(?<![가-힣])([가-힣]{{2,4}})(?=(?:{particles}))"
         )
 
         candidates: list[DetectionCandidate] = []
-        for match in regex.finditer(content):
+        for match in regex.finditer(normalized):
             label = match.group(1)
             if not self._is_valid_person_candidate(label):
+                continue
+            orig_start, orig_end = self._remap_span(position_map, match.start(1), match.end(1))
+            original_label = original[orig_start:orig_end]
+            if not self._is_valid_person_candidate(original_label):
                 continue
             candidates.append(
                 DetectionCandidate(
                     type="PERSON",
                     label=label,
-                    start=match.start(1),
-                    end=match.end(1),
+                    start=orig_start,
+                    end=orig_end,
                     reason="직함 없는 실명 문맥 보강",
                     priority=priority,
+                    original_label=original_label,
                 )
             )
         return candidates
 
-    def _find_strict_obfuscated_email_candidates(self, content: str, priority: int) -> list[DetectionCandidate]:
+    def _find_strict_obfuscated_email_candidates(
+        self,
+        normalized: str,
+        position_map: list[int],
+        original: str,
+        priority: int,
+    ) -> list[DetectionCandidate]:
         candidates: list[DetectionCandidate] = []
-        for match in STRICT_OBFUSCATED_EMAIL_PATTERN.finditer(content):
+        for match in STRICT_OBFUSCATED_EMAIL_PATTERN.finditer(normalized):
             label = match.group(0).strip()
+            orig_start, orig_end = self._remap_span(position_map, match.start(), match.end())
+            original_label = original[orig_start:orig_end]
             candidates.append(
                 DetectionCandidate(
                     type="EMAIL",
                     label=label,
-                    start=match.start(),
-                    end=match.end(),
+                    start=orig_start,
+                    end=orig_end,
                     reason="변형 이메일 표기까지 보수적으로 보호",
                     priority=priority,
+                    original_label=original_label,
                 )
             )
+        return candidates
+
+    def _find_bare_format_candidates(
+        self,
+        normalized: str,
+        position_map: list[int],
+        original: str,
+        priority: int,
+    ) -> list[DetectionCandidate]:
+        candidates: list[DetectionCandidate] = []
+        for pattern in self._bare_format_patterns:
+            for match in pattern.regex.finditer(normalized):
+                label = match.group(0)
+                if not self._is_valid_candidate(pattern.type, label):
+                    continue
+                orig_start, orig_end = self._remap_span(position_map, match.start(), match.end())
+                original_label = original[orig_start:orig_end]
+                if not self._is_valid_candidate(pattern.type, original_label):
+                    continue
+                candidates.append(
+                    DetectionCandidate(
+                        type=pattern.type,
+                        label=label,
+                        start=orig_start,
+                        end=orig_end,
+                        reason=pattern.reason,
+                        priority=priority,
+                        original_label=original_label,
+                    )
+                )
         return candidates
 
     def _select_non_overlapping(

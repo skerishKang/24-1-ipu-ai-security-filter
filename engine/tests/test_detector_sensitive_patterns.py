@@ -79,11 +79,13 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         )
         self.assertIn("RESIDENT_REGISTRATION_NUMBER", [item.type for item in detections])
 
+        # Bare format is also caught: the post-hyphen "1" is a Korean RRN
+        # (1900-1999 male) which the bare-format pattern picks up.
         no_prefix = self.detector.detect(
             "990101-1234567 은 테스트용 가짜 값입니다.",
             policy="strict_token",
         )
-        self.assertNotIn("RESIDENT_REGISTRATION_NUMBER", [item.type for item in no_prefix])
+        self.assertIn("RESIDENT_REGISTRATION_NUMBER", [item.type for item in no_prefix])
 
     def test_strict_detects_foreign_registration_number(self) -> None:
         detections = self.detector.detect(
@@ -92,11 +94,13 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         )
         self.assertIn("FOREIGN_REGISTRATION_NUMBER", [item.type for item in detections])
 
+        # Bare format: post-hyphen "5" is the foreign-resident range, which
+        # the FOREIGN bare-format pattern catches before the generic RRN.
         no_prefix = self.detector.detect(
             "990101-5234567 은 테스트용 가짜 값입니다.",
             policy="strict_token",
         )
-        self.assertNotIn("FOREIGN_REGISTRATION_NUMBER", [item.type for item in no_prefix])
+        self.assertIn("FOREIGN_REGISTRATION_NUMBER", [item.type for item in no_prefix])
 
     def test_strict_detects_card_number(self) -> None:
         detections = self.detector.detect(
@@ -105,11 +109,13 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         )
         self.assertIn("CARD_NUMBER", [item.type for item in detections])
 
-        no_prefix = self.detector.detect(
+        # Bare (no-prefix) format is also caught under strict_token. The
+        # Luhn-validated 4111-1111-1111-1111 is a known test card.
+        bare = self.detector.detect(
             "4111-1111-1111-1111 은 테스트용 가짜 값입니다.",
             policy="strict_token",
         )
-        self.assertNotIn("CARD_NUMBER", [item.type for item in no_prefix])
+        self.assertIn("CARD_NUMBER", [item.type for item in bare])
 
     def test_default_does_not_detect_id_number_or_card_types(self) -> None:
         detections = self.detector.detect(
@@ -128,11 +134,13 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         )
         self.assertIn("ACCOUNT_NUMBER", [item.type for item in detections])
 
-        no_prefix = self.detector.detect(
+        # Bare account number (3 groups separated by hyphens) is caught under
+        # strict_token as a defense against label-stripped bypass attempts.
+        bare = self.detector.detect(
             "123-456-789012 은 테스트용 가짜 값입니다.",
             policy="strict_token",
         )
-        self.assertNotIn("ACCOUNT_NUMBER", [item.type for item in no_prefix])
+        self.assertIn("ACCOUNT_NUMBER", [item.type for item in bare])
 
     def test_strict_detects_vehicle_registration_number(self) -> None:
         detections = self.detector.detect(
@@ -141,11 +149,14 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         )
         self.assertIn("VEHICLE_REGISTRATION_NUMBER", [item.type for item in detections])
 
-        no_prefix = self.detector.detect(
+        # Vehicle plate shape without a label is rare; we do not catch it as
+        # bare-format because it produces too many false positives. The
+        # labelled detection still works.
+        bare = self.detector.detect(
             "123가4567 은 테스트용 가짜 값입니다.",
             policy="strict_token",
         )
-        self.assertNotIn("VEHICLE_REGISTRATION_NUMBER", [item.type for item in no_prefix])
+        self.assertNotIn("VEHICLE_REGISTRATION_NUMBER", [item.type for item in bare])
 
     def test_default_does_not_detect_account_or_vehicle_types(self) -> None:
         detections = self.detector.detect(
@@ -155,6 +166,48 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         types = {item.type for item in detections}
         self.assertNotIn("ACCOUNT_NUMBER", types)
         self.assertNotIn("VEHICLE_REGISTRATION_NUMBER", types)
+
+    def test_bare_format_detects_resident_registration_number(self) -> None:
+        # No prefix label: defense against the most common bypass.
+        bare = self.detector.detect(
+            "990101-1234567",
+            policy="strict_token",
+        )
+        self.assertIn("RESIDENT_REGISTRATION_NUMBER", [item.type for item in bare])
+
+    def test_bare_format_detects_foreign_registration_number(self) -> None:
+        bare = self.detector.detect(
+            "990101-5234567",
+            policy="strict_token",
+        )
+        self.assertIn("FOREIGN_REGISTRATION_NUMBER", [item.type for item in bare])
+
+    def test_bare_format_does_not_detect_under_default_policy(self) -> None:
+        # Bare-format fallback only activates under strict_token / local_rewrite.
+        bare = self.detector.detect(
+            "990101-1234567",
+            policy="default",
+        )
+        self.assertEqual([item.type for item in bare], [])
+
+    def test_unicode_normalization_catches_zero_width_email(self) -> None:
+        # Without normalization, the email regex would split on the zero-width
+        # space and miss the value. After NFKC + zero-width stripping, the
+        # email is detected.
+        obfuscated = "sec​urity@ipu.co.kr"
+        detections = self.detector.detect(obfuscated, policy="strict_token")
+        self.assertTrue(
+            any(item.type == "EMAIL" for item in detections),
+            f"expected EMAIL detection for obfuscated input, got {[item.type for item in detections]}",
+        )
+
+    def test_unicode_normalization_catches_fullwidth_phone(self) -> None:
+        obfuscated = "전화 ０１０-１２３４-５６７８ 로 주세요."
+        detections = self.detector.detect(obfuscated, policy="strict_token")
+        self.assertTrue(
+            any(item.type == "PHONE" for item in detections),
+            f"expected PHONE detection for fullwidth input, got {[item.type for item in detections]}",
+        )
 
 
 if __name__ == "__main__":

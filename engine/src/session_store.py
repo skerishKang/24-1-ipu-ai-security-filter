@@ -321,6 +321,26 @@ class SQLiteSessionStore:
     def _prepare_storage_path(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._chmod_if_supported(self._db_path.parent, SQLITE_SESSION_DIR_MODE)
+        # Pre-create the DB file with the correct mode so the umask window
+        # between ``sqlite3.connect`` (which creates the file with the
+        # process umask, typically ``0o644`` world-readable) and the post-
+        # init ``chmod`` is closed. ``O_CREAT | O_EXCL`` is a no-op when the
+        # file already exists, so re-opening an existing store is safe.
+        if not self._db_path.exists() and os.name != "nt":
+            try:
+                fd = os.open(
+                    self._db_path,
+                    os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                    SQLITE_SESSION_FILE_MODE,
+                )
+                os.close(fd)
+            except FileExistsError:
+                pass
+            except OSError:
+                # Best-effort: if we cannot pre-create the file we still try
+                # to connect, the post-init chmod will still tighten the
+                # permissions on POSIX.
+                pass
 
     def _initialize(self) -> None:
         with self._connect() as conn:

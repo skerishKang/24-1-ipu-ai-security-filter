@@ -1,11 +1,23 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 
 from engine.src.local_rewriter import OllamaLocalRewriter
 from engine.src.manual_preview_engine import ManualPreviewEngine
 from engine.tests.rewrite_comparison_samples import REWRITE_COMPARISON_SAMPLES
+
+
+def _arm_restore_auth(session_store, session_id: str, *, owner_hash: str = "test-owner") -> str:
+    """Helper: register owner + restore token for a session and return the raw token."""
+    token = f"test-token-{session_id}"
+    session_store.save_owner_hash(session_id, owner_hash)
+    session_store.save_restore_token_hash(
+        session_id,
+        hashlib.sha256(token.encode("utf-8")).hexdigest(),
+    )
+    return token
 
 
 class FakeClient:
@@ -53,7 +65,13 @@ class LocalRewriteComparisonTest(unittest.TestCase):
             policy="local_rewrite",
         )
 
-        restored = self.engine.restore(preview["replaced_text"], "local-rewrite-restore")
+        token = _arm_restore_auth(self.engine.session_store, "local-rewrite-restore")
+        restored = self.engine.restore(
+            preview["replaced_text"],
+            "local-rewrite-restore",
+            token=token,
+            owner_hash="test-owner",
+        )
 
         self.assertEqual(restored, sample.content)
 

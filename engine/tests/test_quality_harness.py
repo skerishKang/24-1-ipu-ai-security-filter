@@ -1,9 +1,20 @@
 from __future__ import annotations
 
+import hashlib
 import unittest
 
 from engine.src.manual_preview_engine import ManualPreviewEngine
 from engine.tests.quality_samples import QUALITY_SAMPLES
+
+
+def _arm_restore_auth(session_store, session_id: str, *, owner_hash: str = "test-owner") -> str:
+    token = f"test-token-{session_id}"
+    session_store.save_owner_hash(session_id, owner_hash)
+    session_store.save_restore_token_hash(
+        session_id,
+        hashlib.sha256(token.encode("utf-8")).hexdigest(),
+    )
+    return token
 
 
 class ManualPreviewQualityHarnessTest(unittest.TestCase):
@@ -107,7 +118,13 @@ class ManualPreviewQualityHarnessTest(unittest.TestCase):
             session_id="quality-restore-roundtrip",
             policy="strict_token",
         )
-        restored = self.engine.restore(preview["replaced_text"], "quality-restore-roundtrip")
+        token = _arm_restore_auth(self.engine.session_store, "quality-restore-roundtrip")
+        restored = self.engine.restore(
+            preview["replaced_text"],
+            "quality-restore-roundtrip",
+            token=token,
+            owner_hash="test-owner",
+        )
 
         self.assertEqual(restored, sample.content)
 

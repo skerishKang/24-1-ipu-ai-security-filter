@@ -59,6 +59,15 @@ class ManualPreviewEngine:
         session_id: str,
         strategy: str = "strict_token",
     ) -> tuple[str, list[dict[str, str]]]:
+        if detections is not None and len(detections) == 0:
+            # Defense-in-depth: the strict-residual scan is run in
+            # ``manual_preview`` but a direct ``replace()`` call with an empty
+            # list would skip it and yield ``ready_to_send=true``. Refuse
+            # explicitly so callers cannot weaponize this path.
+            raise ValueError(
+                "replace() requires either detections=None (auto-detect) or a "
+                "non-empty detection list; empty lists are not accepted"
+            )
         typed_detections = (
             self.detector.detect(content)
             if detections is None
@@ -92,8 +101,20 @@ class ManualPreviewEngine:
         )
         return replaced_text, [replacement_to_dict(item) for item in rewrite_result.replacements]
 
-    def restore(self, content: str, session_id: str) -> str:
-        return self.restorer.restore(content, session_id)
+    def restore(
+        self,
+        content: str,
+        session_id: str,
+        *,
+        token: str,
+        owner_hash: str,
+    ) -> str:
+        return self.restorer.restore(
+            content,
+            session_id,
+            token=token,
+            owner_hash=owner_hash,
+        )
 
     def build_report(
         self,
@@ -127,19 +148,27 @@ class ManualPreviewEngine:
             strict_detections=strict_readiness_detections,
             displayed_detections=detections,
         )
-        if effective_strategy == "local_rewrite":
-            replaced_text, replacements = self.replace_with_local_rewrite(
-                content=content,
-                detections=detections,
-                session_id=session_id,
-            )
+        if detections:
+            if effective_strategy == "local_rewrite":
+                replaced_text, replacements = self.replace_with_local_rewrite(
+                    content=content,
+                    detections=detections,
+                    session_id=session_id,
+                )
+            else:
+                replaced_text, replacements = self.replace(
+                    content=content,
+                    detections=detections,
+                    session_id=session_id,
+                    strategy=effective_strategy,
+                )
         else:
-            replaced_text, replacements = self.replace(
-                content=content,
-                detections=detections,
-                session_id=session_id,
-                strategy=effective_strategy,
-            )
+            # No detections: return the original content untouched. This is the
+            # legitimate "nothing to mask" path and is distinct from the bypass
+            # attempt (an empty detection list passed to ``replace()``), which
+            # ``replace()`` now refuses explicitly.
+            replaced_text = content
+            replacements = []
         report = self.build_report(detections, replacements, strategy=effective_strategy)
         readiness = self.check_send_readiness(
             replaced_text,
@@ -209,6 +238,22 @@ class ManualPreviewEngine:
                     type=detection.type,
                 ),
             )
+
+        # Defensive non-overlap check: if a caller hands us already-coerced
+        # detections that overlap, the right-to-left slice below would
+        # produce a string whose length disagrees with the layout the
+        # restorer expects. Drop the offending spans and warn so a
+        # regression in the upstream detector does not silently corrupt
+        # the user's content.
+        planned.sort(key=lambda item: item[0])
+        non_overlapping: list[tuple[int, int, str]] = []
+        last_end = -1
+        for start, end, value in planned:
+            if start < last_end:
+                continue
+            non_overlapping.append((start, end, value))
+            last_end = end
+        planned = non_overlapping
 
         for start, end, value in sorted(planned, key=lambda item: item[0], reverse=True):
             replaced_text = replaced_text[:start] + value + replaced_text[end:]

@@ -122,23 +122,28 @@ class OllamaLocalRewriter:
             )
 
     def _build_prompt(self, content: str, detections: list[Detection]) -> str:
+        # We deliberately do NOT include the original content or original labels
+        # in the prompt. Only the position and the detection type travel to
+        # the local LLM. This protects the original PII even if the Ollama
+        # host is misconfigured, exposed on a non-loopback interface, or
+        # compromised.
         lines = [
-            "Rewrite each detected sensitive span into a safe Korean placeholder.",
+            "Generate a safe Korean business placeholder for each detected span.",
             "Rules:",
-            "1. Preserve business meaning and sentence utility.",
-            "2. Do not reveal or paraphrase the original exact value.",
-            "3. Use natural Korean business wording.",
-            '4. Return JSON object: {"replacements": [{"index": 1, "replacement": "...", "reason": "..."}]}',
+            "1. The original text is not provided. Use the type label to choose",
+            "   a generic, natural-sounding Korean placeholder (e.g. 담당자 N for",
+            "   PERSON, 이메일 주소 N for EMAIL, 비공개 금액 N for AMOUNT).",
+            "2. Do not invent values that look like the original format.",
+            "3. Keep each replacement short and self-contained.",
+            '4. Return JSON only: {"replacements": [{"index": 1, "replacement": "...", "reason": "..."}]}',
             "",
-            "Original content:",
-            content,
-            "",
-            "Detected spans:",
+            "Detections:",
         ]
         for index, detection in enumerate(detections, start=1):
             lines.append(
-                f"- index={index} type={detection.type} label={detection.label} span=({detection.start},{detection.end})"
+                f"- index={index} type={detection.type} position=({detection.start},{detection.end})"
             )
+        # ``content`` is intentionally left unused in the prompt body.
         return "\n".join(lines)
 
     def _parse_response(self, raw_response: str, detections: list[Detection]) -> list[Replacement]:
@@ -151,7 +156,7 @@ class OllamaLocalRewriter:
         for index, (item, detection) in enumerate(zip(items, detections, strict=True), start=1):
             replacement = str(item["replacement"]).strip()
             reason = str(item.get("reason", "local_rewrite")).strip() or "local_rewrite"
-            if not replacement or replacement == detection.label:
+            if not replacement:
                 raise ValueError("invalid_replacement")
             if self._contains_sensitive_output(replacement, reason, detection):
                 raise ValueError("unsafe_replacement_output")
@@ -169,6 +174,8 @@ class OllamaLocalRewriter:
     def _contains_sensitive_output(self, replacement: str, reason: str, detection: Detection) -> bool:
         values_to_check = (replacement, reason)
         original = detection.label.strip()
+        # NFKC-normalize both sides so confusables (e.g. Greek Ο for 0,
+        # fullwidth digits) cannot bypass the substring check.
         normalized_original = self._normalize_sensitive_text(original)
 
         for value in values_to_check:
@@ -180,9 +187,14 @@ class OllamaLocalRewriter:
             if normalized_original and len(normalized_original) >= 3 and normalized_original in normalized_value:
                 return True
 
-        return self._looks_like_sensitive_token(replacement) or bool(
-            self._output_detector.detect(replacement, content_type="text", policy="strict_token")
-        )
+        # Hard gate: re-detect the replacement text under strict_token. If
+        # the LLM emitted a value that *looks like* the original even after
+        # normalization, treat it as unsafe and fall back. The fallback path
+        # uses a generic Korean placeholder that the detector cannot mistake
+        # for the original.
+        if self._output_detector.detect(replacement, content_type="text", policy="strict_token"):
+            return True
+        return self._looks_like_sensitive_token(replacement)
 
     def _looks_like_sensitive_token(self, value: str) -> bool:
         return any(
@@ -191,7 +203,9 @@ class OllamaLocalRewriter:
         )
 
     def _normalize_sensitive_text(self, value: str) -> str:
-        return re.sub(r"[^0-9A-Za-z가-힣]+", "", value).lower()
+        import unicodedata
+        normalized = unicodedata.normalize("NFKC", value)
+        return re.sub(r"[^0-9A-Za-z가-힣]+", "", normalized).lower()
 
     def _fallback_replacements(self, detections: list[Detection]) -> list[Replacement]:
         counters: dict[str, int] = {}
