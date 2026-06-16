@@ -1,4 +1,5 @@
 ﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { escapeHtml } from "../utils/resultRendering.js";
 
 export function createCopyPromptPanel({
   copyReadyPrompt,
@@ -97,6 +98,12 @@ export function createCopyPromptPanel({
 
   const aiResponseSection = document.createElement("div");
   aiResponseSection.className = "copy-panel__ai-response";
+  // The AI response textarea must not be built with innerHTML interpolation,
+  // because the local ``escapeHtml`` only escapes 3 of the 5 characters that
+  // can break out of a ``<textarea>`` (``</textarea>`` round-trips unescaped
+  // and the user can paste that into their own input). Build the textarea
+  // with ``createElement`` and assign ``.value`` so the browser treats it as
+  // text regardless of content.
   aiResponseSection.innerHTML = `
     <div class="copy-panel__ai-response-header">
       <strong>외부 응답 복원</strong>
@@ -104,11 +111,6 @@ export function createCopyPromptPanel({
         외부 도구가 반환한 응답에 토큰이 남아 있으면 원문 용어를 복원할 수 있습니다.
       </p>
     </div>
-    <textarea
-      class="copy-panel__ai-response-input"
-      placeholder="외부 응답을 붙여넣으세요"
-      data-testid="ai-response-input"
-    >${escapeHtml(aiResponseText)}</textarea>
     <div class="copy-panel__ai-response-actions">
       <button type="button" class="button button--primary" data-testid="restore-ai-response">
         ${isAiRestoring ? "복원 중..." : "응답 복원"}
@@ -123,7 +125,15 @@ export function createCopyPromptPanel({
     </div>
   `;
 
-  const aiInput = aiResponseSection.querySelector("[data-testid='ai-response-input']");
+  const aiInput = document.createElement("textarea");
+  aiInput.className = "copy-panel__ai-response-input";
+  aiInput.placeholder = "외부 응답을 붙여넣으세요";
+  aiInput.dataset.testid = "ai-response-input";
+  aiInput.value = aiResponseText || "";
+  // Insert the textarea right after the description block.
+  const aiResponseHeader = aiResponseSection.querySelector(".copy-panel__ai-response-header");
+  aiResponseHeader.insertAdjacentElement("afterend", aiInput);
+
   aiInput.addEventListener("input", () => {
     onAiResponseChange(aiInput.value);
   });
@@ -144,11 +154,4 @@ function localizeReadinessReason(text) {
     .replaceAll("high-risk", "높음")
     .replaceAll("moderate-risk", "중간")
     .replaceAll("low-risk", "낮음");
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }

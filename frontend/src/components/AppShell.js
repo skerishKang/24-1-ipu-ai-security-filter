@@ -1,23 +1,28 @@
-﻿export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSession = true }) {
+﻿import { escapeHtml } from "../utils/resultRendering.js";
+
+export function createAppShell({ hero, modeToggle, layoutMode = "expert", showSession = true }) {
   const shell = document.createElement("main");
   shell.className = "app-shell";
+  // ``hero`` fields can carry backend-controlled text (e.g. ``hero.sessionId``
+  // is a server-issued identifier; a hostile backend could otherwise inject
+  // HTML/script). Escape all of them.
   shell.innerHTML = `
     <section class="hero hero--compact">
       <div class="hero__topline">
         <div class="hero__identity">
-          <span class="hero__eyebrow">${hero.eyebrow}</span>
-          <h1>${hero.title}</h1>
+          <span class="hero__eyebrow">${escapeHtml(hero.eyebrow)}</span>
+          <h1>${escapeHtml(hero.title)}</h1>
         </div>
         <div data-slot="mode-toggle"></div>
       </div>
       <div class="hero__body hero__body--compact">
-        <p>${hero.description}</p>
+        <p>${escapeHtml(hero.description)}</p>
         ${
           showSession
             ? `
         <aside class="hero__session">
           <span class="hero__session-label">세션</span>
-          <strong class="hero__session-value" data-testid="session-source">${hero.sessionId}</strong>
+          <strong class="hero__session-value" data-testid="session-source">${escapeHtml(hero.sessionId)}</strong>
         </aside>
         `
             : ""

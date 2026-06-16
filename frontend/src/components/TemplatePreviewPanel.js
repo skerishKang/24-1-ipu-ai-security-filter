@@ -1,4 +1,5 @@
 import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { escapeHtml } from "../utils/resultRendering.js";
 
 export function createTemplatePreviewPanel({
   template,
@@ -49,11 +50,4 @@ export function createTemplatePreviewPanel({
 
   panel.body.append(status, documentCard, valuesList);
   return panel.element;
-}
-
-function escapeHtml(value) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }

@@ -1,4 +1,5 @@
 ﻿import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { escapeHtml } from "../utils/resultRendering.js";
 
 export function createInputPanel({
   title = "1. 문서 입력",
@@ -141,7 +142,7 @@ export function createInputPanel({
         <div class="input-panel__file-picker-row">
           <span class="button button--ghost input-panel__file-trigger">파일 선택</span>
           <span class="input-panel__file-name-inline" data-testid="selected-file-inline">
-            ${selectedFileName || "선택된 파일 없음"}
+            ${escapeHtml(selectedFileName || "선택된 파일 없음")}
           </span>
         </div>
         <input class="input-panel__file-input" type="file" accept="${inputMode === "audio" ? ".wav,.mp3,.m4a,.mp4,.webm,audio/wav,audio/mpeg,audio/mp4,audio/webm,video/mp4" : ".txt,.md,.csv,.pdf,.docx,.hwpx,.hwp,text/plain,text/markdown,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/haansofthwpx,application/x-hwp"}" data-testid="file-input" />
@@ -236,11 +237,4 @@ export function createInputPanel({
 
 function getSelectedMode(container) {
   return container.querySelector("input[name='input-mode']:checked")?.value ?? "text";
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }

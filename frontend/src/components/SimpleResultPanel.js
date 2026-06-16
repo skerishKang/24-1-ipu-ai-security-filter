@@ -18,10 +18,11 @@ export function createSimpleResultPanel({
   report = { review_status: "clean", risk_level: "low-risk", strategy: "alias" },
   selectedPolicy,
 }) {
+  const safeCount = Number.isFinite(protectedCount) ? protectedCount : 0;
   const panel = createPanelFrame({
     title: "2. 처리 결과",
     description: "비식별 결과를 빠르게 확인합니다.",
-    badge: `${protectedCount}건 보호`,
+    badge: `${safeCount}건 보호`,
   });
 
   panel.element.classList.add("panel--review-surface");
@@ -39,16 +40,16 @@ export function createSimpleResultPanel({
 
   const summary = document.createElement("div");
   summary.className = "simple-result__summary";
-  const nextStepText = protectedCount > 0
+  const nextStepText = safeCount > 0
     ? "처리 결과를 확인한 뒤, 필요하면 검토 패널에서 세부 항목을 점검하세요."
     : "탐지된 항목이 없습니다. 바로 다음 작업으로 진행할 수 있습니다.";
   summary.innerHTML = `
-    <strong class="simple-result__count">${protectedCount}개 항목 보호</strong>
+    <strong class="simple-result__count">${escapeHtml(safeCount)}개 항목 보호</strong>
     <p class="simple-result__label">${escapeHtml(previewLabel)}</p>
     <p class="simple-result__policy">${escapeHtml(policySummary?.title || "")}</p>
     <p class="simple-result__policy-meta">${escapeHtml(policySummary?.description || "")}</p>
     <p class="simple-result__hint" style="font-size: 13px; font-weight: 600; color: #0f766e; margin-top: 12px;">
-      ${nextStepText}
+      ${escapeHtml(nextStepText)}
     </p>
   `;
 

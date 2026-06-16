@@ -69,16 +69,20 @@ export async function uploadManualPreviewFile(file, policy = "default") {
   }
 
   if (!response.ok) {
+    // ``detail`` is only used internally to pick a stable classification
+    // code; we deliberately do NOT include it in the user-facing message
+    // because it can include server-side paths, dependency names, or other
+    // implementation detail that should not leak to the page.
     let detail = "";
     try {
       const errorBody = await response.json();
-      detail = errorBody.detail ? ` ${errorBody.detail}` : "";
+      detail = errorBody.detail ? String(errorBody.detail) : "";
     } catch (error) {
       detail = "";
     }
     throw createApiError(
       classifyFileResponseCode(response.status, detail),
-      `파일 미리보기 요청이 실패했습니다.(${response.status})${detail}`,
+      `파일 미리보기 요청이 실패했습니다. (${response.status})`,
     );
   }
 
@@ -118,13 +122,13 @@ export async function uploadManualPreviewAudio(file, policy = "default") {
     let detail = "";
     try {
       const errorBody = await response.json();
-      detail = errorBody.detail ? ` ${errorBody.detail}` : "";
+      detail = errorBody.detail ? String(errorBody.detail) : "";
     } catch (error) {
       detail = "";
     }
     throw createApiError(
       classifyAudioResponseCode(response.status, detail),
-      `음성 미리보기 요청이 실패했습니다.(${response.status})${detail}`,
+      `음성 미리보기 요청이 실패했습니다. (${response.status})`,
     );
   }
 
@@ -141,12 +145,54 @@ export async function uploadManualPreviewAudio(file, policy = "default") {
   return normalizeManualPreviewResponse(data);
 }
 
+const RESTORE_INPUT_MAX_CHARS = 200_000;
+
+function loadRestoreCacheFromStorage() {
+  try {
+    const raw = window.sessionStorage.getItem(RESTORE_CACHE_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return;
+    for (const [sessionId, entry] of Object.entries(parsed)) {
+      if (entry && typeof entry.token === "string" && typeof entry.storedAt === "number") {
+        restoreTokensBySession.set(sessionId, entry);
+      }
+    }
+  } catch (_) {
+    // sessionStorage may be unavailable (private mode, etc.); the
+    // in-memory map alone is fine.
+  }
+}
+
+function flushRestoreCacheToStorage() {
+  try {
+    const out = {};
+    for (const [sessionId, entry] of restoreTokensBySession.entries()) {
+      out[sessionId] = entry;
+    }
+    window.sessionStorage.setItem(RESTORE_CACHE_STORAGE_KEY, JSON.stringify(out));
+  } catch (_) {
+    // ignore — in-memory cache is still authoritative for this tab.
+  }
+}
+
+loadRestoreCacheFromStorage();
+
 export async function restoreManualPreview(sessionId, replacedText) {
   const manualPreviewRestoreUrl = getManualPreviewRestoreUrl();
   const restoreToken = getRestoreToken(sessionId);
 
   if (!restoreToken) {
     throw createApiError("restore-token-missing", "복원 권한 정보를 찾을 수 없습니다. 미리보기를 다시 생성해 주세요.");
+  }
+
+  // Cap the size of the AI-response payload to keep the restore POST
+  // bounded even if the user pastes a very large response.
+  if (typeof replacedText === "string" && replacedText.length > RESTORE_INPUT_MAX_CHARS) {
+    throw createApiError(
+      "restore-input-too-large",
+      `응답이 너무 깁니다 (${RESTORE_INPUT_MAX_CHARS}자 이하). 분할해 다시 시도해 주세요.`,
+    );
   }
 
   let response;
@@ -229,8 +275,10 @@ function rememberRestoreToken(sessionId, restoreToken) {
   restoreTokensBySession.set(sessionId, {
     token: restoreToken,
     storedAt: now,
+    lastAccessAt: now,
   });
   trimRestoreTokenCache();
+  flushRestoreCacheToStorage();
 }
 
 function getRestoreToken(sessionId) {
@@ -247,20 +295,36 @@ function getRestoreToken(sessionId) {
     restoreTokensBySession.delete(sessionId);
     return "";
   }
+  // Refresh LRU timestamp on read so the eviction is true LRU, not FIFO.
+  cached.lastAccessAt = now;
   return cached.token;
 }
 
 function pruneRestoreTokenCache(now = Date.now()) {
+  let changed = false;
   for (const [sessionId, cached] of restoreTokensBySession.entries()) {
     if (!cached || now - cached.storedAt > RESTORE_TOKEN_CACHE_TTL_MS) {
       restoreTokensBySession.delete(sessionId);
+      changed = true;
     }
+  }
+  if (changed) {
+    flushRestoreCacheToStorage();
   }
 }
 
 function trimRestoreTokenCache() {
   while (restoreTokensBySession.size > RESTORE_TOKEN_CACHE_MAX_ENTRIES) {
-    const oldestSessionId = restoreTokensBySession.keys().next().value;
+    // Evict the entry with the oldest ``lastAccessAt`` (true LRU).
+    let oldestSessionId = null;
+    let oldestAt = Infinity;
+    for (const [sessionId, cached] of restoreTokensBySession.entries()) {
+      const last = cached && typeof cached.lastAccessAt === "number" ? cached.lastAccessAt : 0;
+      if (last < oldestAt) {
+        oldestAt = last;
+        oldestSessionId = sessionId;
+      }
+    }
     if (!oldestSessionId) {
       return;
     }

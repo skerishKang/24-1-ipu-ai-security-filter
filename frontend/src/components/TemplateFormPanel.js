@@ -1,4 +1,5 @@
 import { createPanelFrame } from "../ui/createPanelFrame.js";
+import { escapeHtml } from "../utils/resultRendering.js";
 
 export function createTemplateFormPanel({
   template,
@@ -136,11 +137,4 @@ function normalizeFieldValue(type, value) {
   }
 
   return value;
-}
-
-function escapeHtml(value) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }

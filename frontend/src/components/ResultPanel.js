@@ -21,10 +21,13 @@ export function createResultPanel({
   onClearComparison,
   policyLookup,
 }) {
+  const totalDetections = Number.isFinite(report.total_detections)
+    ? report.total_detections
+    : 0;
   const panel = createPanelFrame({
     title: "2. 비식별 결과",
     description: "원문과 처리 결과를 나란히 확인하고, 어떤 항목이 어떤 정책으로 치환됐는지 검토합니다.",
-    badge: `${report.total_detections}건 탐지`,
+    badge: `${totalDetections}건 탐지`,
   });
 
   panel.element.classList.add("panel--review-surface");
