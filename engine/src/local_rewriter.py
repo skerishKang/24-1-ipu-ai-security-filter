@@ -272,8 +272,10 @@ class OllamaLocalRewriter(LocalRewriter):
         return f"{replacement} {index}"
 
 
-class PlaceholderLocalRewriter:
+class PlaceholderLocalRewriter(LocalRewriter):
     """Fallback rewriter when Ollama is not available."""
+
+    engine_name = "deterministic"
 
     def rewrite(self, content: str, detections: list[Detection]) -> LocalRewriteResult:
         if not detections:

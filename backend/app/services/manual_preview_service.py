@@ -19,12 +19,13 @@ from app.api.schemas.manual_preview import (
     DetectionItem,
     ManualRestoreRequest,
     ManualRestoreResponse,
-    ManualPreviewReport,
     ManualPreviewReadiness,
+    ManualPreviewReport,
     ManualPreviewRequest,
     ManualPreviewResponse,
     PolicyName,
     ReplacementItem,
+    RewriteMetadata,
 )
 from app.core.exceptions import RestoreTokenError
 from app.core.settings import get_settings
@@ -409,6 +410,11 @@ class ManualPreviewService:
 
     def _build_response(self, engine_result: dict, restore_token: str) -> ManualPreviewResponse:
         minimized = self.settings.manual_preview_response_mode == "minimized"
+        raw_metadata = engine_result.get("rewrite_metadata")
+        if raw_metadata:
+            rewrite_metadata = RewriteMetadata(**raw_metadata)
+        else:
+            rewrite_metadata = None
         return ManualPreviewResponse(
             session_id=str(engine_result["session_id"]),
             restore_token=restore_token,
@@ -417,7 +423,7 @@ class ManualPreviewService:
             detections=self._build_detection_items(engine_result["detections"], minimized=minimized),
             replacements=self._build_replacement_items(engine_result["replacements"], minimized=minimized),
             report=ManualPreviewReport(**engine_result["report"]),
-            rewrite_metadata=engine_result.get("rewrite_metadata", {}),
+            rewrite_metadata=rewrite_metadata,
             readiness=ManualPreviewReadiness(**engine_result["readiness"]),
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )

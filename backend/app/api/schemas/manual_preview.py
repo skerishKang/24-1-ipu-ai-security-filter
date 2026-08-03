@@ -8,6 +8,7 @@ ReportRiskLevelName = Literal["low-risk", "moderate-risk", "high-risk"]
 ReportStrategyName = Literal["alias", "strict_token", "local_rewrite"]
 ReportReviewStatusName = Literal["clean", "review-required"]
 TaskTypeName = Literal["summarize", "risk_review", "action_items"]
+RewriteEngineName = Literal["deterministic", "ollama"]
 
 MAX_MANUAL_PREVIEW_CONTENT_LENGTH = 50_000
 MAX_RESTORE_SESSION_ID_LENGTH = 128
@@ -65,6 +66,11 @@ class ManualPreviewReadiness(BaseModel):
     risk_level: str
 
 
+class RewriteMetadata(BaseModel):
+    engine: RewriteEngineName
+    used_fallback: bool
+
+
 class ManualPreviewResponse(BaseModel):
     session_id: str
     restore_token: str
@@ -73,7 +79,7 @@ class ManualPreviewResponse(BaseModel):
     detections: list[DetectionItem]
     replacements: list[ReplacementItem]
     report: ManualPreviewReport
-    rewrite_metadata: dict[str, object] = Field(default_factory=dict)
+    rewrite_metadata: RewriteMetadata | None = None
     readiness: ManualPreviewReadiness
     copy_ready_prompt: str
 
