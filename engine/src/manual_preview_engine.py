@@ -5,17 +5,17 @@ from typing import Any
 from engine.src.contracts import (
     Detection,
     Replacement,
+    SessionMapping,
     detection_to_dict,
     replacement_to_dict,
     report_to_dict,
 )
 from engine.src.detector import RegexDetector
 from engine.src.local_rewriter import OllamaLocalRewriter, PlaceholderLocalRewriter
-from engine.src.report_builder import ReportBuilder
 from engine.src.replacer import TokenReplacer
+from engine.src.report_builder import ReportBuilder
 from engine.src.restorer import SessionRestorer
 from engine.src.session_store import InMemorySessionStore, SessionStore
-from engine.src.contracts import SessionMapping
 
 
 class ManualPreviewEngine:

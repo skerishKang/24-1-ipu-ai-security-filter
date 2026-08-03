@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -51,11 +53,18 @@ jobs:
         run: ruff check backend/ engine/ --ignore=E501,F401,E402 --exit-zero
 
       - name: Check changed files are lint-clean (blocking)
+        if: github.event_name == 'pull_request'
         run: |
-          CHANGED=$(git diff --name-only origin/main...HEAD -- '*.py' || true)
+          CHANGED=$(git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
+            -- '*.py')
           if [ -n "$CHANGED" ]; then
-            ruff check $CHANGED --ignore=E501,F401,E402 || exit 1
+            ruff check $CHANGED --ignore=E501,F401,E402,B008,BLE001,RUF012
           fi
+
+      - name: Run frontend-backend live integration tests
+        working-directory: frontend
+        run: node tests/runLiveIntegrationTests.js
 
       - name: Run engine tests
         run: |

@@ -11,7 +11,11 @@ from slowapi.errors import RateLimitExceeded
 from app.api.router import api_router
 from app.core.auth import API_KEY_HEADER_NAME
 from app.core.rate_limit import limiter
-from app.core.settings import get_settings, resolve_deployment_env, validate_public_api_key_hash
+from app.core.settings import (
+    get_settings,
+    resolve_deployment_env,
+    validate_public_api_key_hash,
+)
 from app.services.manual_preview_service import ManualPreviewService
 
 logger = logging.getLogger("uvicorn.error")
