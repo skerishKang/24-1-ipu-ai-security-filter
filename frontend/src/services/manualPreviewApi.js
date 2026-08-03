@@ -236,6 +236,7 @@ function normalizeManualPreviewResponse(data) {
     },
     readiness: normalizeReadiness(data.readiness),
     copy_ready_prompt: data.copy_ready_prompt ?? "",
+    rewrite_metadata: data.rewrite_metadata ?? null,
   };
 }
 
