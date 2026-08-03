@@ -47,8 +47,15 @@ jobs:
           grep -v '^-e ' backend/requirements.txt > /tmp/ipu-backend-requirements.txt
           python -m pip install -r /tmp/ipu-backend-requirements.txt
 
-      - name: Run Python lint
+      - name: Run Python lint (informational)
         run: ruff check backend/ engine/ --ignore=E501,F401,E402 --exit-zero
+
+      - name: Check changed files are lint-clean (blocking)
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD -- '*.py' || true)
+          if [ -n "$CHANGED" ]; then
+            ruff check $CHANGED --ignore=E501,F401,E402 || exit 1
+          fi
 
       - name: Run engine tests
         run: |

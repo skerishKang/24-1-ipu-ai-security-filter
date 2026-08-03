@@ -3,10 +3,10 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from engine.src.local_rewriter import PlaceholderLocalRewriter
 from engine.src.manual_preview_engine import ManualPreviewEngine
 from engine.src.restorer import RestoreAuthenticationError
 from engine.src.session_store import InMemorySessionStore, SQLiteSessionStore
-from engine.src.local_rewriter import PlaceholderLocalRewriter
 
 
 class FakeClock:

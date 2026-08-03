@@ -1,8 +1,8 @@
-const assert = require("node:assert/strict");
-const http = require("node:http");
-const path = require("node:path");
-const { spawn } = require("node:child_process");
-const { chromium } = require("playwright");
+import assert from "node:assert/strict";
+import http from "node:http";
+import path from "node:path";
+import { spawn } from "node:child_process";
+import { chromium } from "playwright";
 
 const BACKEND_URL = "http://127.0.0.1:8241";
 const FRONTEND_URL = "http://127.0.0.1:4241";
