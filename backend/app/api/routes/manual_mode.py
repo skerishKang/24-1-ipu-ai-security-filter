@@ -1,8 +1,6 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.api.schemas.manual_preview import (
     ManualRestoreRequest,
@@ -12,6 +10,7 @@ from app.api.schemas.manual_preview import (
     PolicyName,
 )
 from app.core.auth import optional_auth_owner_hash
+from app.core.rate_limit import limiter
 from app.core.exceptions import (
     EmptyFileError,
     FileTooLargeError,
@@ -24,8 +23,6 @@ from app.core.exceptions import (
 from app.services.manual_preview_service import ManualPreviewService, UploadConcurrencyExceededError
 
 router = APIRouter(prefix="/mode", tags=["manual-mode"])
-
-limiter = Limiter(key_func=get_remote_address)
 
 
 def get_limiter(request: Request):
@@ -102,7 +99,7 @@ async def manual_preview_audio(
 
 
 @router.post("/manual-preview/restore", response_model=ManualRestoreResponse)
-@limiter.limit("60/minute")
+@limiter.limit("15/minute")
 async def manual_preview_restore(
     request: Request,
     payload: ManualRestoreRequest,

@@ -6,12 +6,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.api.router import api_router
 from app.core.auth import API_KEY_HEADER_NAME
+from app.core.rate_limit import limiter
 from app.services.manual_preview_service import ManualPreviewService
 from app.core.settings import get_settings, resolve_deployment_env, validate_public_api_key_hash
 
@@ -65,9 +64,6 @@ def _cors_headers() -> list[str]:
     if configured:
         return _split_env_list(configured)
     return ["Content-Type", API_KEY_HEADER_NAME]
-
-
-limiter = Limiter(key_func=get_remote_address)
 
 
 async def cleanup_expired_sessions(app: FastAPI):
