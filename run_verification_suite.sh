@@ -34,8 +34,9 @@ echo "Using backend python: $BACKEND_PY"
   tests.test_pdf_quality_samples
 
 echo
-echo "[3/5] Frontend browser smoke tests"
+echo "[3/5] Frontend unit + browser smoke tests"
 cd "$FRONTEND_DIR"
+node tests/resultRendering.test.js
 node tests/runSmokeTests.js
 
 echo

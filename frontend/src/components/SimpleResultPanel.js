@@ -55,19 +55,26 @@ export function createSimpleResultPanel({
 
   const safeCard = document.createElement("div");
   safeCard.className = "text-card";
-  safeCard.innerHTML = `
-    <p class="text-card__label">처리 결과</p>
-    <p class="text-card__content" data-testid="simple-replaced-text">${highlightText(replacedText, replacements.map((item) => item.replaced), "text-replaced")}</p>
-  `;
+  const safeCardLabel = document.createElement("p");
+  safeCardLabel.className = "text-card__label";
+  safeCardLabel.textContent = "처리 결과";
+  const safeCardContent = document.createElement("p");
+  safeCardContent.className = "text-card__content";
+  safeCardContent.dataset.testid = "simple-replaced-text";
+  safeCardContent.append(highlightText(replacedText, replacements.map((item) => item.replaced), "text-replaced"));
+  safeCard.append(safeCardLabel, safeCardContent);
 
   const originalDetails = document.createElement("details");
   originalDetails.className = "simple-result__details";
-  originalDetails.innerHTML = `
-    <summary>원문 보기</summary>
-    <div class="text-card">
-      <p class="text-card__content">${highlightText(originalText, replacements.map((item) => item.original), "text-original-hit")}</p>
-    </div>
-  `;
+  const originalSummary = document.createElement("summary");
+  originalSummary.textContent = "원문 보기";
+  const originalCard = document.createElement("div");
+  originalCard.className = "text-card";
+  const originalContent = document.createElement("p");
+  originalContent.className = "text-card__content";
+  originalContent.append(highlightText(originalText, replacements.map((item) => item.original), "text-original-hit"));
+  originalCard.append(originalContent);
+  originalDetails.append(originalSummary, originalCard);
 
   const actions = document.createElement("div");
   actions.className = "simple-result__actions";
