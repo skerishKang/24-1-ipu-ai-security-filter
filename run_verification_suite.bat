@@ -43,6 +43,9 @@ node tests\runSmokeTests.js || goto :fail
 
 echo.
 echo [4/5] Frontend-backend live integration tests
+call :assert_live_ports_free
+if errorlevel 1 goto :fail
+
 call :start_live_servers
 if errorlevel 1 goto :fail
 
@@ -53,6 +56,7 @@ cd /d "%FRONTEND_DIR%"
 node tests\runLiveIntegrationTests.js || goto :fail
 echo [live] Live integration completed successfully.
 call :stop_live_servers
+if errorlevel 1 goto :fail
 
 if "%IPU_RUN_AUDIO_LIVE_SMOKE%"=="1" (
   echo.
@@ -76,9 +80,20 @@ if not "%IPU_NO_PAUSE%"=="1" pause
 exit /b 0
 
 
+:assert_live_ports_free
+echo [live] Checking that ports 8241 and 4241 are available...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$occupied = @(); foreach ($port in @(8241, 4241)) { $client = New-Object System.Net.Sockets.TcpClient; try { $client.Connect('127.0.0.1', $port); $occupied += $port } catch { } finally { $client.Dispose() } }; if ($occupied.Count -gt 0) { Write-Host ('Ports already in use: ' + ($occupied -join ', ')); exit 1 }; exit 0"
+if errorlevel 1 (
+  echo [live] Refusing to use or terminate processes that were not started by this run.
+  exit /b 1
+)
+echo [live] Ports are available.
+exit /b 0
+
+
 :start_live_servers
 echo [live] Starting backend with: "%BACKEND_PY%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$arguments = @('-m','uvicorn','app.main:app','--app-dir',$env:BACKEND_DIR,'--host','127.0.0.1','--port','8241'); $process = Start-Process -FilePath $env:BACKEND_PY -ArgumentList $arguments -WorkingDirectory $env:ROOT -RedirectStandardOutput $env:BACKEND_STDOUT -RedirectStandardError $env:BACKEND_STDERR -PassThru; Set-Content -LiteralPath $env:BACKEND_PID_FILE -Value $process.Id -Encoding ascii"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $process = $null; try { $backendDir = '"' + $env:BACKEND_DIR + '"'; $arguments = @('-m','uvicorn','app.main:app','--app-dir',$backendDir,'--host','127.0.0.1','--port','8241'); $process = Start-Process -FilePath $env:BACKEND_PY -ArgumentList $arguments -WorkingDirectory $env:ROOT -RedirectStandardOutput $env:BACKEND_STDOUT -RedirectStandardError $env:BACKEND_STDERR -PassThru; Set-Content -LiteralPath $env:BACKEND_PID_FILE -Value $process.Id -Encoding ascii } catch { if ($process) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue }; Write-Error $_; exit 1 }"
 if errorlevel 1 (
   echo [live] Failed to start backend process.
   exit /b 1
@@ -94,7 +109,7 @@ if not defined BACKEND_PID (
 )
 echo [live] Backend PID: %BACKEND_PID%
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$arguments = @('-m','http.server','4241','--directory',$env:FRONTEND_DIR,'--bind','127.0.0.1'); $process = Start-Process -FilePath $env:BACKEND_PY -ArgumentList $arguments -WorkingDirectory $env:ROOT -RedirectStandardOutput $env:FRONTEND_STDOUT -RedirectStandardError $env:FRONTEND_STDERR -PassThru; Set-Content -LiteralPath $env:FRONTEND_PID_FILE -Value $process.Id -Encoding ascii"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $process = $null; try { $frontendDir = '"' + $env:FRONTEND_DIR + '"'; $arguments = @('-m','http.server','4241','--directory',$frontendDir,'--bind','127.0.0.1'); $process = Start-Process -FilePath $env:BACKEND_PY -ArgumentList $arguments -WorkingDirectory $env:ROOT -RedirectStandardOutput $env:FRONTEND_STDOUT -RedirectStandardError $env:FRONTEND_STDERR -PassThru; Set-Content -LiteralPath $env:FRONTEND_PID_FILE -Value $process.Id -Encoding ascii } catch { if ($process) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue }; Write-Error $_; exit 1 }"
 if errorlevel 1 (
   echo [live] Failed to start frontend process.
   exit /b 1
@@ -127,13 +142,17 @@ exit /b 0
 if not defined BACKEND_PID if not defined FRONTEND_PID exit /b 0
 
 echo [live] Stopping processes started by this verification run...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$processIds = @(); if ($env:BACKEND_PID) { $processIds += [int]$env:BACKEND_PID }; if ($env:FRONTEND_PID) { $processIds += [int]$env:FRONTEND_PID }; foreach ($processId in $processIds) { Stop-Process -Id $processId -ErrorAction SilentlyContinue }; foreach ($processId in $processIds) { Wait-Process -Id $processId -Timeout 5 -ErrorAction SilentlyContinue }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$processIds = @(); if ($env:BACKEND_PID) { $processIds += [int]$env:BACKEND_PID }; if ($env:FRONTEND_PID) { $processIds += [int]$env:FRONTEND_PID }; $failed = @(); foreach ($processId in $processIds) { $process = Get-Process -Id $processId -ErrorAction SilentlyContinue; if ($process) { Stop-Process -Id $processId -ErrorAction SilentlyContinue; Wait-Process -Id $processId -Timeout 5 -ErrorAction SilentlyContinue }; if (Get-Process -Id $processId -ErrorAction SilentlyContinue) { $failed += $processId } }; if ($failed.Count -gt 0) { Write-Error ('Processes did not stop: ' + ($failed -join ', ')); exit 1 }; exit 0"
+set "STOP_RESULT=%ERRORLEVEL%"
+if not "%STOP_RESULT%"=="0" (
+  echo [live] Cleanup failed for one or more captured PIDs.
+  exit /b 1
+)
 if defined BACKEND_PID echo [live] Backend PID stopped: %BACKEND_PID%
 if defined FRONTEND_PID echo [live] Frontend PID stopped: %FRONTEND_PID%
 set "BACKEND_PID="
 set "FRONTEND_PID="
-if exist "%BACKEND_PID_FILE%" del /q "%BACKEND_PID_FILE%" >nul 2>&1
-if exist "%FRONTEND_PID_FILE%" del /q "%FRONTEND_PID_FILE%" >nul 2>&1
+call :remove_live_pid_files
 echo [live] Cleanup completed.
 exit /b 0
 
@@ -154,6 +173,12 @@ if exist "%FRONTEND_STDERR%" (
 exit /b 0
 
 
+:remove_live_pid_files
+if exist "%BACKEND_PID_FILE%" del /q "%BACKEND_PID_FILE%" >nul 2>&1
+if exist "%FRONTEND_PID_FILE%" del /q "%FRONTEND_PID_FILE%" >nul 2>&1
+exit /b 0
+
+
 :remove_live_logs
 if exist "%BACKEND_STDOUT%" del /q "%BACKEND_STDOUT%" >nul 2>&1
 if exist "%BACKEND_STDERR%" del /q "%BACKEND_STDERR%" >nul 2>&1
@@ -166,6 +191,7 @@ exit /b 0
 echo.
 echo Verification suite failed.
 call :stop_live_servers
+call :remove_live_pid_files
 call :show_live_logs
 if not "%IPU_NO_PAUSE%"=="1" pause
 exit /b 1
