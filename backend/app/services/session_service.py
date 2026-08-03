@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+from app.core.settings import get_settings
 from engine.src.session_store import (
     SessionStore,
     SQLiteSessionStore,
 )
 
-from app.core.settings import get_settings
-
 
 class SessionHistoryUnavailableError(Exception):
     """세션 히스토리 기능은 SQLite 모드에서만 지원됩니다."""
-    pass
 
 
 class SessionOwnershipError(Exception):

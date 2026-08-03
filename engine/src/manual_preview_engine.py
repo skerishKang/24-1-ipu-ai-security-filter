@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from engine.src.contracts import (
     Detection,
@@ -11,7 +11,7 @@ from engine.src.contracts import (
     report_to_dict,
 )
 from engine.src.detector import RegexDetector
-from engine.src.local_rewriter import OllamaLocalRewriter, PlaceholderLocalRewriter
+from engine.src.local_rewriter import PlaceholderLocalRewriter
 from engine.src.replacer import TokenReplacer
 from engine.src.report_builder import ReportBuilder
 from engine.src.restorer import SessionRestorer
@@ -19,13 +19,13 @@ from engine.src.session_store import InMemorySessionStore, SessionStore
 
 
 class ManualPreviewEngine:
-    TASK_GUIDES = {
+    TASK_GUIDES: ClassVar[dict[str, str]] = {
         "summarize": "아래 문서를 3~5문장으로 요약해 주세요.",
         "risk_review": "아래 문서에서 확인되는 주요 리스크와 검토 포인트를 정리해 주세요.",
         "action_items": "아래 문서에서 실행이 필요한 액션 아이템만 추려 주세요.",
     }
 
-    RESPONSE_FORMAT_GUIDES = {
+    RESPONSE_FORMAT_GUIDES: ClassVar[dict[str, str]] = {
         "summarize": "핵심만 bullet point 형태로 간결하게 작성해 주세요.",
         "risk_review": "항목별로 리스크 내용, 심각도, 권장 조치를 구분해 작성해 주세요.",
         "action_items": "체크리스트 형태로 짧고 명확하게 작성해 주세요.",

@@ -14,3 +14,14 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["engine*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint.per-file-ignores]
+# Scripts and test helpers insert the project/backend root into sys.path
+# before importing application modules; E402 is an intentional pattern here.
+"engine/scripts/*.py" = ["E402"]
+"backend/tests/test_manual_preview_local_rewrite_api.py" = ["E402"]
+"backend/tests/test_manual_preview_response_mode.py" = ["E402"]

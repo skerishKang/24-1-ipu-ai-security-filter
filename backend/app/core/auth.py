@@ -32,7 +32,7 @@ def derive_caller_identity(api_key: str, *, expected_hash: str | None) -> str:
     if expected_hash is None:
         return "public-unconfigured"
     salt = expected_hash[:16]
-    return hashlib.sha256(f"caller:{salt}:{api_key}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"caller:{salt}:{api_key}".encode()).hexdigest()
 
 
 def optional_auth_owner_hash(

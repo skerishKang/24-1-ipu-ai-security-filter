@@ -45,22 +45,12 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ruff
+          python -m pip install ruff==0.16.1
           grep -v '^-e ' backend/requirements.txt > /tmp/ipu-backend-requirements.txt
           python -m pip install -r /tmp/ipu-backend-requirements.txt
 
-      - name: Run Python lint (informational)
-        run: ruff check backend/ engine/ --ignore=E501,F401,E402 --exit-zero
-
-      - name: Check changed files are lint-clean (blocking)
-        if: github.event_name == 'pull_request'
-        run: |
-          CHANGED=$(git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
-            -- '*.py')
-          if [ -n "$CHANGED" ]; then
-            ruff check $CHANGED --ignore=E501,F401,E402,B008,BLE001,RUF012
-          fi
+      - name: Run Python lint (blocking)
+        run: ruff check backend/ engine/
 
       - name: Run engine tests
         run: |

@@ -1,21 +1,18 @@
 import io
 import os
+import unittest
+import wave
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 from unittest.mock import patch
-import wave
 
 import httpx
-from fastapi import UploadFile
-from starlette.datastructures import Headers
-
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.core.exceptions import ProcessingLimitExceededError
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
-
-
+from fastapi import UploadFile
+from starlette.datastructures import Headers
 
 
 class FakeAudioTranscriber:
@@ -492,7 +489,7 @@ def build_pdf_bytes(page_texts: list[str]) -> bytes:
         page_references.append(f"{page_object_number} 0 R".encode("ascii"))
 
         escaped = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-        stream = f"BT /F1 12 Tf 72 120 Td ({escaped}) Tj ET".encode("utf-8")
+        stream = f"BT /F1 12 Tf 72 120 Td ({escaped}) Tj ET".encode()
 
         objects.append(
             f"{page_object_number} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Contents {content_object_number} 0 R /Resources << /Font << /F1 {3 + (len(page_texts) * 2)} 0 R >> >> >>\nendobj\n".encode(

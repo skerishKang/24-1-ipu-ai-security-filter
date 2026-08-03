@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import os
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 import httpx
-
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.main import create_app
-
 
 DEFAULT_SAMPLE_PATH = Path(
     os.getenv(
@@ -50,7 +48,10 @@ class ManualPreviewAudioRealSmokeTest(unittest.IsolatedAsyncioTestCase):
     async def test_manual_preview_audio_real_whisper_smoke(self) -> None:
         self.assertTrue(DEFAULT_SAMPLE_PATH.exists(), f"missing sample audio: {DEFAULT_SAMPLE_PATH}")
 
-        with DEFAULT_SAMPLE_PATH.open("rb") as handle:
+        # Opt-in real-whisper smoke reads a local sample file synchronously
+        # before issuing the request; this is test fixture setup, not an
+        # application code path.
+        with DEFAULT_SAMPLE_PATH.open("rb") as handle:  # noqa: ASYNC230
             response = await self.client.post(
                 "/api/v1/mode/manual-preview/audio",
                 files={

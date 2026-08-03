@@ -162,9 +162,8 @@ class LocalRewriteEndpointGuardTest(unittest.TestCase):
             "http://192.168.0.10:11434",
             "https://example.com",
         ):
-            with self.subTest(base_url=base_url):
-                with self.assertRaises(ValueError):
-                    OllamaHTTPClient(base_url=base_url)
+            with self.subTest(base_url=base_url), self.assertRaises(ValueError):
+                OllamaHTTPClient(base_url=base_url)
 
     def test_ollama_http_client_can_allow_remote_when_explicit(self):
         client = OllamaHTTPClient(

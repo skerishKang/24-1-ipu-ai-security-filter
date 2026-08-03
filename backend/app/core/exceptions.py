@@ -34,7 +34,6 @@ class InvalidEncodingError(ValueError):
 class AudioTranscriptionError(Exception):
     """Raised when audio transcription fails."""
 
-    pass
 
 
 class SessionExpiredError(KeyError):

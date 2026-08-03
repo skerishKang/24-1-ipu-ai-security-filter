@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
 from app.api.schemas.manual_preview import (
-    ManualPreviewReadiness,
     ManualPreviewRequest,
     ManualPreviewResponse,
     ManualRestoreRequest,
@@ -17,7 +16,6 @@ from app.core.exceptions import (
     InvalidEncodingError,
     ProcessingLimitExceededError,
     RestoreTokenError,
-    SessionExpiredError,
     UnsupportedFileTypeError,
 )
 from app.core.rate_limit import limiter
@@ -54,8 +52,8 @@ async def manual_preview_file(
     request: Request,
     owner_hash: Annotated[str, Depends(optional_auth_owner_hash)],
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
-    file: UploadFile = File(...),
-    policy: PolicyName = Form(default="default"),
+    file: Annotated[UploadFile, File()],
+    policy: Annotated[PolicyName, Form()] = "default",
 ) -> ManualPreviewResponse:
     try:
         return await manual_preview_service.build_file_preview(file=file, policy=policy, owner_hash=owner_hash)
@@ -81,8 +79,8 @@ async def manual_preview_audio(
     request: Request,
     owner_hash: Annotated[str, Depends(optional_auth_owner_hash)],
     manual_preview_service: Annotated[ManualPreviewService, Depends(get_manual_preview_service)],
-    file: UploadFile = File(...),
-    policy: PolicyName = Form(default="default"),
+    file: Annotated[UploadFile, File()],
+    policy: Annotated[PolicyName, Form()] = "default",
 ) -> ManualPreviewResponse:
     try:
         return await manual_preview_service.build_audio_preview(file=file, policy=policy, owner_hash=owner_hash)

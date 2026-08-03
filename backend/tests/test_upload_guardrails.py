@@ -4,19 +4,22 @@ from __future__ import annotations
 
 import io
 import os
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 from unittest.mock import patch
 
 import httpx
-from fastapi import UploadFile
-
-from app.core.auth import hash_api_key, optional_auth_owner_hash
-from app.core.settings import BackendSettings, MissingPublicApiKeyHashError, UnsafePublicResponseModeError, get_settings
-from app.main import create_app
-from app.api.routes.manual_mode import get_manual_preview_service
 from app.api.routes import manual_mode as manual_mode_module
+from app.api.routes.manual_mode import get_manual_preview_service
+from app.core.auth import hash_api_key, optional_auth_owner_hash
+from app.core.settings import (
+    BackendSettings,
+    MissingPublicApiKeyHashError,
+    UnsafePublicResponseModeError,
+    get_settings,
+)
+from app.main import create_app
 from app.main import limiter as main_limiter
 from app.services.manual_preview_service import ManualPreviewService
 
@@ -121,15 +124,13 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
 
     def test_public_deployment_rejects_full_response_mode(self):
         for env in ("production", "prod", "ops", "ops-target"):
-            with self.subTest(env=env):
-                with patch.dict(os.environ, {
-                    "IPU_DEPLOYMENT_ENV": env,
-                    "IPU_ALLOWED_ORIGINS": "http://example.com",
-                    "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
-                    "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
-                }):
-                    with self.assertRaises(UnsafePublicResponseModeError):
-                        get_settings()
+            with self.subTest(env=env), patch.dict(os.environ, {
+                "IPU_DEPLOYMENT_ENV": env,
+                "IPU_ALLOWED_ORIGINS": "http://example.com",
+                "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
+                "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
+            }), self.assertRaises(UnsafePublicResponseModeError):
+                get_settings()
 
     def test_create_app_rejects_public_deployment_with_full_response_mode(self):
         with patch.dict(os.environ, {
@@ -137,9 +138,8 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
             "IPU_ALLOWED_ORIGINS": "http://example.com",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "full",
             "IPU_API_KEY_HASH": TEST_PUBLIC_HASH,
-        }):
-            with self.assertRaises(UnsafePublicResponseModeError):
-                create_app()
+        }), self.assertRaises(UnsafePublicResponseModeError):
+            create_app()
 
     def test_create_app_rejects_public_deployment_without_auth_hash(self):
         with patch.dict(os.environ, {
@@ -147,9 +147,8 @@ class SettingsUploadGuardrailTest(unittest.TestCase):
             "IPU_ALLOWED_ORIGINS": "http://example.com",
             "IPU_MANUAL_PREVIEW_RESPONSE_MODE": "minimized",
             "IPU_API_KEY_HASH": "",
-        }):
-            with self.assertRaises(MissingPublicApiKeyHashError):
-                create_app()
+        }), self.assertRaises(MissingPublicApiKeyHashError):
+            create_app()
 
     def test_create_app_allows_public_deployment_with_minimized_response_mode(self):
         with patch.dict(os.environ, {
@@ -484,21 +483,18 @@ class UploadGuardrailSettingsValidationTest(unittest.TestCase):
 
     def test_upload_max_bytes_invalid_values(self):
         for invalid_val in ("5000", "1000000", "0", "-5", "abc", ""):
-            with patch.dict(os.environ, {"IPU_UPLOAD_MAX_BYTES": invalid_val}):
-                with self.assertRaises(ValueError):
-                    get_settings()
+            with patch.dict(os.environ, {"IPU_UPLOAD_MAX_BYTES": invalid_val}), self.assertRaises(ValueError):
+                get_settings()
 
     def test_public_upload_max_bytes_invalid_values(self):
         for invalid_val in ("2000", "1000000", "0", "-10", "xyz", ""):
-            with patch.dict(os.environ, {"IPU_PUBLIC_UPLOAD_MAX_BYTES": invalid_val}):
-                with self.assertRaises(ValueError):
-                    get_settings()
+            with patch.dict(os.environ, {"IPU_PUBLIC_UPLOAD_MAX_BYTES": invalid_val}), self.assertRaises(ValueError):
+                get_settings()
 
     def test_upload_max_concurrency_invalid_values(self):
         for invalid_val in ("0", "-1", "foo", ""):
-            with patch.dict(os.environ, {"IPU_UPLOAD_MAX_CONCURRENCY": invalid_val}):
-                with self.assertRaises(ValueError):
-                    get_settings()
+            with patch.dict(os.environ, {"IPU_UPLOAD_MAX_CONCURRENCY": invalid_val}), self.assertRaises(ValueError):
+                get_settings()
 
     def test_valid_positive_values_succeed(self):
         with patch.dict(os.environ, {

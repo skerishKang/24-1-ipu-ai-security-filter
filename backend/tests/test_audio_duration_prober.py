@@ -21,63 +21,60 @@ class AudioDurationProberTest(unittest.TestCase):
     def test_ffprobe_missing_raises_clear_error(self) -> None:
         transcriber = PlaceholderAudioTranscriber()
 
-        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}):
-            with patch("app.services.audio_transcriber.shutil.which", return_value=None):
-                with self.assertRaises(ValueError) as ctx:
-                    transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
+        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}), patch(
+            "app.services.audio_transcriber.shutil.which", return_value=None
+        ), self.assertRaises(ValueError) as ctx:
+            transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
 
         self.assertIn("ffprobe is required", str(ctx.exception))
 
     def test_ffprobe_allows_duration_under_limit(self) -> None:
         transcriber = PlaceholderAudioTranscriber()
 
-        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}):
-            with patch("app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"):
-                with patch(
-                    "app.services.audio_transcriber.subprocess.run",
-                    return_value=SimpleNamespace(stdout='{"format":{"duration":"12.5"}}'),
-                ):
-                    transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
+        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}), patch(
+            "app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"
+        ), patch(
+            "app.services.audio_transcriber.subprocess.run",
+            return_value=SimpleNamespace(stdout='{"format":{"duration":"12.5"}}'),
+        ):
+            transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
 
     def test_ffprobe_rejects_duration_over_limit(self) -> None:
         transcriber = PlaceholderAudioTranscriber()
 
-        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}):
-            with patch("app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"):
-                with patch(
-                    "app.services.audio_transcriber.subprocess.run",
-                    return_value=SimpleNamespace(stdout='{"format":{"duration":"61.5"}}'),
-                ):
-                    with self.assertRaises(ProcessingLimitExceededError) as ctx:
-                        transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
+        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}), patch(
+            "app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"
+        ), patch(
+            "app.services.audio_transcriber.subprocess.run",
+            return_value=SimpleNamespace(stdout='{"format":{"duration":"61.5"}}'),
+        ), self.assertRaises(ProcessingLimitExceededError) as ctx:
+            transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
 
         self.assertIn("exceeds the processing limit", str(ctx.exception))
 
     def test_ffprobe_timeout_is_processing_limit_error(self) -> None:
         transcriber = PlaceholderAudioTranscriber()
 
-        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}):
-            with patch("app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"):
-                with patch(
-                    "app.services.audio_transcriber.subprocess.run",
-                    side_effect=subprocess.TimeoutExpired(cmd=["ffprobe"], timeout=10),
-                ):
-                    with self.assertRaises(ProcessingLimitExceededError) as ctx:
-                        transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
+        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}), patch(
+            "app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"
+        ), patch(
+            "app.services.audio_transcriber.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd=["ffprobe"], timeout=10),
+        ), self.assertRaises(ProcessingLimitExceededError) as ctx:
+            transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
 
         self.assertIn("timeout", str(ctx.exception))
 
     def test_ffprobe_malformed_output_raises_clear_error(self) -> None:
         transcriber = PlaceholderAudioTranscriber()
 
-        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}):
-            with patch("app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"):
-                with patch(
-                    "app.services.audio_transcriber.subprocess.run",
-                    return_value=SimpleNamespace(stdout='{"format":{"duration":"not-a-number"}}'),
-                ):
-                    with self.assertRaises(ValueError) as ctx:
-                        transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
+        with patch.dict("os.environ", {"IPU_AUDIO_DURATION_PROBER": "ffprobe"}), patch(
+            "app.services.audio_transcriber.shutil.which", return_value="/usr/bin/ffprobe"
+        ), patch(
+            "app.services.audio_transcriber.subprocess.run",
+            return_value=SimpleNamespace(stdout='{"format":{"duration":"not-a-number"}}'),
+        ), self.assertRaises(ValueError) as ctx:
+            transcriber._validate_non_wav_duration(b"audio-bytes", ".mp3")
 
         self.assertIn("invalid audio duration", str(ctx.exception))
 

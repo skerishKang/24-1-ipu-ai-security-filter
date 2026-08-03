@@ -1,12 +1,10 @@
 import os
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
-import unittest
 
 import httpx
-from fastapi import HTTPException
-
 from app.api.routes.manual_mode import get_manual_preview_service
 from app.api.schemas.manual_preview import (
     MAX_RESTORE_SESSION_ID_LENGTH,
@@ -17,6 +15,7 @@ from app.core.auth import derive_caller_identity, hash_api_key, optional_auth_ow
 from app.core.exceptions import RestoreTokenError
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
+from fastapi import HTTPException
 
 
 class ManualPreviewRestoreLimitTest(unittest.IsolatedAsyncioTestCase):
