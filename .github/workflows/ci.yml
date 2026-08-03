@@ -91,6 +91,38 @@ jobs:
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
+      - name: Run frontend-backend live integration tests
+        run: |
+          cleanup() {
+            kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          python -m uvicorn app.main:app \
+            --app-dir backend \
+            --host 127.0.0.1 \
+            --port 8241 &
+          BACKEND_PID=$!
+
+          python -m http.server 4241 \
+            --directory frontend \
+            --bind 127.0.0.1 &
+          FRONTEND_PID=$!
+
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8241/health >/dev/null \
+              && curl -fsS http://127.0.0.1:4241/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:8241/health >/dev/null
+          curl -fsS http://127.0.0.1:4241/ >/dev/null
+
+          cd frontend
+          node tests/runLiveIntegrationTests.js
+
       - name: Run frontend smoke tests
         working-directory: frontend
         run: node tests/runSmokeTests.js

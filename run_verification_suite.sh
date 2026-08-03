@@ -41,7 +41,38 @@ node tests/runSmokeTests.js
 
 echo
 echo "[4/5] Frontend-backend live integration tests"
+cd "$ROOT"
+
+cleanup() {
+  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+"$BACKEND_PY" -m uvicorn app.main:app \
+  --app-dir backend \
+  --host 127.0.0.1 \
+  --port 8241 &
+BACKEND_PID=$!
+
+python3 -m http.server 4241 \
+  --directory frontend \
+  --bind 127.0.0.1 &
+FRONTEND_PID=$!
+
+for attempt in {1..30}; do
+  if curl -fsS http://127.0.0.1:8241/health >/dev/null \
+    && curl -fsS http://127.0.0.1:4241/ >/dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+curl -fsS http://127.0.0.1:8241/health >/dev/null
+curl -fsS http://127.0.0.1:4241/ >/dev/null
+
+cd frontend
 node tests/runLiveIntegrationTests.js
+cleanup
 
 if [[ "${IPU_RUN_AUDIO_LIVE_SMOKE:-0}" == "1" ]]; then
   echo

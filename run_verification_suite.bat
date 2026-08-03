@@ -29,6 +29,8 @@ node tests\runSmokeTests.js || goto :fail
 
 echo.
 echo [4/5] Frontend-backend live integration tests
+echo NOTE: Start backend (port 8241) and frontend (port 4241) manually before running this suite.
+cd /d "%FRONTEND_DIR%"
 node tests\runLiveIntegrationTests.js || goto :fail
 
 if "%IPU_RUN_AUDIO_LIVE_SMOKE%"=="1" (
