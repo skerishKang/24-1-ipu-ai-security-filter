@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import io
 import unittest
+from dataclasses import dataclass
 
+from app.services.file_parser import PdfFileParser
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app.services.file_parser import PdfFileParser
 from engine.src.manual_preview_engine import ManualPreviewEngine
 
 
@@ -135,7 +135,7 @@ def build_pdf_bytes(page_texts: list[str]) -> bytes:
         page_references.append(f"{page_object_number} 0 R".encode("ascii"))
 
         escaped = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-        stream = f"BT /F1 12 Tf 72 120 Td ({escaped}) Tj ET".encode("utf-8")
+        stream = f"BT /F1 12 Tf 72 120 Td ({escaped}) Tj ET".encode()
 
         objects.append(
             f"{page_object_number} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Contents {content_object_number} 0 R /Resources << /Font << /F1 {3 + (len(page_texts) * 2)} 0 R >> >> >>\nendobj\n".encode(

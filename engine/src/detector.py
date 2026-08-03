@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from engine.src.contracts import Detection
 from engine.src.detector_patterns import (
@@ -21,12 +21,12 @@ from engine.src.detector_patterns import (
 
 # Zero-width / format characters an attacker can insert to break regex matching.
 _INVISIBLE_CODEPOINT_PATTERN = re.compile(
-    "[​-‏﻿⁠­͏؜ᅟᅠ឴឵᠎]"
+    "[\u200b-\u200f\ufeff\u2060\u00ad\u035f\u061c\u115f\u1160\u17b4\u17b5\u180e]"
 )
 
 
 def _normalize_text(content: str) -> tuple[str, list[int]]:
-    """Normalize Unicode while keeping a position map back to the original.
+    r"""Normalize Unicode while keeping a position map back to the original.
 
     Returns ``(normalized_text, position_map)`` where ``position_map[norm_pos]``
     is the original index of the character at ``norm_pos``. Characters that are
@@ -464,8 +464,7 @@ class RegexDetector:
                 break
 
         for suffix in ("님", "씨"):
-            if core_name.endswith(suffix):
-                core_name = core_name[: -len(suffix)]
+            core_name = core_name.removesuffix(suffix)
 
         core_name = core_name.strip()
         if len(core_name) < 2 or len(core_name) > 4:
@@ -503,9 +502,7 @@ class RegexDetector:
         if len(parts) != 2:
             return False
         first, last = parts
-        if not (first[0].isupper() and first[1:].islower() and last[0].isupper() and last[1:].islower()):
-            return False
-        return True
+        return first[0].isupper() and first[1:].islower() and last[0].isupper() and last[1:].islower()
 
     def _is_valid_english_org(self, label: str) -> bool:
         if not label:
@@ -544,7 +541,7 @@ class RegexDetector:
             if label_lower in common_phrases:
                 return False
             for phrase in common_phrases:
-                if label_lower.startswith(phrase + " ") or label_lower.startswith("re: " + phrase):
+                if label_lower.startswith((phrase + " ", "re: " + phrase)):
                     return False
 
         return False

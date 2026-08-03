@@ -407,7 +407,10 @@ class ManualPreviewService:
                 base_url=self.settings.ollama_base_url,
                 model=self.settings.ollama_model,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
+            # Fallback boundary: any Ollama init failure (unreachable host, bad
+            # model, transport error) must degrade to the deterministic
+            # placeholder rewriter instead of failing previews.
             logger.warning("Failed to initialize OllamaLocalRewriter, using placeholder")
             return PlaceholderLocalRewriter()
 

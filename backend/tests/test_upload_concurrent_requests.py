@@ -5,23 +5,21 @@ from __future__ import annotations
 import asyncio
 import io
 import os
+import unittest
+import wave
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 from unittest.mock import patch
-import wave
 
 import httpx
-from fastapi import UploadFile
-
-from app.core.settings import get_settings
-from app.main import create_app
-from app.api.routes.manual_mode import get_manual_preview_service
-from app.services.manual_preview_service import ManualPreviewService
-from app.services.file_parser import ParsedFileContent
-from app.services.audio_transcriber import TranscribedAudio
-from app.main import limiter as main_limiter
 from app.api.routes import manual_mode as manual_mode_module
+from app.api.routes.manual_mode import get_manual_preview_service
+from app.main import create_app
+from app.main import limiter as main_limiter
+from app.services.audio_transcriber import TranscribedAudio
+from app.services.file_parser import ParsedFileContent
+from app.services.manual_preview_service import ManualPreviewService
+from fastapi import UploadFile
 
 
 def _reset_rate_limiters() -> None:

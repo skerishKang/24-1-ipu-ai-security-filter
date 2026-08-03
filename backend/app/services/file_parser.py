@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import io
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 from xml.etree import ElementTree
 from zipfile import BadZipFile, ZipFile
@@ -185,7 +185,9 @@ class PdfFileParser:
             extracted = page.extract_text(**kwargs)
         except TypeError:
             extracted = page.extract_text()
-        except Exception:
+        except Exception:  # noqa: BLE001
+            # Fallback boundary: a malformed or vendor-specific PDF page must not
+            # fail the whole extraction; treat it as empty text.
             return ""
         return extracted or ""
 

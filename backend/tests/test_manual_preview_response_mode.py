@@ -1,7 +1,7 @@
 import os
 import sys
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_ROOT = PROJECT_ROOT / "backend"
@@ -10,6 +10,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from app.api.schemas.manual_preview import ManualPreviewRequest
 from app.services.manual_preview_service import ManualPreviewService
+
 from engine.src.session_store import InMemorySessionStore
 
 

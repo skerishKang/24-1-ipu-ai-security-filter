@@ -3,11 +3,10 @@ from __future__ import annotations
 import io
 import unittest
 
-from fastapi import UploadFile
-from starlette.datastructures import Headers
-
 from app.core.exceptions import ProcessingLimitExceededError
 from app.services.file_parser import DefaultFileParser, ParsedFileContent
+from fastapi import UploadFile
+from starlette.datastructures import Headers
 
 
 class ParserLimitCoverageTest(unittest.IsolatedAsyncioTestCase):

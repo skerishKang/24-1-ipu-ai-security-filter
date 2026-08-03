@@ -4,6 +4,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import ClassVar
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -15,7 +16,7 @@ from engine.tests.rewrite_comparison_samples import REWRITE_COMPARISON_SAMPLES
 
 
 class StubClient:
-    TYPE_TO_LABEL = {
+    TYPE_TO_LABEL: ClassVar[dict[str, str]] = {
         "PERSON": "담당자",
         "ORG": "A사",
         "EMAIL": "이메일 주소",

@@ -1,8 +1,8 @@
 import os
 import sys
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 import httpx
 
@@ -11,9 +11,9 @@ BACKEND_ROOT = PROJECT_ROOT / "backend"
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from app.api.routes.manual_mode import get_manual_preview_service
 from app.main import create_app
 from app.services.manual_preview_service import ManualPreviewService
+
 from engine.src.local_rewriter import PlaceholderLocalRewriter
 
 

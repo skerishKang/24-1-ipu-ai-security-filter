@@ -194,7 +194,7 @@ class SensitivePatternDetectorTest(unittest.TestCase):
         # Without normalization, the email regex would split on the zero-width
         # space and miss the value. After NFKC + zero-width stripping, the
         # email is detected.
-        obfuscated = "sec​urity@ipu.co.kr"
+        obfuscated = "sec\u200burity@ipu.co.kr"
         detections = self.detector.detect(obfuscated, policy="strict_token")
         self.assertTrue(
             any(item.type == "EMAIL" for item in detections),

@@ -3,12 +3,13 @@ from __future__ import annotations
 import hmac
 import os
 import sqlite3
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
 from time import time
-from typing import Callable, Protocol
+from typing import Protocol
 
 from engine.src.contracts import SessionMapping
 

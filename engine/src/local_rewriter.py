@@ -119,7 +119,10 @@ class OllamaLocalRewriter(LocalRewriter):
                 used_fallback=True,
                 raw_response=raw_response,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
+            # Fallback boundary: transport/connection/HTTP errors from the local
+            # Ollama client must not break previews. Degrade to deterministic
+            # replacements so the request still completes.
             return LocalRewriteResult(
                 replacements=self._fallback_replacements(detections),
                 used_fallback=True,
