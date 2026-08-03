@@ -147,36 +147,10 @@ export async function uploadManualPreviewAudio(file, policy = "default") {
 
 const RESTORE_INPUT_MAX_CHARS = 200_000;
 
-function loadRestoreCacheFromStorage() {
-  try {
-    const raw = window.sessionStorage.getItem(RESTORE_CACHE_STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return;
-    for (const [sessionId, entry] of Object.entries(parsed)) {
-      if (entry && typeof entry.token === "string" && typeof entry.storedAt === "number") {
-        restoreTokensBySession.set(sessionId, entry);
-      }
-    }
-  } catch (_) {
-    // sessionStorage may be unavailable (private mode, etc.); the
-    // in-memory map alone is fine.
-  }
-}
-
 function flushRestoreCacheToStorage() {
-  try {
-    const out = {};
-    for (const [sessionId, entry] of restoreTokensBySession.entries()) {
-      out[sessionId] = entry;
-    }
-    window.sessionStorage.setItem(RESTORE_CACHE_STORAGE_KEY, JSON.stringify(out));
-  } catch (_) {
-    // ignore — in-memory cache is still authoritative for this tab.
-  }
+  // Restore tokens are intentionally kept in memory only. Persisting them in
+  // sessionStorage would make a single XSS bug enough to steal restore access.
 }
-
-loadRestoreCacheFromStorage();
 
 export async function restoreManualPreview(sessionId, replacedText) {
   const manualPreviewRestoreUrl = getManualPreviewRestoreUrl();
@@ -262,6 +236,7 @@ function normalizeManualPreviewResponse(data) {
     },
     readiness: normalizeReadiness(data.readiness),
     copy_ready_prompt: data.copy_ready_prompt ?? "",
+    rewrite_metadata: data.rewrite_metadata ?? null,
   };
 }
 

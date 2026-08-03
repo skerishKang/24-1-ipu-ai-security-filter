@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from engine.src.local_rewriter import PlaceholderLocalRewriter
 from engine.src.manual_preview_engine import ManualPreviewEngine
 from engine.src.restorer import RestoreAuthenticationError
 from engine.src.session_store import InMemorySessionStore, SQLiteSessionStore
@@ -418,6 +419,46 @@ class ManualPreviewEngineTest(unittest.TestCase):
         )
         self.assertIn("[ACCOUNT_NUMBER_", result["replaced_text"])
         self.assertIn("[VEHICLE_REGISTRATION_NUMBER_", result["replaced_text"])
+
+    def test_rewrite_metadata_contract_placeholder_rewriter(self) -> None:
+        content = "아이피유테크 contact@ipu.co.kr"
+        preview = self.engine.manual_preview(
+            content=content,
+            session_id="test-metadata-placeholder",
+            policy="local_rewrite",
+        )
+        metadata = preview["rewrite_metadata"]
+        assert isinstance(metadata, dict)
+        assert metadata["engine"] == "deterministic"
+        assert metadata["used_fallback"] is True
+
+    def test_rewrite_metadata_contract_empty_detections(self) -> None:
+        preview = self.engine.manual_preview(
+            content="safe text no sensitive data",
+            session_id="test-metadata-empty",
+        )
+        assert preview["rewrite_metadata"] == {}
+
+    def test_rewrite_metadata_contract_non_local_rewrite_strategy(self) -> None:
+        preview = self.engine.manual_preview(
+            content="contact@ipu.co.kr",
+            session_id="test-metadata-non-local",
+            policy="strict_token",
+        )
+        assert preview["rewrite_metadata"] == {}
+
+    def test_placeholder_local_rewriter_has_engine_name(self) -> None:
+        rewriter = PlaceholderLocalRewriter()
+        assert hasattr(rewriter, "engine_name")
+        assert rewriter.engine_name == "deterministic"
+
+    def test_placeholder_local_rewriter_returns_used_fallback_true(self) -> None:
+        from engine.src.local_rewriter import LocalRewriteResult
+        result: LocalRewriteResult = PlaceholderLocalRewriter().rewrite(
+            content="test",
+            detections=[],
+        )
+        assert result.used_fallback is True
 
 
 if __name__ == "__main__":

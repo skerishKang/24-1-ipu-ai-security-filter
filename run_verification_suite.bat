@@ -19,15 +19,18 @@ python engine\scripts\run_quality_harness.py || goto :fail
 echo.
 echo [2/5] Backend API + guardrail + PDF quality tests
 cd /d "%BACKEND_DIR%"
-"%BACKEND_PY%" -m unittest tests.test_manual_preview_api tests.test_manual_preview_restore_limits tests.test_upload_guardrails tests.test_file_parser tests.test_pdf_quality_samples || goto :fail
+"%BACKEND_PY%" -m unittest tests.test_manual_preview_api tests.test_manual_preview_local_rewrite_api tests.test_manual_preview_restore_limits tests.test_manual_preview_response_mode tests.test_upload_guardrails tests.test_upload_concurrent_requests tests.test_upload_streaming_read_guard tests.test_file_parser tests.test_audio_duration_prober tests.test_parser_limit_coverage tests.test_pdf_quality_samples || goto :fail
 
 echo.
-echo [3/5] Frontend browser smoke tests
+echo [3/5] Frontend unit + browser smoke tests
 cd /d "%FRONTEND_DIR%"
+node tests\resultRendering.test.js || goto :fail
 node tests\runSmokeTests.js || goto :fail
 
 echo.
 echo [4/5] Frontend-backend live integration tests
+echo NOTE: Start backend (port 8241) and frontend (port 4241) manually before running this suite.
+cd /d "%FRONTEND_DIR%"
 node tests\runLiveIntegrationTests.js || goto :fail
 
 if "%IPU_RUN_AUDIO_LIVE_SMOKE%"=="1" (

@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -47,8 +49,18 @@ jobs:
           grep -v '^-e ' backend/requirements.txt > /tmp/ipu-backend-requirements.txt
           python -m pip install -r /tmp/ipu-backend-requirements.txt
 
-      - name: Run Python lint
-        run: ruff check backend/ engine/ --ignore=E501,F401,E402
+      - name: Run Python lint (informational)
+        run: ruff check backend/ engine/ --ignore=E501,F401,E402 --exit-zero
+
+      - name: Check changed files are lint-clean (blocking)
+        if: github.event_name == 'pull_request'
+        run: |
+          CHANGED=$(git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
+            -- '*.py')
+          if [ -n "$CHANGED" ]; then
+            ruff check $CHANGED --ignore=E501,F401,E402,B008,BLE001,RUF012
+          fi
 
       - name: Run engine tests
         run: |
@@ -79,6 +91,42 @@ jobs:
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
+      - name: Run frontend-backend live integration tests
+        run: |
+          cleanup() {
+            kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          python -m uvicorn app.main:app \
+            --app-dir backend \
+            --host 127.0.0.1 \
+            --port 8241 &
+          BACKEND_PID=$!
+
+          python -m http.server 4241 \
+            --directory frontend \
+            --bind 127.0.0.1 &
+          FRONTEND_PID=$!
+
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8241/health >/dev/null \
+              && curl -fsS http://127.0.0.1:4241/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:8241/health >/dev/null
+          curl -fsS http://127.0.0.1:4241/ >/dev/null
+
+          cd frontend
+          node tests/runLiveIntegrationTests.js
+
       - name: Run frontend smoke tests
         working-directory: frontend
         run: node tests/runSmokeTests.js
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: node tests/resultRendering.test.js

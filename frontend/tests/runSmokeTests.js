@@ -1,8 +1,11 @@
-const assert = require("node:assert/strict");
-const http = require("node:http");
-const { spawn } = require("node:child_process");
-const path = require("node:path");
-const { chromium } = require("playwright");
+import assert from "node:assert/strict";
+import http from "node:http";
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { chromium } from "playwright";
 
 const FRONTEND_DIR = path.resolve(__dirname, "..");
 const BASE_URL = "http://127.0.0.1:4241";
@@ -289,7 +292,7 @@ async function startStaticServer() {
         return;
       }
 
-      require("node:fs").readFile(filePath, (error, data) => {
+      fs.readFile(filePath, (error, data) => {
         if (error) {
           res.writeHead(404);
           res.end("Not found");

@@ -1,0 +1,10 @@
+{
+  "name": "ipu-ai-security-filter-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/resultRendering.test.js",
+    "smoke": "node tests/runSmokeTests.js"
+  }
+}

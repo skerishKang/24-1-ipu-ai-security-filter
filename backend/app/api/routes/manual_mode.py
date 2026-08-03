@@ -1,14 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
 from app.api.schemas.manual_preview import (
-    ManualRestoreRequest,
-    ManualRestoreResponse,
+    ManualPreviewReadiness,
     ManualPreviewRequest,
     ManualPreviewResponse,
+    ManualRestoreRequest,
+    ManualRestoreResponse,
     PolicyName,
 )
 from app.core.auth import optional_auth_owner_hash
@@ -21,11 +20,13 @@ from app.core.exceptions import (
     SessionExpiredError,
     UnsupportedFileTypeError,
 )
-from app.services.manual_preview_service import ManualPreviewService, UploadConcurrencyExceededError
+from app.core.rate_limit import limiter
+from app.services.manual_preview_service import (
+    ManualPreviewService,
+    UploadConcurrencyExceededError,
+)
 
 router = APIRouter(prefix="/mode", tags=["manual-mode"])
-
-limiter = Limiter(key_func=get_remote_address)
 
 
 def get_limiter(request: Request):
@@ -102,7 +103,7 @@ async def manual_preview_audio(
 
 
 @router.post("/manual-preview/restore", response_model=ManualRestoreResponse)
-@limiter.limit("60/minute")
+@limiter.limit("15/minute")
 async def manual_preview_restore(
     request: Request,
     payload: ManualRestoreRequest,

@@ -45,32 +45,57 @@ export function createResultPanel({
 
   const grid = document.createElement("div");
   grid.className = "result-grid";
-  grid.innerHTML = `
-    <article class="text-card">
-      <p class="text-card__label">원문</p>
-      <p class="text-card__content" data-testid="original-text">${highlightText(originalText, replacements.map((item) => item.original), "text-original-hit")}</p>
-    </article>
-    <article class="text-card">
-      <p class="text-card__label">처리 결과</p>
-      <p class="text-card__content" data-testid="replaced-text">${highlightText(replacedText, replacements.map((item) => item.replaced), "text-replaced")}</p>
-    </article>
-  `;
+
+  const originalCard = document.createElement("article");
+  originalCard.className = "text-card";
+  const originalLabel = document.createElement("p");
+  originalLabel.className = "text-card__label";
+  originalLabel.textContent = "원문";
+  const originalContent = document.createElement("p");
+  originalContent.className = "text-card__content";
+  originalContent.dataset.testid = "original-text";
+  originalContent.append(highlightText(originalText, replacements.map((item) => item.original), "text-original-hit"));
+  originalCard.append(originalLabel, originalContent);
+
+  const replacedCard = document.createElement("article");
+  replacedCard.className = "text-card";
+  const replacedLabel = document.createElement("p");
+  replacedLabel.className = "text-card__label";
+  replacedLabel.textContent = "처리 결과";
+  const replacedContent = document.createElement("p");
+  replacedContent.className = "text-card__content";
+  replacedContent.dataset.testid = "replaced-text";
+  replacedContent.append(highlightText(replacedText, replacements.map((item) => item.replaced), "text-replaced"));
+  replacedCard.append(replacedLabel, replacedContent);
+
+  grid.append(originalCard, replacedCard);
 
   const list = document.createElement("div");
   list.className = "replacement-list";
-  list.innerHTML = replacements
-    .map(
-      (item) => `
-        <article class="list-item">
-          <div class="list-item__row">
-            <span class="list-item__key">${escapeHtml(item.original)}</span>
-            <span class="list-item__value">${escapeHtml(item.replaced)}</span>
-          </div>
-          <div class="list-item__meta">${escapeHtml(item.type)} · ${escapeHtml(item.reason || "")}</div>
-        </article>
-      `,
-    )
-    .join("");
+  for (const item of replacements) {
+    const listItem = document.createElement("article");
+    listItem.className = "list-item";
+
+    const row = document.createElement("div");
+    row.className = "list-item__row";
+
+    const key = document.createElement("span");
+    key.className = "list-item__key";
+    key.textContent = item.original ?? "";
+
+    const value = document.createElement("span");
+    value.className = "list-item__value";
+    value.textContent = item.replaced ?? "";
+
+    row.append(key, value);
+
+    const meta = document.createElement("div");
+    meta.className = "list-item__meta";
+    meta.textContent = `${item.type ?? ""} · ${item.reason || ""}`;
+
+    listItem.append(row, meta);
+    list.append(listItem);
+  }
 
   const compareSection = createCompareSection({
     comparison,
@@ -90,12 +115,17 @@ function createCompareSection({ comparison, selectedPolicy, onLoadComparison, on
 
   const header = document.createElement("div");
   header.className = "compare-panel__header";
-  header.innerHTML = `
-    <div>
-      <strong class="compare-panel__title">strict_token / local_rewrite 비교</strong>
-      <p class="compare-panel__description">보수적 토큰 치환과 자연어 리라이트 결과를 같은 원문 기준으로 비교합니다.</p>
-    </div>
-  `;
+
+  const titleBlock = document.createElement("div");
+  const title = document.createElement("strong");
+  title.className = "compare-panel__title";
+  title.textContent = "strict_token / local_rewrite 비교";
+  const description = document.createElement("p");
+  description.className = "compare-panel__description";
+  description.textContent = "보수적 토큰 치환과 자연어 리라이트 결과를 같은 원문 기준으로 비교합니다.";
+  titleBlock.append(title, description);
+
+  header.append(titleBlock);
 
   const actions = document.createElement("div");
   actions.className = "compare-panel__actions";
@@ -171,14 +201,32 @@ function createCompareCard(policy, preview, policyLookup) {
   const card = document.createElement("article");
   card.className = "compare-card";
   const summary = policyLookup?.(policy);
-  card.innerHTML = `
-    <div class="compare-card__topline">
-      <span class="policy-badge policy-badge--${policy === "local_rewrite" ? "rewrite" : "strict"}">정책 ${policy}</span>
-      <span class="review-badge review-badge--${preview.report.review_status === "review-required" ? "warning" : "clean"}">${formatReviewStatus(preview.report.review_status)} · ${formatRiskLevel(preview.report.risk_level)}</span>
-    </div>
-    <strong class="compare-card__title">${escapeHtml(summary?.title || policy)}</strong>
-    <p class="compare-card__description">${escapeHtml(summary?.description || "")}</p>
-    <p class="compare-card__content">${highlightText(preview.replaced_text, preview.replacements.map((item) => item.replaced), "text-replaced")}</p>
-  `;
+
+  const topLine = document.createElement("div");
+  topLine.className = "compare-card__topline";
+
+  const badge = document.createElement("span");
+  badge.className = `policy-badge policy-badge--${policy === "local_rewrite" ? "rewrite" : "strict"}`;
+  badge.textContent = `정책 ${policy}`;
+
+  const statusBadge = document.createElement("span");
+  statusBadge.className = `review-badge review-badge--${preview.report.review_status === "review-required" ? "warning" : "clean"}`;
+  statusBadge.textContent = `${formatReviewStatus(preview.report.review_status)} · ${formatRiskLevel(preview.report.risk_level)}`;
+
+  topLine.append(badge, statusBadge);
+
+  const title = document.createElement("strong");
+  title.className = "compare-card__title";
+  title.textContent = summary?.title || policy;
+
+  const description = document.createElement("p");
+  description.className = "compare-card__description";
+  description.textContent = summary?.description || "";
+
+  const content = document.createElement("p");
+  content.className = "compare-card__content";
+  content.append(highlightText(preview.replaced_text, preview.replacements.map((item) => item.replaced), "text-replaced"));
+
+  card.append(topLine, title, description, content);
   return card;
 }
