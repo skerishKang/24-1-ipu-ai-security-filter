@@ -86,7 +86,7 @@ class ManualPreviewEngine:
         content: str,
         detections: list[dict[str, str | int | float]] | None,
         session_id: str,
-    ) -> tuple[str, list[dict[str, str]]]:
+    ) -> tuple[str, list[dict[str, str]], dict[str, object]]:
         typed_detections = (
             self.detector.detect(content, policy="strict_token")
             if detections is None
@@ -99,7 +99,15 @@ class ManualPreviewEngine:
             replacements=rewrite_result.replacements,
             session_id=session_id,
         )
-        return replaced_text, [replacement_to_dict(item) for item in rewrite_result.replacements]
+        metadata = {
+            "engine": self.local_rewriter.engine_name,
+            "used_fallback": rewrite_result.used_fallback,
+        }
+        return (
+            replaced_text,
+            [replacement_to_dict(item) for item in rewrite_result.replacements],
+            metadata,
+        )
 
     def restore(
         self,
@@ -148,9 +156,10 @@ class ManualPreviewEngine:
             strict_detections=strict_readiness_detections,
             displayed_detections=detections,
         )
+        rewrite_metadata: dict[str, object] = {}
         if detections:
             if effective_strategy == "local_rewrite":
-                replaced_text, replacements = self.replace_with_local_rewrite(
+                replaced_text, replacements, rewrite_metadata = self.replace_with_local_rewrite(
                     content=content,
                     detections=detections,
                     session_id=session_id,
@@ -169,6 +178,7 @@ class ManualPreviewEngine:
             # ``replace()`` now refuses explicitly.
             replaced_text = content
             replacements = []
+            rewrite_metadata = {}
         report = self.build_report(detections, replacements, strategy=effective_strategy)
         readiness = self.check_send_readiness(
             replaced_text,
@@ -184,6 +194,7 @@ class ManualPreviewEngine:
             "detections": detections,
             "replacements": replacements,
             "report": report,
+            "rewrite_metadata": rewrite_metadata,
             "task_type": task_type,
             "readiness": readiness,
             "copy_ready_prompt": self._build_copy_ready_prompt(replaced_text, report, task_type),

@@ -417,6 +417,7 @@ class ManualPreviewService:
             detections=self._build_detection_items(engine_result["detections"], minimized=minimized),
             replacements=self._build_replacement_items(engine_result["replacements"], minimized=minimized),
             report=ManualPreviewReport(**engine_result["report"]),
+            rewrite_metadata=engine_result.get("rewrite_metadata", {}),
             readiness=ManualPreviewReadiness(**engine_result["readiness"]),
             copy_ready_prompt=str(engine_result["copy_ready_prompt"]),
         )

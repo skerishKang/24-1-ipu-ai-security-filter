@@ -73,6 +73,7 @@ class ManualPreviewResponse(BaseModel):
     detections: list[DetectionItem]
     replacements: list[ReplacementItem]
     report: ManualPreviewReport
+    rewrite_metadata: dict[str, object] = Field(default_factory=dict)
     readiness: ManualPreviewReadiness
     copy_ready_prompt: str
 

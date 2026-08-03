@@ -66,7 +66,12 @@ class LocalRewriteResult:
     raw_response: str
 
 
-class OllamaLocalRewriter:
+class LocalRewriter:
+    engine_name: str = "deterministic"
+
+
+class OllamaLocalRewriter(LocalRewriter):
+    engine_name: str = "ollama"
     SYSTEM_PROMPT = (
         "You rewrite sensitive spans into safe Korean business placeholders. "
         "Keep meaning and document utility. Never repeat original sensitive text. "
