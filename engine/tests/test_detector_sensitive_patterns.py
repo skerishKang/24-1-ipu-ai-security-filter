@@ -201,6 +201,47 @@ class SensitivePatternDetectorTest(unittest.TestCase):
             f"expected EMAIL detection for obfuscated input, got {[item.type for item in detections]}",
         )
 
+    def test_unicode_normalization_catches_combining_grapheme_joiner_email(self) -> None:
+        # U+034F (COMBINING GRAPHEME JOINER) is an invisible codepoint an
+        # attacker can insert to split a PII token. Normalization must strip it
+        # so the email regex still matches. This guards against regressions in
+        # the invisible-codepoint set (a prior typo mapped U+034F to U+035F).
+        obfuscated = "sec\u034furity@ipu.co.kr"
+        detections = self.detector.detect(obfuscated, policy="strict_token")
+        self.assertTrue(
+            any(item.type == "EMAIL" for item in detections),
+            f"expected EMAIL detection for U+034F obfuscated input, got {[item.type for item in detections]}",
+        )
+
+    def test_unicode_normalization_strips_invisible_codepoint_set(self) -> None:
+        # Each codepoint in the invisible set must be stripped so that an
+        # inserted character does not break PII regex matching.
+        invisible_codepoints = [
+            "\u200b",  # zero-width space
+            "\u200c",  # zero-width non-joiner
+            "\u200d",  # zero-width joiner
+            "\u200e",  # left-to-right mark
+            "\u200f",  # right-to-left mark
+            "\ufeff",  # zero-width no-break space (BOM)
+            "\u2060",  # word joiner
+            "\u00ad",  # soft hyphen
+            "\u034f",  # combining grapheme joiner
+            "\u061c",  # arabic letter mark
+            "\u115f",  # hangul jungseong filler
+            "\u1160",  # hangul jungseong filler
+            "\u17b4",  # khmer inherent vowel dependent
+            "\u17b5",  # khmer inherent vowel dependent
+            "\u180e",  # mongolian vowel separator
+        ]
+        for cp in invisible_codepoints:
+            with self.subTest(codepoint=f"U+{ord(cp):04X}"):
+                obfuscated = f"sec{cp}urity@ipu.co.kr"
+                detections = self.detector.detect(obfuscated, policy="strict_token")
+                self.assertTrue(
+                    any(item.type == "EMAIL" for item in detections),
+                    f"expected EMAIL detection for U+{ord(cp):04X} obfuscated input, got {[item.type for item in detections]}",
+                )
+
     def test_unicode_normalization_catches_fullwidth_phone(self) -> None:
         obfuscated = "전화 ０１０-１２３４-５６７８ 로 주세요."
         detections = self.detector.detect(obfuscated, policy="strict_token")

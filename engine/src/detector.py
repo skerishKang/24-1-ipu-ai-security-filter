@@ -21,7 +21,7 @@ from engine.src.detector_patterns import (
 
 # Zero-width / format characters an attacker can insert to break regex matching.
 _INVISIBLE_CODEPOINT_PATTERN = re.compile(
-    "[\u200b-\u200f\ufeff\u2060\u00ad\u035f\u061c\u115f\u1160\u17b4\u17b5\u180e]"
+    "[\u200b-\u200f\ufeff\u2060\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e]"
 )
 
 
