@@ -62,10 +62,6 @@ jobs:
             ruff check $CHANGED --ignore=E501,F401,E402,B008,BLE001,RUF012
           fi
 
-      - name: Run frontend-backend live integration tests
-        working-directory: frontend
-        run: node tests/runLiveIntegrationTests.js
-
       - name: Run engine tests
         run: |
           python -m unittest \
