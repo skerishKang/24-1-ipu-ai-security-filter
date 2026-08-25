@@ -66,26 +66,31 @@ def write_markdown_summary(path: str, summary: dict[str, Any]) -> None:
     lines.append("## Systems")
     lines.append("")
     systems = summary["systems"]
-    metric_keys = sorted(systems["S0"]["privacy"].keys()) if "S0" in systems else []
+    # residual_by_label stays in results.json / CSV; it is too wide for the
+    # human-readable systems table.
+    _omit_from_systems_table = {"residual_by_label"}
+    metric_keys = sorted(
+        {key for block in systems.values() for key in block.get("privacy", {}) if key not in _omit_from_systems_table}
+    )
     header = "| system | " + " | ".join(metric_keys) + " |"
     lines.append(header)
     lines.append("|" + "---|" * (len(metric_keys) + 1))
     for system_id in sorted(systems):
         privacy = systems[system_id]["privacy"]
-        cells = " | ".join(_fmt(privacy[key]) for key in metric_keys)
+        cells = " | ".join(_fmt(privacy.get(key)) for key in metric_keys)
         lines.append(f"| {system_id} | {cells} |")
     lines.append("")
 
     lines.append("## Clinical utility retention")
     lines.append("")
-    utility_categories = (
-        sorted(systems["S0"]["utility"].keys()) if "S0" in systems else []
+    utility_categories = sorted(
+        {key for block in systems.values() for key in block.get("utility", {})}
     )
     header = "| system | " + " | ".join(utility_categories) + " |"
     lines.append(header)
     lines.append("|" + "---|" * (len(utility_categories) + 1))
     for system_id in sorted(systems):
-        utility = systems[system_id]["utility"]
+        utility = systems[system_id].get("utility", {})
         cells = " | ".join(
             _fmt(utility[key]["rate"]) if isinstance(utility.get(key), dict) else _fmt(utility.get(key))
             for key in utility_categories

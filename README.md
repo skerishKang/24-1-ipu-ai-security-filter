@@ -104,6 +104,13 @@ IPU AI Firewall은 민감정보를 내부에서 탐지, 치환, 복원한 뒤 �
 │   ├── 00-master-roadmap.md
 │   ├── business/
 │   └── development/
+├── benchmark/
+│   ├── README.md
+│   ├── corpus/
+│   ├── adapters/
+│   ├── metrics/
+│   ├── tests/
+│   └── reports/
 ├── frontend/
 │   ├── README.md
 │   ├── runtime-config.js

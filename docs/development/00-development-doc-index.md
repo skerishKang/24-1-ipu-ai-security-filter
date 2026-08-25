@@ -122,6 +122,8 @@
   - DOCX/HWPX broader compressed package inspection 평가, zip/package-level 검사 보류 기준
 - [53-address-detection-sample-design.md](./53-address-detection-sample-design.md)
   - 주소 탐지 sample-driven 설계, fake sample corpus, policy boundary, 구현 전 테스트 기준
+- [B63 R0 benchmark README](../../benchmark/README.md)
+  - B63 R0-A synthetic privacy-clinical-utility benchmark harness 범위, 세 시스템 정의, 메트릭 수식, 재현성 지침
 
 ## 추천 읽기 순서
 

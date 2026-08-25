@@ -51,7 +51,7 @@ jobs:
           python -m pip install -r /tmp/ipu-backend-requirements.txt
 
       - name: Run Python lint (blocking)
-        run: ruff check backend/ engine/
+        run: ruff check backend/ engine/ benchmark/
 
       - name: Run engine tests
         run: |
@@ -59,6 +59,10 @@ jobs:
             engine.tests.test_detector_sensitive_patterns \
             engine.tests.test_manual_preview_engine \
             engine.tests.test_local_rewriter
+
+      - name: Run B63 R0 benchmark tests
+        run: |
+          python -m unittest discover -s benchmark/tests -t .
 
       - name: Run backend tests
         working-directory: backend

@@ -1,0 +1,13 @@
+{
+  "command": "python -m benchmark.runner --systems S0,S1,S3 --out G:\\Ddrive\\BatangD\\task\\workdiary\\24-1-ipu-ai-security-filter\\benchmark/reports/R0_canonical",
+  "corpus_version": "0.1.0",
+  "engine_version_note": "engine imported read-only from repository at git_sha",
+  "execution_timestamp_utc": "2026-08-25T07:18:20+00:00",
+  "extra_dependencies": {},
+  "git_dirty": true,
+  "git_sha": "314a2bf8ac30fc72d44d2e3d7c352cdde05eb512",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python_version": "3.11.0",
+  "schema_version": "0.1.0",
+  "seed": 20260825
+}

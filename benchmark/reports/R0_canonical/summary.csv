@@ -1,0 +1,316 @@
+field,metric,section,system,value
+documents_scored,contextual_reid_risk_experimental,privacy,S0,84
+mean_score,contextual_reid_risk_experimental,privacy,S0,0.7208
+status,contextual_reid_risk_experimental,privacy,S0,EXPERIMENTAL
+f1,entity_exact_adversarial,privacy,S0,0.1121
+fn,entity_exact_adversarial,privacy,S0,409
+fp,entity_exact_adversarial,privacy,S0,66
+precision,entity_exact_adversarial,privacy,S0,0.3125
+recall,entity_exact_adversarial,privacy,S0,0.0683
+tp,entity_exact_adversarial,privacy,S0,30
+f1,entity_exact_base,privacy,S0,0.1449
+fn,entity_exact_base,privacy,S0,399
+fp,entity_exact_base,privacy,S0,73
+precision,entity_exact_base,privacy,S0,0.354
+recall,entity_exact_base,privacy,S0,0.0911
+tp,entity_exact_base,privacy,S0,40
+f1,entity_overlap_adversarial,privacy,S0,0.157
+fn,entity_overlap_adversarial,privacy,S0,397
+fp,entity_overlap_adversarial,privacy,S0,54
+precision,entity_overlap_adversarial,privacy,S0,0.4375
+recall,entity_overlap_adversarial,privacy,S0,0.0957
+tp,entity_overlap_adversarial,privacy,S0,42
+f1,entity_overlap_base,privacy,S0,0.2029
+fn,entity_overlap_base,privacy,S0,383
+fp,entity_overlap_base,privacy,S0,57
+precision,entity_overlap_base,privacy,S0,0.4956
+recall,entity_overlap_base,privacy,S0,0.1276
+tp,entity_overlap_base,privacy,S0,56
+value,high_risk_f2_adversarial,privacy,S0,0.1829
+value,high_risk_f2_base,privacy,S0,0.2389
+document_fp_rate,negative_false_positive,privacy,S0,0.0
+documents_with_predictions,negative_false_positive,privacy,S0,0.0
+mean_predictions_per_document,negative_false_positive,privacy,S0,0.0
+flagged_cases,quasi_combination_detection_rate,privacy,S0,24
+hits,quasi_combination_detection_rate,privacy,S0,0
+rate,quasi_combination_detection_rate,privacy,S0,0.0
+ADDRESS,residual_by_label,privacy,S0,"{'total': 32, 'survived': 32, 'rate': 1.0}"
+ADMIT_DISCHARGE_DATE,residual_by_label,privacy,S0,"{'total': 56, 'survived': 8, 'rate': 0.1429}"
+AGE,residual_by_label,privacy,S0,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+CLINICIAN_ID,residual_by_label,privacy,S0,"{'total': 16, 'survived': 16, 'rate': 1.0}"
+CLINICIAN_NAME,residual_by_label,privacy,S0,"{'total': 42, 'survived': 42, 'rate': 1.0}"
+DETAILED_REGION,residual_by_label,privacy,S0,"{'total': 36, 'survived': 36, 'rate': 1.0}"
+EMAIL,residual_by_label,privacy,S0,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+EXACT_TIMESTAMP,residual_by_label,privacy,S0,"{'total': 56, 'survived': 2, 'rate': 0.0357}"
+FOREIGN_REG_NUMBER,residual_by_label,privacy,S0,"{'total': 16, 'survived': 3, 'rate': 0.1875}"
+GUARDIAN_NAME,residual_by_label,privacy,S0,"{'total': 48, 'survived': 48, 'rate': 1.0}"
+HOSPITAL_NAME,residual_by_label,privacy,S0,"{'total': 62, 'survived': 62, 'rate': 1.0}"
+INSURANCE_NUMBER,residual_by_label,privacy,S0,"{'total': 16, 'survived': 14, 'rate': 0.875}"
+MRN,residual_by_label,privacy,S0,"{'total': 32, 'survived': 32, 'rate': 1.0}"
+OCCUPATION,residual_by_label,privacy,S0,"{'total': 24, 'survived': 24, 'rate': 1.0}"
+ORDER_ID,residual_by_label,privacy,S0,"{'total': 66, 'survived': 62, 'rate': 0.9394}"
+PATIENT_NAME,residual_by_label,privacy,S0,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+PHONE,residual_by_label,privacy,S0,"{'total': 64, 'survived': 8, 'rate': 0.125}"
+RARE_DISEASE,residual_by_label,privacy,S0,"{'total': 24, 'survived': 24, 'rate': 1.0}"
+RARE_PROCEDURE,residual_by_label,privacy,S0,"{'total': 12, 'survived': 12, 'rate': 1.0}"
+RRN,residual_by_label,privacy,S0,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+SEX,residual_by_label,privacy,S0,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+UNIQUE_EVENT,residual_by_label,privacy,S0,"{'total': 12, 'survived': 12, 'rate': 1.0}"
+WARD_DEPARTMENT,residual_by_label,privacy,S0,"{'total': 40, 'survived': 40, 'rate': 1.0}"
+rate,residual_direct_phi_rate,privacy,S0,0.7155
+residual,residual_direct_phi_rate,privacy,S0,259
+total,residual_direct_phi_rate,privacy,S0,362
+rate,residual_high_risk_phi_rate,privacy,S0,0.7155
+residual,residual_high_risk_phi_rate,privacy,S0,259
+total,residual_high_risk_phi_rate,privacy,S0,362
+reason,session_cumulative_risk_score,privacy,S0,label definition unstable in R0; no forced number
+status,session_cumulative_risk_score,privacy,S0,NOT_IMPLEMENTED
+documents,transform_escape_rate,privacy,S0,74
+escaped_documents,transform_escape_rate,privacy,S0,74
+rate,transform_escape_rate,privacy,S0,1.0
+kept,diagnosis,utility,S0,6
+rate,diagnosis,utility,S0,1.0
+total,diagnosis,utility,S0,6
+preserved,diagnosis_treatment_relation_preservation,utility,S0,6
+rate,diagnosis_treatment_relation_preservation,utility,S0,1.0
+total,diagnosis_treatment_relation_preservation,utility,S0,6
+kept,dosage,utility,S0,11
+rate,dosage,utility,S0,1.0
+total,dosage,utility,S0,11
+preserved,event_ordering_preservation,utility,S0,12
+rate,event_ordering_preservation,utility,S0,1.0
+total,event_ordering_preservation,utility,S0,12
+kept,frequency_route,utility,S0,3
+rate,frequency_route,utility,S0,1.0
+total,frequency_route,utility,S0,3
+kept,lab_value,utility,S0,16
+rate,lab_value,utility,S0,1.0
+total,lab_value,utility,S0,16
+kept,medication,utility,S0,11
+rate,medication,utility,S0,1.0
+total,medication,utility,S0,11
+kept,negation_cue,utility,S0,9
+rate,negation_cue,utility,S0,1.0
+total,negation_cue,utility,S0,9
+kept,procedure,utility,S0,6
+rate,procedure,utility,S0,1.0
+total,procedure,utility,S0,6
+kept,symptom,utility,S0,9
+rate,symptom,utility,S0,1.0
+total,symptom,utility,S0,9
+kept,temporality,utility,S0,3
+rate,temporality,utility,S0,1.0
+total,temporality,utility,S0,3
+kept,uncertainty_cue,utility,S0,3
+rate,uncertainty_cue,utility,S0,1.0
+total,uncertainty_cue,utility,S0,3
+documents_scored,contextual_reid_risk_experimental,privacy,S1,84
+mean_score,contextual_reid_risk_experimental,privacy,S1,0.7726
+status,contextual_reid_risk_experimental,privacy,S1,EXPERIMENTAL
+f1,entity_exact_adversarial,privacy,S1,0.1043
+fn,entity_exact_adversarial,privacy,S1,410
+fp,entity_exact_adversarial,privacy,S1,88
+precision,entity_exact_adversarial,privacy,S1,0.2479
+recall,entity_exact_adversarial,privacy,S1,0.0661
+tp,entity_exact_adversarial,privacy,S1,29
+f1,entity_exact_base,privacy,S1,0.1772
+fn,entity_exact_base,privacy,S1,383
+fp,entity_exact_base,privacy,S1,137
+precision,entity_exact_base,privacy,S1,0.2902
+recall,entity_exact_base,privacy,S1,0.1276
+tp,entity_exact_base,privacy,S1,56
+f1,entity_overlap_adversarial,privacy,S1,0.2734
+fn,entity_overlap_adversarial,privacy,S1,363
+fp,entity_overlap_adversarial,privacy,S1,41
+precision,entity_overlap_adversarial,privacy,S1,0.6496
+recall,entity_overlap_adversarial,privacy,S1,0.1731
+tp,entity_overlap_adversarial,privacy,S1,76
+f1,entity_overlap_base,privacy,S1,0.3829
+fn,entity_overlap_base,privacy,S1,318
+fp,entity_overlap_base,privacy,S1,72
+precision,entity_overlap_base,privacy,S1,0.6269
+recall,entity_overlap_base,privacy,S1,0.2756
+tp,entity_overlap_base,privacy,S1,121
+value,high_risk_f2_adversarial,privacy,S1,0.1724
+value,high_risk_f2_base,privacy,S1,0.3053
+document_fp_rate,negative_false_positive,privacy,S1,0.0
+documents_with_predictions,negative_false_positive,privacy,S1,0.0
+mean_predictions_per_document,negative_false_positive,privacy,S1,0.0
+flagged_cases,quasi_combination_detection_rate,privacy,S1,24
+hits,quasi_combination_detection_rate,privacy,S1,0
+rate,quasi_combination_detection_rate,privacy,S1,0.0
+ADDRESS,residual_by_label,privacy,S1,"{'total': 32, 'survived': 2, 'rate': 0.0625}"
+ADMIT_DISCHARGE_DATE,residual_by_label,privacy,S1,"{'total': 56, 'survived': 13, 'rate': 0.2321}"
+AGE,residual_by_label,privacy,S1,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+CLINICIAN_ID,residual_by_label,privacy,S1,"{'total': 16, 'survived': 1, 'rate': 0.0625}"
+CLINICIAN_NAME,residual_by_label,privacy,S1,"{'total': 42, 'survived': 42, 'rate': 1.0}"
+DETAILED_REGION,residual_by_label,privacy,S1,"{'total': 36, 'survived': 36, 'rate': 1.0}"
+EMAIL,residual_by_label,privacy,S1,"{'total': 16, 'survived': 3, 'rate': 0.1875}"
+EXACT_TIMESTAMP,residual_by_label,privacy,S1,"{'total': 56, 'survived': 14, 'rate': 0.25}"
+FOREIGN_REG_NUMBER,residual_by_label,privacy,S1,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+GUARDIAN_NAME,residual_by_label,privacy,S1,"{'total': 48, 'survived': 48, 'rate': 1.0}"
+HOSPITAL_NAME,residual_by_label,privacy,S1,"{'total': 62, 'survived': 62, 'rate': 1.0}"
+INSURANCE_NUMBER,residual_by_label,privacy,S1,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+MRN,residual_by_label,privacy,S1,"{'total': 32, 'survived': 6, 'rate': 0.1875}"
+OCCUPATION,residual_by_label,privacy,S1,"{'total': 24, 'survived': 24, 'rate': 1.0}"
+ORDER_ID,residual_by_label,privacy,S1,"{'total': 66, 'survived': 11, 'rate': 0.1667}"
+PATIENT_NAME,residual_by_label,privacy,S1,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+PHONE,residual_by_label,privacy,S1,"{'total': 64, 'survived': 22, 'rate': 0.3438}"
+RARE_DISEASE,residual_by_label,privacy,S1,"{'total': 24, 'survived': 24, 'rate': 1.0}"
+RARE_PROCEDURE,residual_by_label,privacy,S1,"{'total': 12, 'survived': 12, 'rate': 1.0}"
+RRN,residual_by_label,privacy,S1,"{'total': 16, 'survived': 4, 'rate': 0.25}"
+SEX,residual_by_label,privacy,S1,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+UNIQUE_EVENT,residual_by_label,privacy,S1,"{'total': 12, 'survived': 12, 'rate': 1.0}"
+WARD_DEPARTMENT,residual_by_label,privacy,S1,"{'total': 40, 'survived': 40, 'rate': 1.0}"
+rate,residual_direct_phi_rate,privacy,S1,0.5304
+residual,residual_direct_phi_rate,privacy,S1,192
+total,residual_direct_phi_rate,privacy,S1,362
+rate,residual_high_risk_phi_rate,privacy,S1,0.5304
+residual,residual_high_risk_phi_rate,privacy,S1,192
+total,residual_high_risk_phi_rate,privacy,S1,362
+reason,session_cumulative_risk_score,privacy,S1,label definition unstable in R0; no forced number
+status,session_cumulative_risk_score,privacy,S1,NOT_IMPLEMENTED
+documents,transform_escape_rate,privacy,S1,74
+escaped_documents,transform_escape_rate,privacy,S1,74
+rate,transform_escape_rate,privacy,S1,1.0
+kept,diagnosis,utility,S1,6
+rate,diagnosis,utility,S1,1.0
+total,diagnosis,utility,S1,6
+preserved,diagnosis_treatment_relation_preservation,utility,S1,6
+rate,diagnosis_treatment_relation_preservation,utility,S1,1.0
+total,diagnosis_treatment_relation_preservation,utility,S1,6
+kept,dosage,utility,S1,11
+rate,dosage,utility,S1,1.0
+total,dosage,utility,S1,11
+preserved,event_ordering_preservation,utility,S1,12
+rate,event_ordering_preservation,utility,S1,1.0
+total,event_ordering_preservation,utility,S1,12
+kept,frequency_route,utility,S1,3
+rate,frequency_route,utility,S1,1.0
+total,frequency_route,utility,S1,3
+kept,lab_value,utility,S1,16
+rate,lab_value,utility,S1,1.0
+total,lab_value,utility,S1,16
+kept,medication,utility,S1,11
+rate,medication,utility,S1,1.0
+total,medication,utility,S1,11
+kept,negation_cue,utility,S1,9
+rate,negation_cue,utility,S1,1.0
+total,negation_cue,utility,S1,9
+kept,procedure,utility,S1,6
+rate,procedure,utility,S1,1.0
+total,procedure,utility,S1,6
+kept,symptom,utility,S1,9
+rate,symptom,utility,S1,1.0
+total,symptom,utility,S1,9
+kept,temporality,utility,S1,3
+rate,temporality,utility,S1,1.0
+total,temporality,utility,S1,3
+kept,uncertainty_cue,utility,S1,3
+rate,uncertainty_cue,utility,S1,1.0
+total,uncertainty_cue,utility,S1,3
+documents_scored,contextual_reid_risk_experimental,privacy,S3,84
+mean_score,contextual_reid_risk_experimental,privacy,S3,0.9452
+status,contextual_reid_risk_experimental,privacy,S3,EXPERIMENTAL
+f1,entity_exact_adversarial,privacy,S3,0.4672
+fn,entity_exact_adversarial,privacy,S3,261
+fp,entity_exact_adversarial,privacy,S3,145
+precision,entity_exact_adversarial,privacy,S3,0.5511
+recall,entity_exact_adversarial,privacy,S3,0.4055
+tp,entity_exact_adversarial,privacy,S3,178
+f1,entity_exact_base,privacy,S3,0.5771
+fn,entity_exact_base,privacy,S3,192
+fp,entity_exact_base,privacy,S3,170
+precision,entity_exact_base,privacy,S3,0.5923
+recall,entity_exact_base,privacy,S3,0.5626
+tp,entity_exact_base,privacy,S3,247
+f1,entity_overlap_adversarial,privacy,S3,0.6299
+fn,entity_overlap_adversarial,privacy,S3,199
+fp,entity_overlap_adversarial,privacy,S3,83
+precision,entity_overlap_adversarial,privacy,S3,0.743
+recall,entity_overlap_adversarial,privacy,S3,0.5467
+tp,entity_overlap_adversarial,privacy,S3,240
+f1,entity_overlap_base,privacy,S3,0.8318
+fn,entity_overlap_base,privacy,S3,83
+fp,entity_overlap_base,privacy,S3,61
+precision,entity_overlap_base,privacy,S3,0.8537
+recall,entity_overlap_base,privacy,S3,0.8109
+tp,entity_overlap_base,privacy,S3,356
+value,high_risk_f2_adversarial,privacy,S3,0.2101
+value,high_risk_f2_base,privacy,S3,0.2454
+document_fp_rate,negative_false_positive,privacy,S3,0.0
+documents_with_predictions,negative_false_positive,privacy,S3,0.0
+mean_predictions_per_document,negative_false_positive,privacy,S3,0.0
+flagged_cases,quasi_combination_detection_rate,privacy,S3,24
+hits,quasi_combination_detection_rate,privacy,S3,24
+rate,quasi_combination_detection_rate,privacy,S3,1.0
+ADDRESS,residual_by_label,privacy,S3,"{'total': 32, 'survived': 2, 'rate': 0.0625}"
+ADMIT_DISCHARGE_DATE,residual_by_label,privacy,S3,"{'total': 56, 'survived': 49, 'rate': 0.875}"
+AGE,residual_by_label,privacy,S3,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+CLINICIAN_ID,residual_by_label,privacy,S3,"{'total': 16, 'survived': 1, 'rate': 0.0625}"
+CLINICIAN_NAME,residual_by_label,privacy,S3,"{'total': 42, 'survived': 2, 'rate': 0.0476}"
+DETAILED_REGION,residual_by_label,privacy,S3,"{'total': 36, 'survived': 36, 'rate': 1.0}"
+EMAIL,residual_by_label,privacy,S3,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+EXACT_TIMESTAMP,residual_by_label,privacy,S3,"{'total': 56, 'survived': 2, 'rate': 0.0357}"
+FOREIGN_REG_NUMBER,residual_by_label,privacy,S3,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+GUARDIAN_NAME,residual_by_label,privacy,S3,"{'total': 48, 'survived': 7, 'rate': 0.1458}"
+HOSPITAL_NAME,residual_by_label,privacy,S3,"{'total': 62, 'survived': 8, 'rate': 0.129}"
+INSURANCE_NUMBER,residual_by_label,privacy,S3,"{'total': 16, 'survived': 3, 'rate': 0.1875}"
+MRN,residual_by_label,privacy,S3,"{'total': 32, 'survived': 10, 'rate': 0.3125}"
+OCCUPATION,residual_by_label,privacy,S3,"{'total': 24, 'survived': 24, 'rate': 1.0}"
+ORDER_ID,residual_by_label,privacy,S3,"{'total': 66, 'survived': 14, 'rate': 0.2121}"
+PATIENT_NAME,residual_by_label,privacy,S3,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+PHONE,residual_by_label,privacy,S3,"{'total': 64, 'survived': 8, 'rate': 0.125}"
+RARE_DISEASE,residual_by_label,privacy,S3,"{'total': 24, 'survived': 24, 'rate': 1.0}"
+RARE_PROCEDURE,residual_by_label,privacy,S3,"{'total': 12, 'survived': 12, 'rate': 1.0}"
+RRN,residual_by_label,privacy,S3,"{'total': 16, 'survived': 0, 'rate': 0.0}"
+SEX,residual_by_label,privacy,S3,"{'total': 64, 'survived': 64, 'rate': 1.0}"
+UNIQUE_EVENT,residual_by_label,privacy,S3,"{'total': 12, 'survived': 12, 'rate': 1.0}"
+WARD_DEPARTMENT,residual_by_label,privacy,S3,"{'total': 40, 'survived': 4, 'rate': 0.1}"
+rate,residual_direct_phi_rate,privacy,S3,0.268
+residual,residual_direct_phi_rate,privacy,S3,97
+total,residual_direct_phi_rate,privacy,S3,362
+rate,residual_high_risk_phi_rate,privacy,S3,0.268
+residual,residual_high_risk_phi_rate,privacy,S3,97
+total,residual_high_risk_phi_rate,privacy,S3,362
+reason,session_cumulative_risk_score,privacy,S3,label definition unstable in R0; no forced number
+status,session_cumulative_risk_score,privacy,S3,NOT_IMPLEMENTED
+documents,transform_escape_rate,privacy,S3,74
+escaped_documents,transform_escape_rate,privacy,S3,64
+rate,transform_escape_rate,privacy,S3,0.8649
+kept,diagnosis,utility,S3,6
+rate,diagnosis,utility,S3,1.0
+total,diagnosis,utility,S3,6
+preserved,diagnosis_treatment_relation_preservation,utility,S3,6
+rate,diagnosis_treatment_relation_preservation,utility,S3,1.0
+total,diagnosis_treatment_relation_preservation,utility,S3,6
+kept,dosage,utility,S3,11
+rate,dosage,utility,S3,1.0
+total,dosage,utility,S3,11
+preserved,event_ordering_preservation,utility,S3,12
+rate,event_ordering_preservation,utility,S3,1.0
+total,event_ordering_preservation,utility,S3,12
+kept,frequency_route,utility,S3,3
+rate,frequency_route,utility,S3,1.0
+total,frequency_route,utility,S3,3
+kept,lab_value,utility,S3,16
+rate,lab_value,utility,S3,1.0
+total,lab_value,utility,S3,16
+kept,medication,utility,S3,11
+rate,medication,utility,S3,1.0
+total,medication,utility,S3,11
+kept,negation_cue,utility,S3,9
+rate,negation_cue,utility,S3,1.0
+total,negation_cue,utility,S3,9
+kept,procedure,utility,S3,6
+rate,procedure,utility,S3,1.0
+total,procedure,utility,S3,6
+kept,symptom,utility,S3,9
+rate,symptom,utility,S3,1.0
+total,symptom,utility,S3,9
+kept,temporality,utility,S3,3
+rate,temporality,utility,S3,1.0
+total,temporality,utility,S3,3
+kept,uncertainty_cue,utility,S3,3
+rate,uncertainty_cue,utility,S3,1.0
+total,uncertainty_cue,utility,S3,3

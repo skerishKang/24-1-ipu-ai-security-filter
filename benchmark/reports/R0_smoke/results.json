@@ -1,0 +1,1029 @@
+{
+  "corpus": {
+    "adversarial_case_count": 76,
+    "base_case_count": 109,
+    "corpus_version": "0.1.0",
+    "schema_version": "0.1.0",
+    "seed": 20260825,
+    "subset_counts": {
+      "direct": 32,
+      "institutional": 20,
+      "negative": 15,
+      "quasi": 24,
+      "utility": 18
+    },
+    "total_case_count": 185
+  },
+  "frontier": [
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P0_BLOCK",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S0",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P1_MAXIMUM_REDACTION",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S0",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": 1.0,
+      "lab_value_retention": 1.0,
+      "medication_retention": 1.0,
+      "negation_preservation": 1.0,
+      "policy": "P2_TOKENIZATION",
+      "quasi_category_survival_experimental": 0.7208,
+      "relation_preservation": 1.0,
+      "residual_direct_phi_rate": 0.7155,
+      "residual_high_risk_phi_rate": 0.7155,
+      "status": "IMPLEMENTED",
+      "system": "S0",
+      "transform_escape_rate": 1.0
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P3_SEMANTIC_GENERALIZATION",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S0",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P4_PRIVATE_MODEL_PASSTHROUGH",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S0",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P0_BLOCK",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S1",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P1_MAXIMUM_REDACTION",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S1",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": 1.0,
+      "lab_value_retention": 1.0,
+      "medication_retention": 1.0,
+      "negation_preservation": 1.0,
+      "policy": "P2_TOKENIZATION",
+      "quasi_category_survival_experimental": 0.7726,
+      "relation_preservation": 1.0,
+      "residual_direct_phi_rate": 0.5304,
+      "residual_high_risk_phi_rate": 0.5304,
+      "status": "IMPLEMENTED",
+      "system": "S1",
+      "transform_escape_rate": 1.0
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P3_SEMANTIC_GENERALIZATION",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S1",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P4_PRIVATE_MODEL_PASSTHROUGH",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S1",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P0_BLOCK",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S3",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": 1.0,
+      "lab_value_retention": 1.0,
+      "medication_retention": 1.0,
+      "negation_preservation": 1.0,
+      "policy": "P1_MAXIMUM_REDACTION",
+      "quasi_category_survival_experimental": 0.1476,
+      "relation_preservation": 1.0,
+      "residual_direct_phi_rate": 0.268,
+      "residual_high_risk_phi_rate": 0.268,
+      "status": "SIMULATED_S3_MAX",
+      "system": "S3",
+      "transform_escape_rate": 0.8649
+    },
+    {
+      "diagnosis_retention": 1.0,
+      "lab_value_retention": 1.0,
+      "medication_retention": 1.0,
+      "negation_preservation": 1.0,
+      "policy": "P2_TOKENIZATION",
+      "quasi_category_survival_experimental": 0.9452,
+      "relation_preservation": 1.0,
+      "residual_direct_phi_rate": 0.268,
+      "residual_high_risk_phi_rate": 0.268,
+      "status": "IMPLEMENTED",
+      "system": "S3",
+      "transform_escape_rate": 0.8649
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P3_SEMANTIC_GENERALIZATION",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S3",
+      "transform_escape_rate": null
+    },
+    {
+      "diagnosis_retention": null,
+      "lab_value_retention": null,
+      "medication_retention": null,
+      "negation_preservation": null,
+      "policy": "P4_PRIVATE_MODEL_PASSTHROUGH",
+      "quasi_category_survival_experimental": null,
+      "relation_preservation": null,
+      "residual_direct_phi_rate": null,
+      "residual_high_risk_phi_rate": null,
+      "status": "NOT_IMPLEMENTED",
+      "system": "S3",
+      "transform_escape_rate": null
+    }
+  ],
+  "manifest": {
+    "command": "python -m benchmark.runner --systems S0,S1,S3 --out G:\\Ddrive\\BatangD\\task\\workdiary\\24-1-ipu-ai-security-filter\\benchmark/reports/R0_smoke",
+    "corpus_version": "0.1.0",
+    "engine_version_note": "engine imported read-only from repository at git_sha",
+    "execution_timestamp_utc": "2026-08-25T07:10:12+00:00",
+    "extra_dependencies": {},
+    "git_dirty": true,
+    "git_sha": "2a25cfbce831d0de045f4c713d4560793ec984a3",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "python_version": "3.11.0",
+    "schema_version": "0.1.0",
+    "seed": 20260825
+  },
+  "suggested_verdict": {
+    "criteria_inputs": {
+      "adversarial_collapse_detected": false,
+      "baseline_best_high_risk_f2_base": 0.3053,
+      "baseline_best_qicdr": 0.0,
+      "measurable_advantage": true,
+      "s0_measured": true,
+      "s1_measured": true,
+      "s3_high_risk_f2_base": 0.2454,
+      "s3_qicdr": 1.0
+    },
+    "note": "mechanical suggestion only; final interpretation belongs to reviewers per Issue #736",
+    "reasons": [
+      "S3 QICDR margin over best baseline: +1.0000"
+    ],
+    "verdict": "PASS_CANDIDATE"
+  },
+  "systems": {
+    "S0": {
+      "adapter_stats": {
+        "cases_failed": 0,
+        "cases_run": 185,
+        "errors": []
+      },
+      "privacy": {
+        "contextual_reid_risk_experimental": {
+          "documents_scored": 84,
+          "mean_score": 0.7208,
+          "status": "EXPERIMENTAL"
+        },
+        "entity_exact_adversarial": {
+          "f1": 0.1121,
+          "fn": 409,
+          "fp": 66,
+          "precision": 0.3125,
+          "recall": 0.0683,
+          "tp": 30
+        },
+        "entity_exact_base": {
+          "f1": 0.1449,
+          "fn": 399,
+          "fp": 73,
+          "precision": 0.354,
+          "recall": 0.0911,
+          "tp": 40
+        },
+        "entity_overlap_adversarial": {
+          "f1": 0.157,
+          "fn": 397,
+          "fp": 54,
+          "precision": 0.4375,
+          "recall": 0.0957,
+          "tp": 42
+        },
+        "entity_overlap_base": {
+          "f1": 0.2029,
+          "fn": 383,
+          "fp": 57,
+          "precision": 0.4956,
+          "recall": 0.1276,
+          "tp": 56
+        },
+        "high_risk_f2_adversarial": 0.1829,
+        "high_risk_f2_base": 0.2389,
+        "negative_false_positive": {
+          "document_fp_rate": 0.0,
+          "documents_with_predictions": 0.0,
+          "mean_predictions_per_document": 0.0
+        },
+        "quasi_combination_detection_rate": {
+          "flagged_cases": 24,
+          "hits": 0,
+          "rate": 0.0
+        },
+        "residual_by_label": {
+          "ADDRESS": {
+            "rate": 1.0,
+            "survived": 32,
+            "total": 32
+          },
+          "ADMIT_DISCHARGE_DATE": {
+            "rate": 0.1429,
+            "survived": 8,
+            "total": 56
+          },
+          "AGE": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "CLINICIAN_ID": {
+            "rate": 1.0,
+            "survived": 16,
+            "total": 16
+          },
+          "CLINICIAN_NAME": {
+            "rate": 1.0,
+            "survived": 42,
+            "total": 42
+          },
+          "DETAILED_REGION": {
+            "rate": 1.0,
+            "survived": 36,
+            "total": 36
+          },
+          "EMAIL": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "EXACT_TIMESTAMP": {
+            "rate": 0.0357,
+            "survived": 2,
+            "total": 56
+          },
+          "FOREIGN_REG_NUMBER": {
+            "rate": 0.1875,
+            "survived": 3,
+            "total": 16
+          },
+          "GUARDIAN_NAME": {
+            "rate": 1.0,
+            "survived": 48,
+            "total": 48
+          },
+          "HOSPITAL_NAME": {
+            "rate": 1.0,
+            "survived": 62,
+            "total": 62
+          },
+          "INSURANCE_NUMBER": {
+            "rate": 0.875,
+            "survived": 14,
+            "total": 16
+          },
+          "MRN": {
+            "rate": 1.0,
+            "survived": 32,
+            "total": 32
+          },
+          "OCCUPATION": {
+            "rate": 1.0,
+            "survived": 24,
+            "total": 24
+          },
+          "ORDER_ID": {
+            "rate": 0.9394,
+            "survived": 62,
+            "total": 66
+          },
+          "PATIENT_NAME": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "PHONE": {
+            "rate": 0.125,
+            "survived": 8,
+            "total": 64
+          },
+          "RARE_DISEASE": {
+            "rate": 1.0,
+            "survived": 24,
+            "total": 24
+          },
+          "RARE_PROCEDURE": {
+            "rate": 1.0,
+            "survived": 12,
+            "total": 12
+          },
+          "RRN": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "SEX": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "UNIQUE_EVENT": {
+            "rate": 1.0,
+            "survived": 12,
+            "total": 12
+          },
+          "WARD_DEPARTMENT": {
+            "rate": 1.0,
+            "survived": 40,
+            "total": 40
+          }
+        },
+        "residual_direct_phi_rate": {
+          "rate": 0.7155,
+          "residual": 259,
+          "total": 362
+        },
+        "residual_high_risk_phi_rate": {
+          "rate": 0.7155,
+          "residual": 259,
+          "total": 362
+        },
+        "session_cumulative_risk_score": {
+          "reason": "label definition unstable in R0; no forced number",
+          "status": "NOT_IMPLEMENTED"
+        },
+        "transform_escape_rate": {
+          "documents": 74,
+          "escaped_documents": 74,
+          "rate": 1.0
+        }
+      },
+      "utility": {
+        "diagnosis": {
+          "kept": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "diagnosis_treatment_relation_preservation": {
+          "preserved": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "dosage": {
+          "kept": 11,
+          "rate": 1.0,
+          "total": 11
+        },
+        "event_ordering_preservation": {
+          "preserved": 12,
+          "rate": 1.0,
+          "total": 12
+        },
+        "frequency_route": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        },
+        "lab_value": {
+          "kept": 16,
+          "rate": 1.0,
+          "total": 16
+        },
+        "medication": {
+          "kept": 11,
+          "rate": 1.0,
+          "total": 11
+        },
+        "negation_cue": {
+          "kept": 9,
+          "rate": 1.0,
+          "total": 9
+        },
+        "procedure": {
+          "kept": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "symptom": {
+          "kept": 9,
+          "rate": 1.0,
+          "total": 9
+        },
+        "temporality": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        },
+        "uncertainty_cue": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        }
+      }
+    },
+    "S1": {
+      "adapter_stats": {
+        "cases_failed": 0,
+        "cases_run": 185,
+        "errors": []
+      },
+      "privacy": {
+        "contextual_reid_risk_experimental": {
+          "documents_scored": 84,
+          "mean_score": 0.7726,
+          "status": "EXPERIMENTAL"
+        },
+        "entity_exact_adversarial": {
+          "f1": 0.1043,
+          "fn": 410,
+          "fp": 88,
+          "precision": 0.2479,
+          "recall": 0.0661,
+          "tp": 29
+        },
+        "entity_exact_base": {
+          "f1": 0.1772,
+          "fn": 383,
+          "fp": 137,
+          "precision": 0.2902,
+          "recall": 0.1276,
+          "tp": 56
+        },
+        "entity_overlap_adversarial": {
+          "f1": 0.2734,
+          "fn": 363,
+          "fp": 41,
+          "precision": 0.6496,
+          "recall": 0.1731,
+          "tp": 76
+        },
+        "entity_overlap_base": {
+          "f1": 0.3829,
+          "fn": 318,
+          "fp": 72,
+          "precision": 0.6269,
+          "recall": 0.2756,
+          "tp": 121
+        },
+        "high_risk_f2_adversarial": 0.1724,
+        "high_risk_f2_base": 0.3053,
+        "negative_false_positive": {
+          "document_fp_rate": 0.0,
+          "documents_with_predictions": 0.0,
+          "mean_predictions_per_document": 0.0
+        },
+        "quasi_combination_detection_rate": {
+          "flagged_cases": 24,
+          "hits": 0,
+          "rate": 0.0
+        },
+        "residual_by_label": {
+          "ADDRESS": {
+            "rate": 0.0625,
+            "survived": 2,
+            "total": 32
+          },
+          "ADMIT_DISCHARGE_DATE": {
+            "rate": 0.2321,
+            "survived": 13,
+            "total": 56
+          },
+          "AGE": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "CLINICIAN_ID": {
+            "rate": 0.0625,
+            "survived": 1,
+            "total": 16
+          },
+          "CLINICIAN_NAME": {
+            "rate": 1.0,
+            "survived": 42,
+            "total": 42
+          },
+          "DETAILED_REGION": {
+            "rate": 1.0,
+            "survived": 36,
+            "total": 36
+          },
+          "EMAIL": {
+            "rate": 0.1875,
+            "survived": 3,
+            "total": 16
+          },
+          "EXACT_TIMESTAMP": {
+            "rate": 0.25,
+            "survived": 14,
+            "total": 56
+          },
+          "FOREIGN_REG_NUMBER": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "GUARDIAN_NAME": {
+            "rate": 1.0,
+            "survived": 48,
+            "total": 48
+          },
+          "HOSPITAL_NAME": {
+            "rate": 1.0,
+            "survived": 62,
+            "total": 62
+          },
+          "INSURANCE_NUMBER": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "MRN": {
+            "rate": 0.1875,
+            "survived": 6,
+            "total": 32
+          },
+          "OCCUPATION": {
+            "rate": 1.0,
+            "survived": 24,
+            "total": 24
+          },
+          "ORDER_ID": {
+            "rate": 0.1667,
+            "survived": 11,
+            "total": 66
+          },
+          "PATIENT_NAME": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "PHONE": {
+            "rate": 0.3438,
+            "survived": 22,
+            "total": 64
+          },
+          "RARE_DISEASE": {
+            "rate": 1.0,
+            "survived": 24,
+            "total": 24
+          },
+          "RARE_PROCEDURE": {
+            "rate": 1.0,
+            "survived": 12,
+            "total": 12
+          },
+          "RRN": {
+            "rate": 0.25,
+            "survived": 4,
+            "total": 16
+          },
+          "SEX": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "UNIQUE_EVENT": {
+            "rate": 1.0,
+            "survived": 12,
+            "total": 12
+          },
+          "WARD_DEPARTMENT": {
+            "rate": 1.0,
+            "survived": 40,
+            "total": 40
+          }
+        },
+        "residual_direct_phi_rate": {
+          "rate": 0.5304,
+          "residual": 192,
+          "total": 362
+        },
+        "residual_high_risk_phi_rate": {
+          "rate": 0.5304,
+          "residual": 192,
+          "total": 362
+        },
+        "session_cumulative_risk_score": {
+          "reason": "label definition unstable in R0; no forced number",
+          "status": "NOT_IMPLEMENTED"
+        },
+        "transform_escape_rate": {
+          "documents": 74,
+          "escaped_documents": 74,
+          "rate": 1.0
+        }
+      },
+      "utility": {
+        "diagnosis": {
+          "kept": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "diagnosis_treatment_relation_preservation": {
+          "preserved": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "dosage": {
+          "kept": 11,
+          "rate": 1.0,
+          "total": 11
+        },
+        "event_ordering_preservation": {
+          "preserved": 12,
+          "rate": 1.0,
+          "total": 12
+        },
+        "frequency_route": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        },
+        "lab_value": {
+          "kept": 16,
+          "rate": 1.0,
+          "total": 16
+        },
+        "medication": {
+          "kept": 11,
+          "rate": 1.0,
+          "total": 11
+        },
+        "negation_cue": {
+          "kept": 9,
+          "rate": 1.0,
+          "total": 9
+        },
+        "procedure": {
+          "kept": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "symptom": {
+          "kept": 9,
+          "rate": 1.0,
+          "total": 9
+        },
+        "temporality": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        },
+        "uncertainty_cue": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        }
+      }
+    },
+    "S3": {
+      "adapter_stats": {
+        "cases_failed": 0,
+        "cases_run": 185,
+        "errors": []
+      },
+      "privacy": {
+        "contextual_reid_risk_experimental": {
+          "documents_scored": 84,
+          "mean_score": 0.9452,
+          "status": "EXPERIMENTAL"
+        },
+        "entity_exact_adversarial": {
+          "f1": 0.4672,
+          "fn": 261,
+          "fp": 145,
+          "precision": 0.5511,
+          "recall": 0.4055,
+          "tp": 178
+        },
+        "entity_exact_base": {
+          "f1": 0.5771,
+          "fn": 192,
+          "fp": 170,
+          "precision": 0.5923,
+          "recall": 0.5626,
+          "tp": 247
+        },
+        "entity_overlap_adversarial": {
+          "f1": 0.6299,
+          "fn": 199,
+          "fp": 83,
+          "precision": 0.743,
+          "recall": 0.5467,
+          "tp": 240
+        },
+        "entity_overlap_base": {
+          "f1": 0.8318,
+          "fn": 83,
+          "fp": 61,
+          "precision": 0.8537,
+          "recall": 0.8109,
+          "tp": 356
+        },
+        "high_risk_f2_adversarial": 0.2101,
+        "high_risk_f2_base": 0.2454,
+        "negative_false_positive": {
+          "document_fp_rate": 0.0,
+          "documents_with_predictions": 0.0,
+          "mean_predictions_per_document": 0.0
+        },
+        "quasi_combination_detection_rate": {
+          "flagged_cases": 24,
+          "hits": 24,
+          "rate": 1.0
+        },
+        "residual_by_label": {
+          "ADDRESS": {
+            "rate": 0.0625,
+            "survived": 2,
+            "total": 32
+          },
+          "ADMIT_DISCHARGE_DATE": {
+            "rate": 0.875,
+            "survived": 49,
+            "total": 56
+          },
+          "AGE": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "CLINICIAN_ID": {
+            "rate": 0.0625,
+            "survived": 1,
+            "total": 16
+          },
+          "CLINICIAN_NAME": {
+            "rate": 0.0476,
+            "survived": 2,
+            "total": 42
+          },
+          "DETAILED_REGION": {
+            "rate": 1.0,
+            "survived": 36,
+            "total": 36
+          },
+          "EMAIL": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "EXACT_TIMESTAMP": {
+            "rate": 0.0357,
+            "survived": 2,
+            "total": 56
+          },
+          "FOREIGN_REG_NUMBER": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "GUARDIAN_NAME": {
+            "rate": 0.1458,
+            "survived": 7,
+            "total": 48
+          },
+          "HOSPITAL_NAME": {
+            "rate": 0.129,
+            "survived": 8,
+            "total": 62
+          },
+          "INSURANCE_NUMBER": {
+            "rate": 0.1875,
+            "survived": 3,
+            "total": 16
+          },
+          "MRN": {
+            "rate": 0.3125,
+            "survived": 10,
+            "total": 32
+          },
+          "OCCUPATION": {
+            "rate": 1.0,
+            "survived": 24,
+            "total": 24
+          },
+          "ORDER_ID": {
+            "rate": 0.2121,
+            "survived": 14,
+            "total": 66
+          },
+          "PATIENT_NAME": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "PHONE": {
+            "rate": 0.125,
+            "survived": 8,
+            "total": 64
+          },
+          "RARE_DISEASE": {
+            "rate": 1.0,
+            "survived": 24,
+            "total": 24
+          },
+          "RARE_PROCEDURE": {
+            "rate": 1.0,
+            "survived": 12,
+            "total": 12
+          },
+          "RRN": {
+            "rate": 0.0,
+            "survived": 0,
+            "total": 16
+          },
+          "SEX": {
+            "rate": 1.0,
+            "survived": 64,
+            "total": 64
+          },
+          "UNIQUE_EVENT": {
+            "rate": 1.0,
+            "survived": 12,
+            "total": 12
+          },
+          "WARD_DEPARTMENT": {
+            "rate": 0.1,
+            "survived": 4,
+            "total": 40
+          }
+        },
+        "residual_direct_phi_rate": {
+          "rate": 0.268,
+          "residual": 97,
+          "total": 362
+        },
+        "residual_high_risk_phi_rate": {
+          "rate": 0.268,
+          "residual": 97,
+          "total": 362
+        },
+        "session_cumulative_risk_score": {
+          "reason": "label definition unstable in R0; no forced number",
+          "status": "NOT_IMPLEMENTED"
+        },
+        "transform_escape_rate": {
+          "documents": 74,
+          "escaped_documents": 64,
+          "rate": 0.8649
+        }
+      },
+      "utility": {
+        "diagnosis": {
+          "kept": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "diagnosis_treatment_relation_preservation": {
+          "preserved": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "dosage": {
+          "kept": 11,
+          "rate": 1.0,
+          "total": 11
+        },
+        "event_ordering_preservation": {
+          "preserved": 12,
+          "rate": 1.0,
+          "total": 12
+        },
+        "frequency_route": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        },
+        "lab_value": {
+          "kept": 16,
+          "rate": 1.0,
+          "total": 16
+        },
+        "medication": {
+          "kept": 11,
+          "rate": 1.0,
+          "total": 11
+        },
+        "negation_cue": {
+          "kept": 9,
+          "rate": 1.0,
+          "total": 9
+        },
+        "procedure": {
+          "kept": 6,
+          "rate": 1.0,
+          "total": 6
+        },
+        "symptom": {
+          "kept": 9,
+          "rate": 1.0,
+          "total": 9
+        },
+        "temporality": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        },
+        "uncertainty_cue": {
+          "kept": 3,
+          "rate": 1.0,
+          "total": 3
+        }
+      }
+    }
+  }
+}
