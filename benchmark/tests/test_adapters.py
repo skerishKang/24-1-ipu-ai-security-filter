@@ -8,7 +8,6 @@ from benchmark.adapters.base import AdapterStats, SystemAdapter, record_stats, r
 from benchmark.adapters.s1_generic_pii import S1GenericPiiAdapter
 from benchmark.adapters.s3_b63_hybrid import S3B63HybridAdapter
 
-
 CLINICAL_TEXT = (
     "외래 기록. 김예찬(45세 여) 환자가 한빛대학교병원에 접수했다. "
     "연락처 010-2345-6789, 주소 서울특별시 예시구 예시로 123. "

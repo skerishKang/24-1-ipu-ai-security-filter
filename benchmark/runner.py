@@ -14,13 +14,14 @@ import sys
 
 from benchmark.adapters.base import AdapterStats, CaseRunResult, SystemAdapter, record_stats, run_case
 from benchmark.corpus.adversarial import build_adversarial_cases
-from benchmark.corpus.generator import build_base_cases, build_manifest as build_corpus_manifest
+from benchmark.corpus.generator import build_base_cases
+from benchmark.corpus.generator import build_manifest as build_corpus_manifest
 from benchmark.corpus.schema import CorpusManifest, corpus_to_dict, validate_corpus
 from benchmark.corpus.taxonomy import CORPUS_SEED
 from benchmark.metrics import privacy as privacy_metrics
 from benchmark.metrics import utility as utility_metrics
-from benchmark.reproducibility import ReproducibilityManifest, build_manifest, manifest_to_dict
 from benchmark.reporting import write_csv, write_json, write_markdown_summary
+from benchmark.reproducibility import ReproducibilityManifest, build_manifest, manifest_to_dict
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

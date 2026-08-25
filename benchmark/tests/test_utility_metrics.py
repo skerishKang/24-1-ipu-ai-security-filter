@@ -41,7 +41,7 @@ class CategoryRetentionTest(unittest.TestCase):
 
     def test_missing_category_is_zero_total(self) -> None:
         case = _case_with_utilities("텍스트", ())
-        rate, kept, total = category_retention([(case, CaseRunResult(transformed_text="텍스트"))], "lab_value")
+        rate, _kept, total = category_retention([(case, CaseRunResult(transformed_text="텍스트"))], "lab_value")
         self.assertEqual(0, total)
         self.assertEqual(0.0, rate)
 

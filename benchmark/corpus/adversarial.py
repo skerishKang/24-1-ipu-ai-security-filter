@@ -7,6 +7,7 @@ utility spans deterministically. No randomness is used anywhere.
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 
 from benchmark.corpus.schema import BenchmarkCase, Span, UtilitySpan
@@ -220,7 +221,7 @@ def apply_variant(case: BenchmarkCase, kind: str) -> BenchmarkCase:
 
 def _transform_case(case: BenchmarkCase, edits: list[Edit]) -> _RemappedCase:
     ordered = sorted(edits, key=lambda item: (item[0], item[1]))
-    for (s1, e1, _), (s2, e2, _) in zip(ordered, ordered[1:]):
+    for (_s1, e1, _), (s2, e2, _) in itertools.pairwise(ordered):
         if s2 < e1:
             raise ValueError("overlapping edits are not supported")
 

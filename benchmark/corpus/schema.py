@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass, field
 
 from benchmark.corpus.taxonomy import (
@@ -129,7 +130,7 @@ def _validate_span_bounds(case: BenchmarkCase) -> None:
 
 def _validate_no_phi_overlap(case: BenchmarkCase) -> None:
     ordered = sorted(case.spans, key=lambda item: (item.start, item.end))
-    for left, right in zip(ordered, ordered[1:]):
+    for left, right in itertools.pairwise(ordered):
         if right.start < left.end:
             raise CorpusValidationError(
                 f"case {case.case_id} has overlapping PHI spans "
@@ -139,7 +140,7 @@ def _validate_no_phi_overlap(case: BenchmarkCase) -> None:
 
 def _validate_utility_spans(case: BenchmarkCase) -> None:
     ordered = sorted(case.utility_spans, key=lambda item: (item.start, item.end))
-    for left, right in zip(ordered, ordered[1:]):
+    for left, right in itertools.pairwise(ordered):
         if right.start < left.end:
             raise CorpusValidationError(
                 f"case {case.case_id} has overlapping utility spans "
