@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ipu-benchmark/corpus_case.schema.json",
+  "title": "B63 R0 benchmark corpus case",
+  "type": "object",
+  "required": [
+    "case_id",
+    "subset",
+    "text",
+    "spans",
+    "utility_spans",
+    "relations",
+    "event_order_markers",
+    "has_quasi_combination",
+    "variant_kind",
+    "template_id",
+    "synthetic"
+  ],
+  "properties": {
+    "case_id": { "type": "string", "minLength": 1 },
+    "subset": {
+      "type": "string",
+      "enum": ["direct", "institutional", "quasi", "negative", "utility"]
+    },
+    "text": { "type": "string" },
+    "spans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "label", "span_id", "phi_class", "risk_tier"],
+        "properties": {
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 1 },
+          "label": {
+            "type": "string",
+            "enum": [
+              "PATIENT_NAME", "GUARDIAN_NAME", "PHONE", "EMAIL", "ADDRESS",
+              "RRN", "FOREIGN_REG_NUMBER", "MRN", "INSURANCE_NUMBER",
+              "CLINICIAN_NAME", "CLINICIAN_ID",
+              "HOSPITAL_NAME", "WARD_DEPARTMENT", "ORDER_ID", "EXACT_TIMESTAMP",
+              "AGE", "SEX", "RARE_DISEASE", "RARE_PROCEDURE", "DETAILED_REGION",
+              "OCCUPATION", "ADMIT_DISCHARGE_DATE", "UNIQUE_EVENT"
+            ]
+          },
+          "span_id": { "type": "string", "minLength": 1 },
+          "phi_class": { "type": "string", "enum": ["direct", "contextual", "quasi"] },
+          "risk_tier": { "type": "string", "enum": ["high", "standard"] }
+        }
+      }
+    },
+    "utility_spans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "utility_type", "span_id"],
+        "properties": {
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 1 },
+          "utility_type": {
+            "type": "string",
+            "enum": [
+              "medication", "dosage", "frequency_route", "lab_value", "diagnosis",
+              "procedure", "symptom", "negation_cue", "uncertainty_cue",
+              "temporality", "event_order_marker"
+            ]
+          },
+          "span_id": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["diagnosis_span_id", "treatment_span_id"],
+        "properties": {
+          "diagnosis_span_id": { "type": "string" },
+          "treatment_span_id": { "type": "string" }
+        }
+      }
+    },
+    "event_order_markers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "has_quasi_combination": { "type": "boolean" },
+    "variant_kind": { "type": "string", "minLength": 1 },
+    "parent_case_id": { "type": ["string", "null"] },
+    "template_id": { "type": "string" },
+    "synthetic": { "type": "boolean", "const": true }
+  }
+}
