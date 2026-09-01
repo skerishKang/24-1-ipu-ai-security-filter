@@ -86,7 +86,8 @@
 - [x] demo/ops 배포 계획 확정
 - [x] demo smoke checklist 확정
 - [x] 운영 로그 필드와 민감정보 비저장 기준 재검증
-- [ ] main branch protection 적용 여부 결정
+- [x] main branch protection 정책 결정
+- [ ] main branch protection 실제 적용 여부 owner 승인
 
 ## Phase 4. Automatic Mode Extension
 
@@ -118,6 +119,7 @@ Reference review는 초기 방향 설정에는 충분히 사용되었으나, 새
 
 ## 현재 우선순위
 
-1. #109 demo and ops deployment plan
-2. main branch protection decision
-3. 제안서/PoC 설명용 제품 상태 요약 갱신
+1. main branch protection 실제 적용 여부 owner 승인
+2. demo environment secret/config preparation
+3. owner-only demo smoke runbook
+4. 제안서/PoC 설명용 제품 상태 요약 갱신
