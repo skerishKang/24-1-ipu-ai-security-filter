@@ -90,6 +90,34 @@
 - 승인 템플릿 3개 이상
 - 폼 기반 생성 흐름 안정화
 
+## PoC 샘플과 approved template 기준
+
+첫 PoC/commercialization demo 기준 자산은 `docs/development/13-poc-sample-corpus-and-template-set.md`를 따른다.
+
+### 1차 approved template set
+
+- `contract_review_request` v1.1.0
+- `customer_inquiry_intake` v1.1.0
+- `internal_report_weekly` v1.1.0
+
+이 3개는 첫 PoC의 최소 approved template set이다. vendor coordination과 security incident template은 future candidate로 둔다.
+
+### 1차 sample category
+
+- contract / agreement
+- customer inquiry / 민원 접수
+- internal report
+- vendor coordination
+- security incident note
+
+공개 demo에서는 contract, customer inquiry, internal report 3개 category를 우선 노출한다. vendor coordination과 security incident note는 내부 또는 전문가 PoC용으로 제한한다.
+
+### 데이터 안전 기준
+
+- GitHub에는 synthetic sample과 redacted metadata만 둔다.
+- 실제 고객/사용자/기관 문서 원문은 GitHub에 commit하지 않는다.
+- private sample 평가가 필요한 경우 원문은 local/private 위치에 두고, GitHub에는 sample id, category, redacted evaluation note, owner approval 여부만 남긴다.
+
 ## 기술 아키텍처 기준
 
 ### 1. 엔진
@@ -189,14 +217,14 @@
 - 새 기능보다 `실무 사용 가능성`을 우선한다
 - 템플릿 1개가 아니라 3개 이상 돌아야 제품성이 생긴다
 - 자유문서는 LLM, 반복문서는 템플릿 중심으로 분리한다
+- GitHub에는 synthetic/redacted 자료만 남긴다
 
 ## 즉시 해야 할 일
 
-1. approved 템플릿 1개를 추가로 확보한다
-2. template mode 브라우저 검증을 끝낸다
-3. 고객 샘플 문서를 5~10개 더 모은다
-4. 배포용 repo/환경 구성을 정리한다
-5. 외부 데모 URL 확보를 준비한다
+1. demo/ops 배포 구조를 정리한다
+2. 외부 데모 URL 확보를 준비한다
+3. public demo URL 공유 전 smoke/checklist를 확정한다
+4. 고객 샘플 기반 품질 검증 결과를 redacted summary로 축적한다
 
 ## 결론
 
