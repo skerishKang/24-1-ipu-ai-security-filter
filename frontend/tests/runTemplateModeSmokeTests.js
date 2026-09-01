@@ -59,8 +59,11 @@ async function main() {
       await page.addScriptTag({ content: "window.__ipuTemplateSmokeXss = false;" });
 
       const attack = `<img src=x onerror=\"window.__ipuTemplateSmokeXss = true\"><script>window.__ipuTemplateSmokeXss = true</script>`;
-      const firstInput = page.locator("input.template-form__input, textarea.template-form__textarea").first();
-      await firstInput.fill(attack);
+      const textInput = page.locator(
+        "textarea.template-form__textarea, input.template-form__input:not([type='date'])",
+      ).first();
+      await expectVisible(textInput);
+      await textInput.fill(attack);
 
       await expectTextIncludes(page.locator(".template-preview__document-body"), "<img src=x");
       const executed = await page.evaluate(() => window.__ipuTemplateSmokeXss);
