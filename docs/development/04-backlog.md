@@ -82,6 +82,7 @@
 - [x] public OpenAPI/docs disable guard
 - [x] restore token / owner boundary 보강
 - [x] upload size / concurrency / parser limit guardrail 보강
+- [x] PoC 샘플 코퍼스와 approved template 최소 세트 정책 정의
 - [ ] main branch protection 적용 여부 결정
 - [ ] demo/ops 배포 계획 확정
 - [ ] demo smoke checklist 확정
@@ -99,10 +100,10 @@
 
 ## Commercialization Track
 
-- [ ] template mode 브라우저 검증 완료
-- [ ] approved template 최소 3개 정의
-- [ ] 고객/PoC 샘플 문서 5~10개 정책 정의
-- [ ] synthetic sample과 private sample 경계 정의
+- [x] template mode 브라우저 검증 완료
+- [x] approved template 최소 3개 정의
+- [x] 고객/PoC 샘플 문서 5~10개 정책 정의
+- [x] synthetic sample과 private sample 경계 정의
 - [ ] demo/ops hosting target 선정
 - [ ] public demo URL 공유 전 smoke 기준 확정
 - [ ] 제안서/PoC 설명용 제품 상태 요약 갱신
@@ -117,8 +118,6 @@ Reference review는 초기 방향 설정에는 충분히 사용되었으나, 새
 
 ## 현재 우선순위
 
-1. #106 roadmap/backlog 현실화
-2. #107 template mode browser verification
-3. #108 customer sample corpus / approved template minimum set
-4. #109 demo and ops deployment plan
-5. main branch protection decision
+1. #108 customer sample corpus / approved template minimum set
+2. #109 demo and ops deployment plan
+3. main branch protection decision
