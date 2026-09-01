@@ -88,6 +88,7 @@
 - [x] demo smoke checklist 확정
 - [x] 운영 로그 필드와 민감정보 비저장 기준 재검증
 - [x] main branch protection 정책 결정
+- [x] owner-only demo environment secret/config preparation 정의
 - [ ] main branch protection 실제 적용 여부 owner 승인
 
 ## Phase 4. Automatic Mode Extension
@@ -109,6 +110,7 @@
 - [x] demo/ops hosting target 선정
 - [x] public demo URL 공유 전 smoke 기준 확정
 - [x] owner demo UI/UX review checklist 정의
+- [x] owner-only demo secret/config preparation 정의
 - [ ] owner feedback 기반 UI copy polish 여부 결정
 - [ ] 제안서/PoC 설명용 제품 상태 요약 갱신
 
@@ -123,7 +125,6 @@ Reference review는 초기 방향 설정에는 충분히 사용되었으나, 새
 ## 현재 우선순위
 
 1. owner feedback 기반 UI copy polish 여부 결정
-2. demo environment secret/config preparation
-3. owner-only demo smoke runbook
-4. main branch protection 실제 적용 여부 owner 승인
-5. 제안서/PoC 설명용 제품 상태 요약 갱신
+2. owner-only demo smoke runbook
+3. main branch protection 실제 적용 여부 owner 승인
+4. 제안서/PoC 설명용 제품 상태 요약 갱신
