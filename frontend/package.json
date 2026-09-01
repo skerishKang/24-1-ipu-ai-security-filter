@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node tests/resultRendering.test.js",
-    "smoke": "node tests/runSmokeTests.js"
+    "smoke": "node tests/runSmokeTests.js",
+    "smoke:template": "node tests/runTemplateModeSmokeTests.js"
   }
 }
