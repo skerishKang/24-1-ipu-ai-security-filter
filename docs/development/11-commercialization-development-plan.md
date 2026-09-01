@@ -34,7 +34,8 @@
   - `반복 문서 템플릿화`
 - 목표 제품 형태:
   - 웹 기반 내부 도구
-  - 데모 URL + 이후 고객사 배포형으로 확장 가능
+  - owner-only demo URL에서 먼저 검증
+  - 이후 고객사 PoC 배포형으로 확장 가능
 
 ## 상용화 1차 범위
 
@@ -47,7 +48,7 @@
 - 템플릿 기반 입력 폼
 - draft -> approved 최소 승인 흐름
 - 기본 운영 로그
-- 데모/PoC 배포 가능한 구조
+- demo-stack 배포 계획과 smoke 기준
 
 ### 제외
 
@@ -58,6 +59,7 @@
 - 대규모 멀티테넌트
 - 실시간 협업
 - 완전한 로컬 LLM 운영 플랫폼
+- production launch claim
 
 ## 제품 트랙
 
@@ -118,6 +120,27 @@
 - 실제 고객/사용자/기관 문서 원문은 GitHub에 commit하지 않는다.
 - private sample 평가가 필요한 경우 원문은 local/private 위치에 두고, GitHub에는 sample id, category, redacted evaluation note, owner approval 여부만 남긴다.
 
+## Demo/ops 배포 기준
+
+첫 demo/ops 계획은 `docs/development/18-demo-ops-deployment-plan.md`를 따른다.
+
+핵심 결정은 다음과 같다.
+
+```text
+SELECTED_TARGET = demo-stack
+EXTERNAL_SURFACE = owner-only demo first
+FRONTEND_HOSTING_CLASS = static hosting
+BACKEND_HOSTING_CLASS = single HTTPS web service
+IPU_DEPLOYMENT_ENV = ops-target
+IPU_MANUAL_PREVIEW_RESPONSE_MODE = minimized
+IPU_API_KEY_HASH = required
+IPU_ALLOWED_ORIGINS = exact frontend demo origin only
+PUBLIC_OPENAPI_DISABLED = yes
+REAL_CUSTOMER_DATA_IN_DEMO = no
+```
+
+이 계획은 public production launch가 아니라, owner-only demo를 먼저 안전하게 검증하기 위한 기준이다.
+
 ## 기술 아키텍처 기준
 
 ### 1. 엔진
@@ -166,14 +189,16 @@
 - 문서 보관 정책
   - 저장 여부 / TTL / 삭제 정책
 - 민감정보 로그 금지 원칙
+- demo URL 공유 전 smoke checklist
 
 ## 배포 기준
 
 ### 단기
 
 - frontend: 정적 호스팅
-- backend: 웹 서비스
-- 외부 데모 URL 확보
+- backend: 단일 HTTPS 웹 서비스
+- 외부 데모 URL은 owner-only 공유부터 시작
+- `ops-target` guardrail을 강제
 
 ### 중기
 
@@ -195,7 +220,7 @@
 - 승인 워크플로 보강
 - 템플릿 버전 관리 정리
 - 로그/감사 기준 보강
-- 배포 구조 정리
+- demo-stack 배포 계획과 smoke 기준 정리
 
 ### Phase 3. 상용 제품 초안
 
@@ -210,6 +235,7 @@
 - 템플릿 추출 품질이 문서 유형마다 흔들릴 수 있음
 - 공공/B2B/B2C를 동시에 잡으면 범위가 지나치게 커짐
 - 운영 기능 없이 데모 구조만 키우면 다시 흔들릴 수 있음
+- public URL을 너무 빨리 공유하면 secret/CORS/logging 경계가 흔들릴 수 있음
 
 ## 의사결정 원칙
 
@@ -218,15 +244,16 @@
 - 템플릿 1개가 아니라 3개 이상 돌아야 제품성이 생긴다
 - 자유문서는 LLM, 반복문서는 템플릿 중심으로 분리한다
 - GitHub에는 synthetic/redacted 자료만 남긴다
+- demo URL 공유 전에는 owner-only smoke를 먼저 통과시킨다
 
 ## 즉시 해야 할 일
 
-1. demo/ops 배포 구조를 정리한다
-2. 외부 데모 URL 확보를 준비한다
-3. public demo URL 공유 전 smoke/checklist를 확정한다
+1. 실제 demo environment secret/config 준비 issue를 만든다
+2. owner-only demo smoke용 runbook을 작성한다
+3. main branch protection 적용 여부를 결정한다
 4. 고객 샘플 기반 품질 검증 결과를 redacted summary로 축적한다
 
 ## 결론
 
 IPU 상용화의 핵심은 “기능을 더 많이 붙이는 것”이 아니라,  
-`자유문서 전처리 + 반복문서 템플릿화` 두 축을 좁은 범위에서 안정적으로 제품화하는 것이다.
+`자유문서 전처리 + 반복문서 템플릿화` 두 축을 좁은 범위에서 안전하게 제품화하는 것이다.
