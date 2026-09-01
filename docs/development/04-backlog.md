@@ -31,6 +31,7 @@
 - [x] frontend/backend/engine end-to-end 수동 preview 경로 연결
 - [x] 일반인/전문가 view mode 분리
 - [x] frontend smoke/unit test 경로 구성
+- [x] owner demo UI/UX review checklist 정의
 - [~] 고객 샘플 기준 수동 워크벤치 품질 검증
 - [~] demo 시나리오 기준 브라우저 검증 기록
 
@@ -107,6 +108,8 @@
 - [x] synthetic sample과 private sample 경계 정의
 - [x] demo/ops hosting target 선정
 - [x] public demo URL 공유 전 smoke 기준 확정
+- [x] owner demo UI/UX review checklist 정의
+- [ ] owner feedback 기반 UI copy polish 여부 결정
 - [ ] 제안서/PoC 설명용 제품 상태 요약 갱신
 
 ## Reference Review
@@ -119,7 +122,8 @@ Reference review는 초기 방향 설정에는 충분히 사용되었으나, 새
 
 ## 현재 우선순위
 
-1. main branch protection 실제 적용 여부 owner 승인
+1. owner feedback 기반 UI copy polish 여부 결정
 2. demo environment secret/config preparation
 3. owner-only demo smoke runbook
-4. 제안서/PoC 설명용 제품 상태 요약 갱신
+4. main branch protection 실제 적용 여부 owner 승인
+5. 제안서/PoC 설명용 제품 상태 요약 갱신
